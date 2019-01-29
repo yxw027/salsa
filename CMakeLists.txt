@@ -1,0 +1,52 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(salsa)
+
+set(CMAKE_CXX_STANDARD 14)
+
+find_package(Ceres REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(GTest)
+
+find_package(catkin COMPONENTS
+	rosbag
+	roscpp
+	sensor_msgs
+	nav_msgs)
+
+add_subdirectory(lib/geometry)
+add_subdirectory(lib/multirotor_sim)
+
+include_directories(include
+    lib
+    lib/multirotor_sim/include
+    lib/geometry/include
+    lib/utils/include
+    ${CERES_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS})
+
+if (${catkin_FOUND})
+	message(STATUS catkin_FOUND - Building salsa ROS library)
+	include_directories(${catkin_INCLUDE_DIRS})
+	add_library(salsa_ros src/salsa_ros.cpp)
+	add_executable(salsa_rosbag src/salsa_rosbag.cpp)
+	target_link_libraries(salsa_rosbag salsa_ros ${catkin_LIBRARIES})
+	add_executable(salsa_node src/salsa_node.cpp)
+	target_link_libraries(salsa_node salsa_ros ${catkin_LIBRARIES})
+endif()
+
+
+if (${GTEST_FOUND})
+	message(STATUS GTEST_FOUND - Building salsa tests)
+	add_executable(test_salsa
+		src/test/test_salsa.cpp
+		src/test/test_mocap_factor.cpp
+		src/test/test_misc.cpp)
+	target_link_libraries(test_salsa
+		geometry
+		multirotor_sim
+		gtest
+		gtest_main
+		${GTEST_LIBRARIES}
+		${CERES_LIBRARIES})
+endif()
+
