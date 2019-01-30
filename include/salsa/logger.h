@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <fstream>
 #include <Eigen/Dense>
 
@@ -10,12 +11,17 @@ class Logger
 public:
     Logger(std::string filename)
     {
+        lock_.lock();
         file_.open(filename);
+        lock_.unlock();
     }
 
     ~Logger()
     {
+        lock_.lock();
         file_.close();
+        lock_.unlock();
+
     }
     template <typename... T>
     void log(T... data)
@@ -31,4 +37,7 @@ public:
 
 private:
     std::ofstream file_;
+    std::mutex lock_;
 };
+
+

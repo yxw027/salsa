@@ -132,6 +132,8 @@ public:
         Mat9 A;
         Mat96 B;
         Vec10 yp;
+        u_ = u;
+        cov_ = cov;
         dynamics(y_, u, ydot, A, B);
         boxplus(y_, ydot * dt, yp);
         y_ = yp;
@@ -238,6 +240,8 @@ public:
     Mat9 P_;
     Mat9 Xi_;
     Vec10 y_;
+    Vec6 u_;
+    Mat6 cov_;
 
     Mat96 J_;
     Vec3 gravity_ = (Vec3() << 0, 0, 9.80665).finished();

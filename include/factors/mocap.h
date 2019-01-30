@@ -9,7 +9,14 @@ using namespace xform;
 struct MocapFunctor
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  MocapFunctor(){}
+
   MocapFunctor(const Vector7d& _x, const Vector6d& _xdot, const Matrix6d& _P)
+  {
+      init(_x, _xdot, _P);
+  }
+
+  void init(const Vector7d& _x, const Vector6d& _xdot, const Matrix6d& _P)
   {
     Xi_ = _P.inverse().llt().matrixL().transpose();
     xdot_ = _xdot;
