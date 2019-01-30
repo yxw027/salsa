@@ -24,6 +24,12 @@ include_directories(include
     ${CERES_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS})
 
+add_library(salsa
+    src/salsa.cpp
+    src/num_diff.cpp)
+target_link_libraries(salsa geometry)
+
+
 if (${catkin_FOUND})
 	message(STATUS catkin_FOUND - Building salsa ROS library)
 	include_directories(${catkin_INCLUDE_DIRS})
@@ -39,9 +45,11 @@ if (${GTEST_FOUND})
 	message(STATUS GTEST_FOUND - Building salsa tests)
 	add_executable(test_salsa
 		src/test/test_salsa.cpp
-		src/test/test_mocap_factor.cpp
+        src/test/test_mocap_factor.cpp
+        src/test/test_imu_factor.cpp
 		src/test/test_misc.cpp)
 	target_link_libraries(test_salsa
+        salsa
 		geometry
 		multirotor_sim
 		gtest
