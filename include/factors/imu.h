@@ -3,6 +3,8 @@
 #include <Eigen/Core>
 #include <ceres/ceres.h>
 
+#include "factors/shield.h"
+
 #include "salsa/misc.h"
 #include "geometry/xform.h"
 
@@ -43,7 +45,7 @@ public:
     }
 
 
-    void reset(const double& _t0, const Vec6& b0)
+    void reset(const double& _t0, const Vec6& b0, int from_idx=-1)
     {
         delta_t_ = 0.0;
         t0_ = _t0;
@@ -54,6 +56,9 @@ public:
         y_(Q) = 1.0;
         P_.setZero();
         J_.setZero();
+
+        from_idx_ = from_idx;
+        active_ = false;
     }
 
     void errorStateDynamics(const Vec10& y, const Vec9& dy, const Vec6& u, const Vec6& eta, Vec9& dydot)
@@ -167,6 +172,7 @@ public:
 
     void finished()
     {
+      active_ = true;
       if (n_updates_ < 2)
       {
         P_ = P_ + Mat9::Identity() * 1e-10;
@@ -232,6 +238,8 @@ public:
         Q = 6,
     };
 
+    bool active_;
+    int from_idx_;
     double t0_;
     double delta_t_;
     Vec6 b_;
@@ -248,4 +256,5 @@ public:
 };
 
 
-typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> ImuFactorAD;
+typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
+typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;

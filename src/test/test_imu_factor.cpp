@@ -5,6 +5,7 @@
 #include <Eigen/Cholesky>
 #include <gtest/gtest.h>
 
+#include "factors/shield.h"
 #include "factors/xform.h"
 #include "factors/imu.h"
 #include "factors/mocap.h"
@@ -39,9 +40,7 @@ TEST(ImuFactor, reset)
 
 TEST(ImuFactor, Propagation)
 {
-    ReferenceController cont;
-    cont.load("../lib/multirotor_sim/params/sim_params.yaml");
-    Simulator multirotor(cont, cont, false, 1);
+    Simulator multirotor(false, 1);
     multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
 
 
@@ -53,37 +52,37 @@ TEST(ImuFactor, Propagation)
 
     multirotor.run();
     imu.reset(multirotor.t_, b0);
-    Xformd x0 = multirotor.get_pose();
-    Vector3d v0 = multirotor.get_vel();
+    Xformd x0 = multirotor.state().X;
+    Vector3d v0 = multirotor.state().v;
 
     Logger<double> log("/tmp/ImuFactor.CheckPropagation.log");
 
-    Xformd xhat = multirotor.get_pose();
-    Vector3d vhat = multirotor.get_vel();
+    Xformd xhat = multirotor.state().X;
+    Vector3d vhat = multirotor.state().v;
     log.log(multirotor.t_);
-    log.logVectors(xhat.elements(), vhat, multirotor.get_pose().elements(),
-                   multirotor.get_vel(), multirotor.get_true_imu());
+    log.logVectors(xhat.elements(), vhat, multirotor.state().X.elements(),
+                   multirotor.state().v, multirotor.imu());
 
     double next_reset = 1.0;
     multirotor.tmax_ = 10.0;
     while (multirotor.run())
     {
-        imu.integrate(multirotor.t_, multirotor.get_true_imu(), cov);
+        imu.integrate(multirotor.t_, multirotor.imu(), cov);
 
         if (std::abs(multirotor.t_ - next_reset) <= multirotor.dt_ /2.0)
         {
             imu.reset(multirotor.t_, b0);
-            x0 = multirotor.get_pose();
-            v0 = multirotor.get_vel();
+            x0 = multirotor.state().X;
+            v0 = multirotor.state().v;
             next_reset += 1.0;
         }
 
         imu.estimateXj(x0.data(), v0.data(), xhat.data(), vhat.data());
         log.log(multirotor.t_);
-        log.logVectors(xhat.elements(), vhat, multirotor.get_pose().elements(), multirotor.get_vel(), multirotor.get_true_imu());
-        EXPECT_MAT_NEAR(xhat.t(), multirotor.get_pose().t(), 0.076);
-        EXPECT_QUAT_NEAR(xhat.q(), multirotor.get_pose().q(), 0.01);
-        EXPECT_MAT_NEAR(vhat, multirotor.get_vel(), 0.05);
+        log.logVectors(xhat.elements(), vhat, multirotor.state().X.elements(), multirotor.state().v, multirotor.imu());
+        EXPECT_MAT_NEAR(xhat.t(), multirotor.state().X.t(), 0.076);
+        EXPECT_QUAT_NEAR(xhat.q(), multirotor.state().X.q(), 0.01);
+        EXPECT_MAT_NEAR(vhat, multirotor.state().v, 0.05);
     }
 }
 
@@ -199,9 +198,7 @@ TEST(ImuFactor, DynamicsJacobians)
 
 TEST(ImuFactor, BiasJacobians)
 {
-    ReferenceController cont;
-    cont.load("../lib/multirotor_sim/params/sim_params.yaml");
-    Simulator multirotor(cont, cont, false);
+    Simulator multirotor(false, 2);
     multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
     std::vector<Vector6d,Eigen::aligned_allocator<Vector6d>> meas;
     std::vector<double> t;
@@ -210,7 +207,7 @@ TEST(ImuFactor, BiasJacobians)
     while (multirotor.t_ < 0.1)
     {
         multirotor.run();
-        meas.push_back(multirotor.get_true_imu());
+        meas.push_back(multirotor.imu());
         t.push_back(multirotor.t_);
     }
 
@@ -252,16 +249,14 @@ TEST(ImuFactor, BiasJacobians)
 
 TEST(ImuFactor, MultiWindow)
 {
-    ReferenceController cont;
-    cont.load("../lib/multirotor_sim/params/sim_params.yaml");
-    Simulator multirotor(cont, cont, false, 2);
+    Simulator multirotor(false, 2);
     multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
 
     const int N = 100;
 
     Vector6d b, bhat;
-    b.block<3,1>(0,0) = multirotor.get_accel_bias();
-    b.block<3,1>(3,0) = multirotor.get_gyro_bias();
+    b.block<3,1>(0,0) = multirotor.accel_bias_;
+    b.block<3,1>(3,0) = multirotor.gyro_bias_;
 
     Problem problem;
 
@@ -312,7 +307,7 @@ TEST(ImuFactor, MultiWindow)
     Matrix6d P = Matrix6d::Identity();
     Vector6d vel;
     vel << multirotor.dyn_.get_state().v, multirotor.dyn_.get_state().w;
-    problem.AddResidualBlock(new MocapFactorAD(new MocapFunctor(multirotor.get_pose().arr_, vel, P)), NULL, xhat.data(), &dt_mocap);
+    problem.AddResidualBlock(new UnshiedledMocapFactorAD(new MocapFunctor(multirotor.state().X.arr_, vel, P)), NULL, xhat.data(), &dt_mocap);
     while (node < N)
     {
         multirotor.run();
@@ -335,7 +330,7 @@ TEST(ImuFactor, MultiWindow)
 
 
             // Add IMU factor to graph
-            problem.AddResidualBlock(new ImuFactorAD(factor), NULL,
+            problem.AddResidualBlock(new ImuFactorAD(new FunctorShield<ImuFunctor>(factor)), NULL,
                                      xhat.data()+7*(node-1), xhat.data()+7*node,
                                      vhat.data()+3*(node-1), vhat.data()+3*node,
                                      bhat.data());
@@ -344,7 +339,7 @@ TEST(ImuFactor, MultiWindow)
             factors.push_back(new ImuFunctor(multirotor.t_, bhat));
             factor = factors[node];
             vel << multirotor.dyn_.get_state().v, multirotor.dyn_.get_state().w;
-            problem.AddResidualBlock(new MocapFactorAD(new MocapFunctor(multirotor.get_pose().arr_, vel, P)), NULL, xhat.data()+7*(node), &dt_mocap);
+            problem.AddResidualBlock(new UnshiedledMocapFactorAD(new MocapFunctor(multirotor.state().X.arr_, vel, P)), NULL, xhat.data()+7*(node), &dt_mocap);
         }
     }
 
