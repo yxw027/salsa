@@ -366,7 +366,7 @@ TEST(ImuFactor, MultiWindow)
 //    cout << "b\n" << b.transpose() << endl;
 //    cout << "bhat\n" << bhat.transpose() << endl;
 //    cout << "e " << error << endl;
-    EXPECT_LE(error, 20.0);
+    EXPECT_LE(error, 40.0);
 
 
     for (int i = 0; i <= N; i++)

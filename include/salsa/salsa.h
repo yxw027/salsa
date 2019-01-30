@@ -47,8 +47,6 @@ public:
 
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
     void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
-    void featCallback(const double& t, const Vector2d& z, const Matrix2d& R, int id, double depth) override;
-    void rawGnssCallback(const GTime& t, const Vector3d& z, const Matrix3d& R, Satellite& sat) override;
 
     Matrix<double, N, 1> t_;
     Matrix<double, 7, N> x_; int x_idx_;

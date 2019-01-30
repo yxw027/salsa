@@ -45,6 +45,7 @@ if (${GTEST_FOUND})
 	message(STATUS GTEST_FOUND - Building salsa tests)
 	add_executable(test_salsa
 		src/test/test_salsa.cpp
+        src/test/test_salsa_indexing.cpp
         src/test/test_mocap_factor.cpp
         src/test/test_imu_factor.cpp
 		src/test/test_misc.cpp)
