@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cmath>
+#include <gtest/gtest.h>
+
 #ifndef NDEBUG
 #define SALSA_ASSERT(condition, ...) \
     do { \
@@ -12,6 +15,4 @@
 #else
 #   define SALSA_ASSERT(...)
 #endif
-
-
 

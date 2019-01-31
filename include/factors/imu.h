@@ -38,6 +38,7 @@ public:
         y_.setZero();
         P_.setZero();
         J_.setZero();
+        active_ = false;
     }
     ImuFunctor(const double& _t0, const Vec6& b0)
     {

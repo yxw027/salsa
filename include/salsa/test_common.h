@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmath>
 
 #define DEG2RAD (M_PI / 180.0)
 #define RAD2DEG (180.0 / M_PI)
@@ -63,3 +64,17 @@ do { \
     EXPECT_LE(std::abs(qt(2)), tol);\
 } while(0)
 
+
+#define EXPECT_MAT_FINITE(mat) \
+do {\
+  for (int c = 0; c < (mat).cols(); c++) \
+  { \
+    for (int r = 0; r < (mat).rows(); r++) \
+    { \
+      EXPECT_TRUE(std::isfinite((mat)(r,c))); \
+    } \
+  }\
+} while(0)
+
+
+#define EXPECT_FINITE(val) EXPECT_TRUE(std::isfinite(val))

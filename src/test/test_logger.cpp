@@ -79,13 +79,13 @@ TEST (Logger, MultiThread)
   data5.setRandom();
 
   log.logVectors(data1);
-  usleep(1000);
+  usleep(2000);
   log.logVectors(data2);
-  usleep(1000);
+  usleep(2000);
   log.logVectors(data3);
-  usleep(1000);
+  usleep(2000);
   log.logVectors(data4);
-  usleep(1000);
+  usleep(2000);
   log.logVectors(data5);
 
   log.close();

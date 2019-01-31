@@ -26,6 +26,7 @@ using namespace xform;
 #define SALSA_NUM_FEATURES 120
 #endif
 
+class Logger;
 class Salsa : public multirotor_sim::EstimatorBase
 {
 public:
@@ -42,6 +43,7 @@ public:
   void initState();
   void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
   void initSolverOptions();
+  void initLog();
 
   void finishNode(const double& t);
 
@@ -53,6 +55,11 @@ public:
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
 
+  double current_t_;
+  Xformd current_x_;
+  Vector3d current_v_;
+
+  bool initialized_[N];
   Matrix<double, N, 1> t_;
   Matrix<double, 7, N> x_; int x_idx_;
   Matrix<double, 3, N> v_;
@@ -65,8 +72,9 @@ public:
 
   MocapFunctor mocap_[N]; int mocap_idx_;
 
-  XformParamAD xform_param_;
-
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
+
+  Logger* state_log_;
+  Logger* opt_log_;
 };

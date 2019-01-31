@@ -3,8 +3,10 @@
 
 #include "multirotor_sim/simulator.h"
 #include "multirotor_sim/controller.h"
+#include "geometry/support.h"
 
 #include "salsa/salsa.h"
+#include "salsa/test_common.h"
 
 TEST (SalsaIndexing, CheckFirstNode)
 {
@@ -25,17 +27,29 @@ TEST (SalsaIndexing, CheckFirstNode)
     EXPECT_FALSE(salsa.imu_[i].active_);
     if (i == 0)
     {
+      EXPECT_TRUE(salsa.initialized_[i]);
       EXPECT_TRUE(salsa.mocap_[i].active_);
     }
     else
     {
+      EXPECT_FALSE(salsa.initialized_[i]);
       EXPECT_FALSE(salsa.mocap_[i].active_);
     }
   }
+  EXPECT_MAT_FINITE(salsa.x_.col(0));
+  EXPECT_MAT_FINITE(salsa.v_.col(0));
+  EXPECT_MAT_FINITE(salsa.tau_.col(0));
+  EXPECT_MAT_FINITE(salsa.imu_bias_);
+  EXPECT_FINITE(salsa.dt_mocap_);
+
   EXPECT_EQ(salsa.current_node_, 0);
-  EXPECT_EQ(salsa.x_idx_, 1);
+  EXPECT_FINITE(salsa.current_t_);
+  EXPECT_MAT_FINITE(salsa.current_x_.arr());
+  EXPECT_MAT_FINITE(salsa.current_v_);
+
+  EXPECT_EQ(salsa.x_idx_, 0);
   EXPECT_EQ(salsa.imu_idx_, 0);
-  EXPECT_EQ(salsa.mocap_idx_, 1);
+  EXPECT_EQ(salsa.mocap_idx_, 0);
   EXPECT_EQ(salsa.mocap_[0].x_idx_, 0);
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
 }
@@ -58,25 +72,39 @@ TEST (SalsaIndexing, CheckSecondNode)
   {
     if (i == 0)
     {
+      EXPECT_TRUE(salsa.initialized_[i]);
       EXPECT_TRUE(salsa.imu_[i].active_);
       EXPECT_TRUE(salsa.mocap_[i].active_);
     }
     else if (i == 1)
     {
+      EXPECT_TRUE(salsa.initialized_[i]);
       EXPECT_FALSE(salsa.imu_[i].active_);
       EXPECT_TRUE(salsa.mocap_[i].active_);
     }
     else
     {
+      EXPECT_FALSE(salsa.initialized_[i]);
       EXPECT_FALSE(salsa.imu_[i].active_);
       EXPECT_FALSE(salsa.mocap_[i].active_);
     }
   }
 
+  EXPECT_MAT_FINITE(salsa.x_.col(1));
+  EXPECT_MAT_FINITE(salsa.v_.col(1));
+  EXPECT_MAT_FINITE(salsa.tau_.col(1));
+  EXPECT_MAT_FINITE(salsa.imu_bias_);
+  EXPECT_FINITE(salsa.dt_mocap_);
+
   EXPECT_EQ(salsa.current_node_, 1);
-  EXPECT_EQ(salsa.x_idx_, 2);
+  EXPECT_FINITE(salsa.current_t_);
+  EXPECT_MAT_FINITE(salsa.current_x_.arr());
+  EXPECT_MAT_FINITE(salsa.current_v_);
+
+  EXPECT_EQ(salsa.current_node_, 1);
+  EXPECT_EQ(salsa.x_idx_, 1);
   EXPECT_EQ(salsa.imu_idx_, 1);
-  EXPECT_EQ(salsa.mocap_idx_, 2);
+  EXPECT_EQ(salsa.mocap_idx_, 1);
   EXPECT_EQ(salsa.mocap_[0].x_idx_, 0);
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
   EXPECT_EQ(salsa.mocap_[1].x_idx_, 1);
@@ -92,18 +120,18 @@ TEST (SalsaIndexing, CheckWindowWrap)
 
   sim.register_estimator(&salsa);
 
-  while (salsa.current_node_ < Salsa::N-1)
+  while (salsa.current_node_ < Salsa::N)
   {
     sim.run();
   }
 
-  EXPECT_EQ(salsa.current_node_, Salsa::N-1);
+  EXPECT_EQ(salsa.current_node_, Salsa::N);
   EXPECT_EQ(salsa.mocap_idx_, 0);
   EXPECT_EQ(salsa.x_idx_, 0);
-  EXPECT_EQ(salsa.imu_idx_, Salsa::N-1);
+  EXPECT_EQ(salsa.imu_idx_, 0);
   for (int i = 0; i < Salsa::N; i++)
   {
-    if (i == Salsa::N-1)
+    if (i == 0)
       EXPECT_FALSE(salsa.imu_[i].active_);
     else
       EXPECT_TRUE(salsa.imu_[i].active_);
@@ -130,8 +158,8 @@ TEST (SalsaIndexing, CheckWindowWrapPlus)
   }
 
   EXPECT_EQ(salsa.current_node_, Salsa::N+3);
-  EXPECT_EQ(salsa.mocap_idx_, 4);
-  EXPECT_EQ(salsa.x_idx_, 4);
+  EXPECT_EQ(salsa.mocap_idx_, 3);
+  EXPECT_EQ(salsa.x_idx_, 3);
   EXPECT_EQ(salsa.imu_idx_, 3);
   for (int i = 0; i < Salsa::N; i++)
   {
