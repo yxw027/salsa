@@ -27,7 +27,7 @@ include_directories(include
 add_library(salsa
     src/salsa.cpp
     src/num_diff.cpp)
-target_link_libraries(salsa geometry)
+target_link_libraries(salsa geometry pthread)
 
 
 if (${catkin_FOUND})
@@ -48,6 +48,7 @@ if (${GTEST_FOUND})
         src/test/test_salsa_indexing.cpp
         src/test/test_mocap_factor.cpp
         src/test/test_imu_factor.cpp
+        src/test/test_logger.cpp
 		src/test/test_misc.cpp)
 	target_link_libraries(test_salsa
         salsa
@@ -55,6 +56,7 @@ if (${GTEST_FOUND})
 		multirotor_sim
 		gtest
 		gtest_main
+        pthread
 		${GTEST_LIBRARIES}
 		${CERES_LIBRARIES})
 endif()
