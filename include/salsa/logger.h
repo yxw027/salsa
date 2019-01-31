@@ -9,11 +9,13 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+#include "salsa/salsa.h"
+
 #define LOGGER_BUFFER_SIZE 1024*1024
 
 using namespace std;
+using namespace Eigen;
 
-template <typename Scalar>
 class Logger
 {
   enum
@@ -151,13 +153,13 @@ public:
   template <typename... T>
   void log(T... data)
   {
-    int dummy[sizeof...(data)] = { (bufferData((char*)&data, sizeof(Scalar)), 1)... };
+    int dummy[sizeof...(data)] = { (bufferData((char*)&data, sizeof(T)), 1)... };
   }
 
   template <typename... T>
   void logVectors(T... data)
   {
-    int dummy[sizeof...(data)] = { (bufferData((char*)data.data(), sizeof(Scalar)*data.rows()*data.cols()), 1)... };
+    int dummy[sizeof...(data)] = { (bufferData((char*)data.data(), sizeof(typename T::Scalar)*data.rows()*data.cols()), 1)... };
   }
 
   std::mutex mtx_;

@@ -11,7 +11,7 @@ using namespace std;
 TEST (Logger, SingleThread)
 {
   std::string filename = "/tmp/Logger.dat";
-  Logger<double> log(filename);
+  Logger log(filename);
   const int N = 256;
 
   MatrixXd data1(N, N), data2(N, N), data3(N, N), data4(N,N), data5(N,N);
@@ -57,18 +57,18 @@ TEST (Logger, SingleThread)
   file.read((char*)data4_in.data(), sizeof(double)*N*N);
   file.read((char*)data5_in.data(), sizeof(double)*N*N);
 
-  EXPECT_MAT_NEAR(data1, data1_in, 1e-14);
-  EXPECT_MAT_NEAR(data2, data2_in, 1e-14);
-  EXPECT_MAT_NEAR(data3, data3_in, 1e-14);
-  EXPECT_MAT_NEAR(data4, data4_in, 1e-14);
-  EXPECT_MAT_NEAR(data5, data5_in, 1e-14);
+  EXPECT_NEAR((data1 - data1_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data2 - data2_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data3 - data3_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data4 - data4_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data5 - data5_in).array().abs().sum(), 0.0, 1e-14);
 }
 
 
 TEST (Logger, MultiThread)
 {
   std::string filename = "/tmp/Logger.dat";
-  Logger<double> log(filename);
+  Logger log(filename);
   const int N = 256;
 
   MatrixXd data1(N, N), data2(N, N), data3(N, N), data4(N,N), data5(N,N);
@@ -99,9 +99,52 @@ TEST (Logger, MultiThread)
   file.read((char*)data4_in.data(), sizeof(double)*N*N);
   file.read((char*)data5_in.data(), sizeof(double)*N*N);
 
-  EXPECT_MAT_NEAR(data1, data1_in, 1e-14);
-  EXPECT_MAT_NEAR(data2, data2_in, 1e-14);
-  EXPECT_MAT_NEAR(data3, data3_in, 1e-14);
-  EXPECT_MAT_NEAR(data4, data4_in, 1e-14);
-  EXPECT_MAT_NEAR(data5, data5_in, 1e-14);
+  EXPECT_NEAR((data1 - data1_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data2 - data2_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data3 - data3_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data4 - data4_in).array().abs().sum(), 0.0, 1e-14);
+  EXPECT_NEAR((data5 - data5_in).array().abs().sum(), 0.0, 1e-14);
+}
+
+
+TEST (Logger, Different_Types)
+{
+    std::string filename = "/tmp/Logger.dat";
+    Logger log(filename);
+
+    int a = 7;
+    double b = 28.02;
+    float c = 3928.29;
+    typedef struct
+    {
+      float d;
+      uint32_t e;
+      int16_t f;
+    } thing_t;
+    thing_t g;
+    g.d = 1983.23;
+    g.e = 239102930;
+    g.f = 28395;
+
+    log.log(a, b, c, g);
+
+    log.close();
+
+    ifstream file(filename, std::ios::in | std::ios::binary);
+    int a_in;
+    double b_in;
+    float c_in;
+    thing_t g_in;
+
+    file.read((char*)&a_in, sizeof(a_in));
+    file.read((char*)&b_in, sizeof(b_in));
+    file.read((char*)&c_in, sizeof(c_in));
+    file.read((char*)&g_in, sizeof(g_in));
+
+    EXPECT_EQ(a_in, a);
+    EXPECT_EQ(b_in, b);
+    EXPECT_EQ(c_in, c);
+    EXPECT_EQ(g_in.d, g.d);
+    EXPECT_EQ(g_in.e, g.e);
+    EXPECT_EQ(g_in.f, g.f);
 }

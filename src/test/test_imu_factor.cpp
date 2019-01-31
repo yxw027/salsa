@@ -55,7 +55,7 @@ TEST(ImuFactor, Propagation)
     Xformd x0 = multirotor.state().X;
     Vector3d v0 = multirotor.state().v;
 
-    Logger<double> log("/tmp/ImuFactor.CheckPropagation.log");
+    Logger log("/tmp/ImuFactor.CheckPropagation.log");
 
     Xformd xhat = multirotor.state().X;
     Vector3d vhat = multirotor.state().v;
@@ -115,7 +115,7 @@ TEST(ImuFactor, ErrorStateDynamics)
     std::default_random_engine gen;
     std::normal_distribution<double> normal;
 
-    Logger<double> log("/tmp/ImuFactor.CheckDynamics.log");
+    Logger log("/tmp/ImuFactor.CheckDynamics.log");
 
 
     Matrix6d cov = Matrix6d::Identity() * 1e-3;
@@ -349,7 +349,7 @@ TEST(ImuFactor, MultiWindow)
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = false;
     Solver::Summary summary;
-    Logger<double> log("/tmp/ImuFactor.MultiWindow.log");
+    Logger log("/tmp/ImuFactor.MultiWindow.log");
 
     MatrixXd xhat0 = xhat;
     MatrixXd vhat0 = vhat;
