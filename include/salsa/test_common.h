@@ -76,5 +76,16 @@ do {\
   }\
 } while(0)
 
+#define EXPECT_MAT_NAN(mat) \
+do {\
+  for (int c = 0; c < (mat).cols(); c++) \
+    { \
+      for (int r = 0; r < (mat).rows(); r++) \
+      { \
+        EXPECT_TRUE(std::isnan((mat)(r,c))); \
+      } \
+  }\
+} while(0)
+
 
 #define EXPECT_FINITE(val) EXPECT_TRUE(std::isfinite(val))

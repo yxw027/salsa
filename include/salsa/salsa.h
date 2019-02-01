@@ -26,6 +26,7 @@ using namespace xform;
 #define SALSA_NUM_FEATURES 120
 #endif
 
+class MTLogger;
 class Logger;
 class Salsa : public multirotor_sim::EstimatorBase
 {
@@ -38,12 +39,12 @@ public:
   };
 
 
-  Salsa();
+  Salsa(std::string filename = "/tmp/Salsa");
 
   void initState();
   void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
   void initSolverOptions();
-  void initLog();
+  void initLog(std::string& filename);
 
   void finishNode(const double& t);
 
@@ -75,6 +76,6 @@ public:
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
 
-  Logger* state_log_;
-  Logger* opt_log_;
+  Logger* state_log_ = nullptr;
+  Logger* opt_log_ = nullptr;
 };

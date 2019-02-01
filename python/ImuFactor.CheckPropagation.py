@@ -17,7 +17,9 @@ u = data[:, 21:27]
 
 error = x - xhat
 
-
+xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
+vtitles = ['$v_x$', '$v_y$', '$v_z$']
+tautitles = [r'$\tau$', r'$\dot{\tau}$']
 
 f = plt.figure()
 plt.suptitle('Position')

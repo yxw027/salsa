@@ -8,10 +8,10 @@
 using namespace Eigen;
 using namespace std;
 
-TEST (Logger, SingleThread)
+TEST (MTLogger, SingleThread)
 {
   std::string filename = "/tmp/Logger.dat";
-  Logger log(filename);
+  MTLogger log(filename);
   const int N = 256;
 
   MatrixXd data1(N, N), data2(N, N), data3(N, N), data4(N,N), data5(N,N);
@@ -65,10 +65,10 @@ TEST (Logger, SingleThread)
 }
 
 
-TEST (Logger, MultiThread)
+TEST (MTLogger, MultiThread)
 {
   std::string filename = "/tmp/Logger.dat";
-  Logger log(filename);
+  MTLogger log(filename);
   const int N = 256;
 
   MatrixXd data1(N, N), data2(N, N), data3(N, N), data4(N,N), data5(N,N);
@@ -107,10 +107,10 @@ TEST (Logger, MultiThread)
 }
 
 
-TEST (Logger, Different_Types)
+TEST (MTLogger, Different_Types)
 {
     std::string filename = "/tmp/Logger.dat";
-    Logger log(filename);
+    MTLogger log(filename);
 
     int a = 7;
     double b = 28.02;

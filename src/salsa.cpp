@@ -7,9 +7,9 @@ using namespace std;
 using namespace Eigen;
 using namespace xform;
 
-Salsa::Salsa()
+Salsa::Salsa(string filename)
 {
-  initLog();
+  initLog(filename);
   initState();
   initSolverOptions();
 }
@@ -29,12 +29,15 @@ void Salsa::initState()
 
   x_idx_ = -1;
   current_node_ = -1;
+  current_t_ = NAN;
+  current_x_.arr().setConstant(NAN);
+  current_v_.setConstant(NAN);
 }
 
-void Salsa::initLog()
+void Salsa::initLog(string &filename)
 {
-  state_log_ = new Logger("/tmp/Salsa.State.log");
-  opt_log_ = new Logger("/tmp/Salsa.Opt.log");
+  state_log_ = new Logger(filename + ".State.log");
+  opt_log_ = new Logger(filename + ".Opt.log");
 }
 
 void Salsa::addResidualBlocks(ceres::Problem &problem)
@@ -114,15 +117,20 @@ void Salsa::solve()
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 {
+
   if (x_idx_ < 0)
     return;
 
-  imu_[imu_idx_].integrate(t, z, R);
   current_t_ = t;
+  imu_[imu_idx_].integrate(t, z, R);
   imu_[imu_idx_].estimateXj(x_.data() + imu_[imu_idx_].from_idx_*7,
-                            v_.data() + imu_[imu_idx_].from_idx_*7*3,
+                            v_.data() + imu_[imu_idx_].from_idx_*3,
                             current_x_.data(),
                             current_v_.data());
+
+  SALSA_ASSERT((current_x_.arr().array() == current_x_.arr().array()).all()
+              || (current_v_.array() == current_v_.array()).all(),
+               "NaN Detected in propagation");
 
   if (state_log_)
   {
@@ -166,7 +174,11 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
 {
   imu_idx_ = 0;
   mocap_idx_ = 0;
+
   current_node_ = 0;
+  current_t_ = t;
+  current_x_ = x0;
+  current_v_ = v0;
 
   initialized_[0] = true;
   t_[0] = t;

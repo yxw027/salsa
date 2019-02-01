@@ -18,13 +18,42 @@ using namespace Eigen;
 
 class Logger
 {
+public:
+    Logger(std::string filename)
+    {
+        file_.open(filename);
+    }
+
+    ~Logger()
+    {
+        file_.close();
+    }
+    template <typename... T>
+    void log(T... data)
+    {
+        int dummy[sizeof...(data)] = { (file_.write((char*)&data, sizeof(T)), 1)... };
+    }
+
+    template <typename... T>
+    void logVectors(T... data)
+    {
+        int dummy[sizeof...(data)] = { (file_.write((char*)data.data(), sizeof(typename T::Scalar)*data.rows()*data.cols()), 1)... };
+    }
+
+private:
+    std::ofstream file_;
+};
+
+
+class MTLogger
+{
   enum
   {
     N = LOGGER_BUFFER_SIZE
   };
 
 public:
-  Logger(std::string filename)
+  MTLogger(std::string filename)
   {
     buffer_ = new char[N];
     file_.open(filename);
@@ -37,7 +66,7 @@ public:
     write_thread = new thread([this](){ this->writeThread(); });
   }
 
-  ~Logger()
+  ~MTLogger()
   {
     close();
   }

@@ -10,15 +10,17 @@
 
 TEST (Salsa, MocapSimulation)
 {
-  Salsa salsa;
+  Salsa salsa("/tmp/Salsa.MocapSimulation");
 
   Simulator sim(true);
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
   sim.register_estimator(&salsa);
 
-  sim.tmax_ = 1.0;
+  Logger truth_log("/tmp/Salsa.MocapSimulation.Truth.log");
 
-
-  while (sim.run()){}
-
+  while (sim.run())
+  {
+    truth_log.log(sim.t_);
+    truth_log.logVectors(sim.state().X.arr(), sim.state().v);
+  }
 }
