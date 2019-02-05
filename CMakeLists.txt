@@ -49,6 +49,7 @@ if (${GTEST_FOUND})
 		src/test/test_salsa.cpp
         src/test/test_salsa_indexing.cpp
         src/test/test_mocap_factor.cpp
+        src/test/test_pseudorange_factor.cpp
         src/test/test_imu_factor.cpp
         src/test/test_logger.cpp
 		src/test/test_misc.cpp)

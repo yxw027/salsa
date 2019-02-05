@@ -12,6 +12,8 @@
 #include "factors/imu.h"
 #include "factors/mocap.h"
 #include "factors/xform.h"
+#include "factors/pseudorange.h"
+#include "factors/carrier_phase.h"
 
 #include "salsa/logger.h"
 
@@ -60,6 +62,7 @@ public:
 
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
+  void rawGnssCallback(const GTime& t, const Vector3d& z, const Matrix3d& R, Satellite& sat) override;
 
   double current_t_;
   Xformd current_x_;

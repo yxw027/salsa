@@ -238,3 +238,8 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
     solve();
   }
 }
+
+void Salsa::rawGnssCallback(const GTime &t, const Vector3d &z, const Matrix3d &R, Satellite &sat)
+{
+
+}
