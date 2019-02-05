@@ -7,11 +7,26 @@ using namespace std;
 using namespace Eigen;
 using namespace xform;
 
-Salsa::Salsa(string filename)
+Salsa::Salsa()
+{}
+
+void Salsa::init(const string& filename)
 {
-  initLog(filename);
+  load(filename);
+  initLog();
   initState();
+  initFactors();
   initSolverOptions();
+}
+
+void Salsa::load(const string& filename)
+{
+    get_yaml_eigen("x_u2m", filename, x_u2m_.arr());
+    get_yaml_eigen("x_u2c", filename, x_u2c_.arr());
+    get_yaml_eigen("x_u2b", filename, x_u2b_.arr());
+    get_yaml_node("dt_m", filename, dt_m_);
+    get_yaml_node("dt_c", filename, dt_c_);
+    get_yaml_node("log_prefix", filename, log_prefix_);
 }
 
 void Salsa::initState()
@@ -25,7 +40,6 @@ void Salsa::initState()
     tau_.col(i).setConstant(NAN);
   }
   imu_bias_.setZero();
-  dt_mocap_ = 0.0;
 
   x_idx_ = -1;
   current_node_ = -1;
@@ -34,10 +48,23 @@ void Salsa::initState()
   current_v_.setConstant(NAN);
 }
 
-void Salsa::initLog(string &filename)
+void Salsa::initFactors()
 {
-  state_log_ = new Logger(filename + ".State.log");
-  opt_log_ = new Logger(filename + ".Opt.log");
+  imu_.reserve(N);
+  for (int i = 0; i < N; i++)
+    imu_.push_back(ImuFunctor());
+  imu_idx_ = 0;
+
+  mocap_.reserve(N);
+  for (int i = 0; i < N; i++)
+    mocap_.push_back(MocapFunctor(dt_m_, x_u2m_));
+  mocap_idx_ = 0;
+}
+
+void Salsa::initLog()
+{
+  state_log_ = new Logger(log_prefix_ + ".State.log");
+  opt_log_ = new Logger(log_prefix_ + ".Opt.log");
 }
 
 void Salsa::addResidualBlocks(ceres::Problem &problem)
@@ -52,7 +79,6 @@ void Salsa::addResidualBlocks(ceres::Problem &problem)
     }
   }
   problem.AddParameterBlock(imu_bias_.data(), 6);
-  problem.AddParameterBlock(&dt_mocap_, 1);
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)
@@ -84,8 +110,7 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
       FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&mocap_[n]);
       problem.AddResidualBlock(new MocapFactorAD(ptr),
                                NULL,
-                               x_.data() + mocap_[n].x_idx_*7,
-                               &dt_mocap_);
+                               x_.data() + mocap_[n].x_idx_*7);
     }
   }
 }
@@ -111,7 +136,6 @@ void Salsa::solve()
   if (opt_log_)
   {
     opt_log_->logVectors(t_, x_, v_, tau_, imu_bias_);
-    opt_log_->log(dt_mocap_);
   }
 }
 

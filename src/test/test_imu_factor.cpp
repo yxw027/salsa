@@ -253,6 +253,8 @@ TEST(ImuFactor, MultiWindow)
     multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
 
     const int N = 100;
+    double dt_m = 0;
+    Xformd x_u2m = Xformd::Identity();
 
     Vector6d b, bhat;
     b.block<3,1>(0,0) = multirotor.accel_bias_;
@@ -296,7 +298,7 @@ TEST(ImuFactor, MultiWindow)
     EstimatorWrapper est;
     est.register_imu_cb(imu_cb);
     multirotor.register_estimator(&est);
-    double dt_mocap = 0;
+
 
 
     // Integrate for N frames
@@ -307,7 +309,11 @@ TEST(ImuFactor, MultiWindow)
     Matrix6d P = Matrix6d::Identity();
     Vector6d vel;
     vel << multirotor.dyn_.get_state().v, multirotor.dyn_.get_state().w;
-    problem.AddResidualBlock(new UnshiedledMocapFactorAD(new MocapFunctor(multirotor.state().X.arr_, vel, P)), NULL, xhat.data(), &dt_mocap);
+
+    MocapFunctor func(dt_m, x_u2m);
+    func.init(multirotor.state().X.arr_, vel, P);
+    FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&func);
+    problem.AddResidualBlock(new MocapFactorAD(ptr), NULL, xhat.data());
     while (node < N)
     {
         multirotor.run();
@@ -339,7 +345,11 @@ TEST(ImuFactor, MultiWindow)
             factors.push_back(new ImuFunctor(multirotor.t_, bhat));
             factor = factors[node];
             vel << multirotor.dyn_.get_state().v, multirotor.dyn_.get_state().w;
-            problem.AddResidualBlock(new UnshiedledMocapFactorAD(new MocapFunctor(multirotor.state().X.arr_, vel, P)), NULL, xhat.data()+7*(node), &dt_mocap);
+
+            MocapFunctor func(dt_m, x_u2m);
+            func.init(multirotor.state().X.arr_, vel, P);
+            FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&func);
+            problem.AddResidualBlock(new MocapFactorAD(ptr), NULL, xhat.data()+7*(node));
         }
     }
 
@@ -357,8 +367,9 @@ TEST(ImuFactor, MultiWindow)
 //    cout << "xhat0\n" << xhat.transpose() << endl;
 //    cout << "bhat0\n" << bhat.transpose() << endl;
 
+    double error0 = (xhat - x).array().abs().sum();
     ceres::Solve(options, &problem, &summary);
-    double error = (xhat - x).array().abs().sum();
+    double errorf = (xhat - x).array().abs().sum();
 
 //    cout << summary.FullReport();
 //    cout << "x\n" << x.transpose() << endl;
@@ -366,7 +377,7 @@ TEST(ImuFactor, MultiWindow)
 //    cout << "b\n" << b.transpose() << endl;
 //    cout << "bhat\n" << bhat.transpose() << endl;
 //    cout << "e " << error << endl;
-    EXPECT_LE(error, 40.0);
+    EXPECT_LE(errorf, error0);
 
 
     for (int i = 0; i <= N; i++)

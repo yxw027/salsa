@@ -13,23 +13,32 @@
 class SalsaRosbag
 {
 public:
-    SalsaRosbag(string& bagfile, string& param, double start, double duration);
+    SalsaRosbag(int argc, char **argv);
 
+    void getArgs(int argc, char** argv);
+    void loadParams();
     void displayHelp();
     void openBag();
-    void getEndTime();
+    double getEndTime();
     void parseBag();
-    void imuCB(rosbag::MessageInstance* m);
-    void poseCB(rosbag::MessageInstance* m);
+    void imuCB(const rosbag::MessageInstance& m);
+    void poseCB(const rosbag::MessageInstance& m);
 
-    rosbag::Bag bag;
-    rosbag::View view;
-    double start;
-    double duration;
-    double end;
+    rosbag::Bag bag_;
+    rosbag::View view_;
+    string bag_filename_;
+    string param_filename_;
+    double start_;
+    double duration_;
+    double end_;
 
-    ros::Time bag_start;
-    ros::Time bag_duration;
-    ros::Time bag_end;
-    Salsa salsa;
+    ros::Time bag_start_;
+    ros::Time bag_duration_;
+    ros::Time bag_end_;
+    Salsa salsa_;
+
+    Matrix6d imu_R_;
+    string seen_imu_topic_;
+
+    Matrix6d mocap_R_;
 };

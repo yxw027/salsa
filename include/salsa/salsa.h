@@ -7,6 +7,7 @@
 #include "multirotor_sim/estimator_base.h"
 #include "multirotor_sim/satellite.h"
 #include "multirotor_sim/wsg84.h"
+#include "multirotor_sim/utils.h"
 
 #include "factors/imu.h"
 #include "factors/mocap.h"
@@ -39,12 +40,16 @@ public:
   };
 
 
-  Salsa(std::string filename = "/tmp/Salsa");
+  Salsa();
 
+  void init(const std::string& filename);
+
+  void load(const std::string& filename);
   void initState();
+  void initFactors();
   void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
   void initSolverOptions();
-  void initLog(std::string& filename);
+  void initLog();
 
   void finishNode(const double& t);
 
@@ -66,16 +71,23 @@ public:
   Matrix<double, 3, N> v_;
   Matrix<double, 2, N> tau_;
   Vector6d imu_bias_;
-  double dt_mocap_;
   int current_node_;
 
-  ImuFunctor imu_[N]; int imu_idx_;
-
-  MocapFunctor mocap_[N]; int mocap_idx_;
+  std::vector<ImuFunctor> imu_; int imu_idx_;
+  std::vector<MocapFunctor> mocap_; int mocap_idx_;
 
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
 
   Logger* state_log_ = nullptr;
   Logger* opt_log_ = nullptr;
+
+  std::string log_prefix_;
+  Xformd x_u2m_; // transform from imu to mocap frame
+  Xformd x_u2b_; // transform from imu to body frame
+  Xformd x_u2c_; // transform from imu to camera frame
+  double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
+  double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
+
+
 };

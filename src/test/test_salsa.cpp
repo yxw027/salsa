@@ -10,7 +10,8 @@
 
 TEST (Salsa, MocapSimulation)
 {
-  Salsa salsa("/tmp/Salsa.MocapSimulation");
+  Salsa salsa;
+  salsa.init("../params/salsa.yaml");
 
   Simulator sim(true);
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");

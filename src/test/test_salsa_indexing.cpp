@@ -11,6 +11,7 @@
 TEST (SalsaIndexing, CheckFirstNode)
 {
   Salsa salsa;
+  salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
@@ -43,7 +44,6 @@ TEST (SalsaIndexing, CheckFirstNode)
     }
   }
   EXPECT_MAT_FINITE(salsa.imu_bias_);
-  EXPECT_FINITE(salsa.dt_mocap_);
 
   EXPECT_EQ(salsa.current_node_, 0);
   EXPECT_FINITE(salsa.current_t_);
@@ -60,6 +60,7 @@ TEST (SalsaIndexing, CheckFirstNode)
 TEST (SalsaIndexing, CheckSecondNode)
 {
   Salsa salsa;
+  salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
@@ -106,7 +107,6 @@ TEST (SalsaIndexing, CheckSecondNode)
   EXPECT_MAT_FINITE(salsa.v_.col(1));
   EXPECT_MAT_FINITE(salsa.tau_.col(1));
   EXPECT_MAT_FINITE(salsa.imu_bias_);
-  EXPECT_FINITE(salsa.dt_mocap_);
 
   EXPECT_EQ(salsa.current_node_, 1);
   EXPECT_FINITE(salsa.current_t_);
@@ -126,6 +126,7 @@ TEST (SalsaIndexing, CheckSecondNode)
 TEST (SalsaIndexing, CheckWindowWrap)
 {
   Salsa salsa;
+  salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
@@ -164,6 +165,7 @@ TEST (SalsaIndexing, CheckWindowWrap)
 TEST (SalsaIndexing, CheckWindowWrapPlus)
 {
   Salsa salsa;
+  salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
@@ -202,6 +204,7 @@ TEST (SalsaIndexing, CheckWindowWrapPlus)
 TEST (SalsaIndexing, CurrentStateAlwaysValid)
 {
   Salsa salsa;
+  salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
