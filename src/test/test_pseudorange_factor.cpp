@@ -70,7 +70,8 @@ TEST_F (TestPseudorange, CheckResidualAtInit)
     rho = z.topRows<2>();
     Matrix2d cov = (Vector2d{3.0, 0.4}).asDiagonal();
 
-    PseudorangeFunctor prange_factor(time, rho, sat, rec_pos, cov);
+    PseudorangeFunctor prange_factor;
+    prange_factor.init(time, rho, sat, rec_pos, cov);
 
     Xformd x = Xformd::Identity();
     Vector3d v = Vector3d::Zero();
@@ -95,7 +96,8 @@ TEST_F (TestPseudorange, CheckResidualAfterMoving)
     rho = z.topRows<2>();
     Matrix2d cov = (Vector2d{3.0, 0.4}).asDiagonal();
 
-    PseudorangeFunctor prange_factor(time, rho, sat, rec_pos, cov);
+    PseudorangeFunctor prange_factor;
+    prange_factor.init(time, rho, sat, rec_pos, cov);
 
     Xformd x = Xformd::Identity();
     x.t() << 10, 0, 0;
@@ -154,11 +156,16 @@ TEST(Pseudorange, TrajectoryClockDynamics)
 
     bool new_node = false;
     auto raw_gnss_cb = [&measurements, &new_node, &cov, &gtimes]
-            (const GTime& t, const Vector3d& z, const Matrix3d& R, Satellite& sat)
+            (const GTime& t, const VecVec3& z, const VecMat3& R, std::vector<Satellite>& sats)
     {
-        measurements[sat.idx_] = z.topRows<2>();
-        cov[sat.idx_] = R.topLeftCorner<2,2>();
-        gtimes[sat.idx_]=t;
+        int i = 0;
+        for (Satellite sat : sats)
+        {
+          measurements[sat.idx_] = z[i].topRows<2>();
+          cov[sat.idx_] = R[i].topLeftCorner<2,2>();
+          gtimes[sat.idx_]=t;
+          i++;
+        }
         new_node = true;
     };
 
@@ -177,7 +184,8 @@ TEST(Pseudorange, TrajectoryClockDynamics)
             new_node = false;
             for (int i = 0; i < measurements.size(); i++)
             {
-                prange_funcs.push_back(new PseudorangeFunctor(gtimes[i], measurements[i], sim.satellites_[i], sim.get_position_ecef(), cov[i]));
+                prange_funcs.push_back(new PseudorangeFunctor());
+                prange_funcs.back()->init(gtimes[i], measurements[i], sim.satellites_[i], sim.get_position_ecef(), cov[i]);
                 problem.AddResidualBlock(new PseudorangeFactorAD(new FunctorShield<PseudorangeFunctor>(prange_funcs.back())),
                                          NULL,
                                          xhat.data() + n*7,

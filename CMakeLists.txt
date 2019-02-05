@@ -28,7 +28,12 @@ include_directories(include
 add_library(salsa
     src/salsa.cpp
     src/num_diff.cpp)
-target_link_libraries(salsa geometry pthread ${YAML_CPP_LIBRARIES} ${CERES_LIBRARIES})
+target_link_libraries(salsa
+    geometry
+    pthread
+    multirotor_sim
+    ${YAML_CPP_LIBRARIES}
+    ${CERES_LIBRARIES})
 
 
 if (${catkin_FOUND})
@@ -52,6 +57,7 @@ if (${GTEST_FOUND})
         src/test/test_pseudorange_factor.cpp
         src/test/test_imu_factor.cpp
         src/test/test_logger.cpp
+        src/test/test_point_positioning.cpp
 		src/test/test_misc.cpp)
 	target_link_libraries(test_salsa
         salsa

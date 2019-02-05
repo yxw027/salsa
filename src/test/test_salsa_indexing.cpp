@@ -51,8 +51,6 @@ TEST (SalsaIndexing, CheckFirstNode)
   EXPECT_MAT_FINITE(salsa.current_v_);
 
   EXPECT_EQ(salsa.x_idx_, 0);
-  EXPECT_EQ(salsa.imu_idx_, 0);
-  EXPECT_EQ(salsa.mocap_idx_, 0);
   EXPECT_EQ(salsa.mocap_[0].x_idx_, 0);
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
 }
@@ -115,8 +113,6 @@ TEST (SalsaIndexing, CheckSecondNode)
 
   EXPECT_EQ(salsa.current_node_, 1);
   EXPECT_EQ(salsa.x_idx_, 1);
-  EXPECT_EQ(salsa.imu_idx_, 1);
-  EXPECT_EQ(salsa.mocap_idx_, 1);
   EXPECT_EQ(salsa.mocap_[0].x_idx_, 0);
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
   EXPECT_EQ(salsa.mocap_[1].x_idx_, 1);
@@ -139,9 +135,7 @@ TEST (SalsaIndexing, CheckWindowWrap)
   }
 
   EXPECT_EQ(salsa.current_node_, Salsa::N);
-  EXPECT_EQ(salsa.mocap_idx_, 0);
   EXPECT_EQ(salsa.x_idx_, 0);
-  EXPECT_EQ(salsa.imu_idx_, 0);
   for (int i = 0; i < Salsa::N; i++)
   {
     if (i == 0)
@@ -178,9 +172,7 @@ TEST (SalsaIndexing, CheckWindowWrapPlus)
   }
 
   EXPECT_EQ(salsa.current_node_, Salsa::N+3);
-  EXPECT_EQ(salsa.mocap_idx_, 3);
   EXPECT_EQ(salsa.x_idx_, 3);
-  EXPECT_EQ(salsa.imu_idx_, 3);
   for (int i = 0; i < Salsa::N; i++)
   {
     if (i == 3)

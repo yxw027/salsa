@@ -13,6 +13,7 @@
 #include "factors/mocap.h"
 #include "factors/xform.h"
 #include "factors/pseudorange.h"
+#include "factors/clock_dynamics.h"
 #include "factors/carrier_phase.h"
 
 #include "salsa/logger.h"
@@ -29,6 +30,10 @@ using namespace xform;
 #define SALSA_NUM_FEATURES 120
 #endif
 
+#ifndef SALSA_NUM_SATELLITES
+#define SALSA_NUM_SATELLITES 20
+#endif
+
 class MTLogger;
 class Logger;
 class Salsa : public multirotor_sim::EstimatorBase
@@ -38,7 +43,9 @@ public:
   enum
   {
     N = SALSA_WINDOW_SIZE,
-    M = SALSA_NUM_FEATURES,
+    N_FEAT = SALSA_NUM_FEATURES,
+    N_SAT = SALSA_NUM_SATELLITES,
+
   };
 
 
@@ -60,9 +67,11 @@ public:
   void addImuFactors(ceres::Problem& problem);
   void addMocapFactors(ceres::Problem& problem);
 
+  void pointPositioning(const GTime& t, const VecVec3& z, std::vector<Satellite>& sat, Vector3d &xhat) const;
+
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
-  void rawGnssCallback(const GTime& t, const Vector3d& z, const Matrix3d& R, Satellite& sat) override;
+  void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R, std::vector<Satellite>& sat) override;
 
   double current_t_;
   Xformd current_x_;
@@ -76,8 +85,10 @@ public:
   Vector6d imu_bias_;
   int current_node_;
 
-  std::vector<ImuFunctor> imu_; int imu_idx_;
-  std::vector<MocapFunctor> mocap_; int mocap_idx_;
+  std::vector<ImuFunctor> imu_;
+  std::vector<MocapFunctor> mocap_;
+  std::vector<std::vector<PseudorangeFunctor>> prange_;
+  std::vector<ClockBiasFunctor> clock_bias_;
 
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
@@ -89,8 +100,10 @@ public:
   Xformd x_u2m_; // transform from imu to mocap frame
   Xformd x_u2b_; // transform from imu to body frame
   Xformd x_u2c_; // transform from imu to camera frame
+  Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
   double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
   double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
+  GTime start_time_;
 
 
 };

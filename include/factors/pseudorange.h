@@ -15,7 +15,12 @@ class PseudorangeFunctor
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    PseudorangeFunctor(const GTime& _t, const Vector2d& _rho, const Satellite& sat, const Vector3d& _rec_pos_ecef, const Matrix2d& cov)
+    PseudorangeFunctor()
+    {
+      active_ = false;
+    }
+
+    void init(const GTime& _t, const Vector2d& _rho, const Satellite& sat, const Vector3d& _rec_pos_ecef, const Matrix2d& cov)
     {
         // We don't have ephemeris for this satellite, we can't do anything with it yet
         if (sat.eph_.A == 0)
@@ -39,7 +44,7 @@ public:
         Vector2d az_el = sat.los2azimuthElevation(rec_pos, los_to_sat);
         ion_delay = sat.ionosphericDelay(t, WSG84::ecef2lla(rec_pos), az_el);
         Xi_ = cov.inverse().llt().matrixL().transpose();
-        valid = true;
+        active_ = true;
     }
 
     template <typename T>
@@ -71,7 +76,7 @@ public:
         return true;
     }
 
-    bool valid = false;
+    bool active_ = false;
     GTime t;
     Vector2d rho;
     Vector3d sat_pos;
