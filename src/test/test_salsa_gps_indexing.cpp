@@ -8,13 +8,14 @@
 #include "salsa/salsa.h"
 #include "salsa/test_common.h"
 
-TEST (SalsaIndexing, CheckFirstNode)
+TEST (GnssIndexing, CheckFirstNode)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+  sim.gnss_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -55,13 +56,14 @@ TEST (SalsaIndexing, CheckFirstNode)
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
 }
 
-TEST (SalsaIndexing, CheckSecondNode)
+TEST (GnssIndexing, CheckSecondNode)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+  sim.gnss_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -119,13 +121,14 @@ TEST (SalsaIndexing, CheckSecondNode)
   EXPECT_EQ(salsa.imu_[1].from_idx_, 1);
 }
 
-TEST (SalsaIndexing, CheckWindowWrap)
+TEST (GnssIndexing, CheckWindowWrap)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+  sim.gnss_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -156,13 +159,14 @@ TEST (SalsaIndexing, CheckWindowWrap)
   EXPECT_MAT_FINITE(salsa.current_v_);
 }
 
-TEST (SalsaIndexing, CheckWindowWrapPlus)
+TEST (GnssIndexing, CheckWindowWrapPlus)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+  sim.gnss_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -193,13 +197,14 @@ TEST (SalsaIndexing, CheckWindowWrapPlus)
   EXPECT_MAT_FINITE(salsa.current_v_);
 }
 
-TEST (SalsaIndexing, CurrentStateAlwaysValid)
+TEST (GnssIndexing, CurrentStateAlwaysValid)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
 
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+  sim.gnss_enabled_ = false;
 
   sim.register_estimator(&salsa);
 

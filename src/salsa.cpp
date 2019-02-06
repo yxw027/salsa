@@ -189,10 +189,10 @@ void Salsa::finishNode(const double& t)
   t_(to_idx) = t;
   initialized_[to_idx] = true;
 
-  // turn off all other factors (they get turned on later)
-  mocap_[x_idx_].active_ = false;
+  // turn off the node factors
+  mocap_[next_x_idx].active_ = false;
   for (int i = 0; i < N_SAT; i++)
-    prange_[x_idx_][i].active_ = false;
+    prange_[next_x_idx][i].active_ = false;
 
   // Prepare the next imu factor
   imu_[next_x_idx].reset(t, imu_bias_, to_idx);
@@ -294,6 +294,4 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
     x_idx_ = 0;
     return;
   }
-
-
 }
