@@ -131,9 +131,7 @@ TEST (GpsIndexing, CheckSecondNode)
 
   EXPECT_EQ(salsa.current_node_, 1);
   EXPECT_EQ(salsa.x_idx_, 1);
-  EXPECT_EQ(salsa.mocap_[0].x_idx_, 0);
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
-  EXPECT_EQ(salsa.mocap_[1].x_idx_, 1);
   EXPECT_EQ(salsa.imu_[1].from_idx_, 1);
 }
 
@@ -170,7 +168,6 @@ TEST (GpsIndexing, CheckWindowWrap)
       EXPECT_TRUE(salsa.prange_[i][j].active_);
     EXPECT_FALSE(salsa.mocap_[i].active_);
 
-    EXPECT_EQ(salsa.mocap_[i].x_idx_, i);
     EXPECT_EQ(salsa.imu_[i].from_idx_, i);
     EXPECT_MAT_FINITE(salsa.x_.col(i));
     EXPECT_MAT_FINITE(salsa.v_.col(i));
@@ -190,7 +187,7 @@ TEST (GpsIndexing, CheckWindowWrapPlus)
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
   sim.gnss_enabled_ = false;
   sim.mocap_enabled_ = false;
-  sim.raw_gnss_enabled_ = false;
+  sim.raw_gnss_enabled_ = true;
   sim.vo_enabled_ = false;
   sim.camera_enabled_ = false;
 
@@ -214,7 +211,6 @@ TEST (GpsIndexing, CheckWindowWrapPlus)
       EXPECT_TRUE(salsa.prange_[i][j].active_);
     EXPECT_FALSE(salsa.mocap_[i].active_);
 
-    EXPECT_EQ(salsa.mocap_[i].x_idx_, i);
     EXPECT_EQ(salsa.imu_[i].from_idx_, i);
     EXPECT_MAT_FINITE(salsa.x_.col(i));
     EXPECT_MAT_FINITE(salsa.v_.col(i));

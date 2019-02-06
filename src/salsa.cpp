@@ -116,7 +116,7 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
       FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&mocap_[n]);
       problem.AddResidualBlock(new MocapFactorAD(ptr),
                                NULL,
-                               x_.data() + mocap_[n].x_idx_*7);
+                               x_.data() + n*7);
     }
   }
 }
@@ -261,7 +261,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
   if (x_idx_ < 0)
   {
     initialize(t, z, Vector3d::Zero(), Vector2d::Zero());
-    mocap_[x_idx_].init(z.arr(), Vector6d::Zero(), R, 0);
+    mocap_[x_idx_].init(z.arr(), Vector6d::Zero(), R);
     return;
   }
   else
@@ -272,7 +272,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 
     x_.col(x_idx_) = z.elements();
     Vector6d zdot = (Xformd(x_.col(x_idx_)) - Xformd(x_.col(prev_x_idx))) / (t - t_[prev_x_idx]);
-    mocap_[x_idx_].init(z.arr(), zdot, R, x_idx_);
+    mocap_[x_idx_].init(z.arr(), zdot, R);
 
     solve();
   }
@@ -283,15 +283,33 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
   if (x_idx_ < 0)
   {
     Vector3d p_ecef;
+    /// TODO: Velocity Least-Squares
     pointPositioning(t, z, sat, p_ecef);
     x_e2n_ = WSG84::x_ecef2ned(p_ecef);
     start_time_ = t;
     initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
+
     for (int i = 0; i < sat.size(); i++)
-    {
       prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
-    }
+
     x_idx_ = 0;
     return;
+  }
+  else
+  {
+    finishNode((t-start_time_).toSec());
+
+    if (sat.size() > 8)
+    {
+      Vector3d p_ecef;
+      /// TODO: Velocity Least-Squares
+      pointPositioning(t, z, sat, p_ecef);
+      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
+
+      for (int i = 0; i < sat.size(); i++)
+        prange_[x_idx_][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
+
+      solve();
+    }
   }
 }

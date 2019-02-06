@@ -19,12 +19,11 @@ struct MocapFunctor
 
   }
 
-  void init(const Vector7d& _xm, const Vector6d& _xmdot, const Matrix6d& _P, int x_idx = -1)
+  void init(const Vector7d& _xm, const Vector6d& _xmdot, const Matrix6d& _P)
   {
     Xi_ = _P.inverse().llt().matrixL().transpose();
     xmdot_ = _xmdot;
     xm_ = _xm;
-    x_idx_ = x_idx;
     active_ = true;
   }
 
@@ -39,7 +38,6 @@ struct MocapFunctor
     return true;
   }
 
-  int x_idx_; // state index that this measurement goes with
   bool active_;
   Xformd xm_;
   Vector6d xmdot_;
