@@ -8,7 +8,7 @@
 #include "salsa/salsa.h"
 #include "salsa/test_common.h"
 
-TEST (GnssIndexing, CheckFirstNode)
+TEST (GpsIndexing, CheckFirstNode)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
@@ -16,6 +16,10 @@ TEST (GnssIndexing, CheckFirstNode)
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
   sim.gnss_enabled_ = false;
+  sim.mocap_enabled_ = false;
+  sim.raw_gnss_enabled_ = true;
+  sim.vo_enabled_ = false;
+  sim.camera_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -30,13 +34,17 @@ TEST (GnssIndexing, CheckFirstNode)
     if (i == 0)
     {
       EXPECT_TRUE(salsa.initialized_[i]);
-      EXPECT_TRUE(salsa.mocap_[i].active_);
+      EXPECT_FALSE(salsa.mocap_[i].active_);
+      for (int j = 0; j < sim.satellites_.size(); j++)
+        EXPECT_TRUE(salsa.prange_[i][j].active_);
       EXPECT_MAT_FINITE(salsa.x_.col(i));
       EXPECT_MAT_FINITE(salsa.v_.col(i));
       EXPECT_MAT_FINITE(salsa.tau_.col(i));
     }
     else
     {
+      for (int j = 0; j < sim.satellites_.size(); j++)
+        EXPECT_FALSE(salsa.prange_[i][j].active_);
       EXPECT_FALSE(salsa.initialized_[i]);
       EXPECT_FALSE(salsa.mocap_[i].active_);
       EXPECT_MAT_NAN(salsa.x_.col(i));
@@ -52,11 +60,10 @@ TEST (GnssIndexing, CheckFirstNode)
   EXPECT_MAT_FINITE(salsa.current_v_);
 
   EXPECT_EQ(salsa.x_idx_, 0);
-  EXPECT_EQ(salsa.mocap_[0].x_idx_, 0);
   EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
 }
 
-TEST (GnssIndexing, CheckSecondNode)
+TEST (GpsIndexing, CheckSecondNode)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
@@ -64,7 +71,10 @@ TEST (GnssIndexing, CheckSecondNode)
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
   sim.gnss_enabled_ = false;
-
+  sim.raw_gnss_enabled_ = true;
+  sim.mocap_enabled_ = false;
+  sim.vo_enabled_ = false;
+  sim.camera_enabled_ = false;
   sim.register_estimator(&salsa);
 
   while (salsa.current_node_ < 1)
@@ -78,7 +88,9 @@ TEST (GnssIndexing, CheckSecondNode)
     {
       EXPECT_TRUE(salsa.initialized_[i]);
       EXPECT_TRUE(salsa.imu_[i].active_);
-      EXPECT_TRUE(salsa.mocap_[i].active_);
+      EXPECT_FALSE(salsa.mocap_[i].active_);
+      for (int j = 0; j < sim.satellites_.size(); j++)
+        EXPECT_TRUE(salsa.prange_[i][j].active_);
       EXPECT_MAT_FINITE(salsa.x_.col(i));
       EXPECT_MAT_FINITE(salsa.v_.col(i));
       EXPECT_MAT_FINITE(salsa.tau_.col(i));
@@ -86,14 +98,18 @@ TEST (GnssIndexing, CheckSecondNode)
     else if (i == 1)
     {
       EXPECT_TRUE(salsa.initialized_[i]);
+      for (int j = 0; j < sim.satellites_.size(); j++)
+        EXPECT_TRUE(salsa.prange_[i][j].active_);
       EXPECT_FALSE(salsa.imu_[i].active_);
-      EXPECT_TRUE(salsa.mocap_[i].active_);
+      EXPECT_FALSE(salsa.mocap_[i].active_);
       EXPECT_MAT_FINITE(salsa.x_.col(i));
       EXPECT_MAT_FINITE(salsa.v_.col(i));
       EXPECT_MAT_FINITE(salsa.tau_.col(i));
     }
     else
     {
+      for (int j = 0; j < sim.satellites_.size(); j++)
+        EXPECT_FALSE(salsa.prange_[i][j].active_);
       EXPECT_FALSE(salsa.initialized_[i]);
       EXPECT_FALSE(salsa.imu_[i].active_);
       EXPECT_FALSE(salsa.mocap_[i].active_);
@@ -121,7 +137,7 @@ TEST (GnssIndexing, CheckSecondNode)
   EXPECT_EQ(salsa.imu_[1].from_idx_, 1);
 }
 
-TEST (GnssIndexing, CheckWindowWrap)
+TEST (GpsIndexing, CheckWindowWrap)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
@@ -129,6 +145,10 @@ TEST (GnssIndexing, CheckWindowWrap)
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
   sim.gnss_enabled_ = false;
+  sim.mocap_enabled_ = false;
+  sim.raw_gnss_enabled_ = true;
+  sim.vo_enabled_ = false;
+  sim.camera_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -146,7 +166,9 @@ TEST (GnssIndexing, CheckWindowWrap)
     else
       EXPECT_TRUE(salsa.imu_[i].active_);
 
-    EXPECT_TRUE(salsa.mocap_[i].active_);
+    for (int j = 0; j < sim.satellites_.size(); j++)
+      EXPECT_TRUE(salsa.prange_[i][j].active_);
+    EXPECT_FALSE(salsa.mocap_[i].active_);
 
     EXPECT_EQ(salsa.mocap_[i].x_idx_, i);
     EXPECT_EQ(salsa.imu_[i].from_idx_, i);
@@ -159,7 +181,7 @@ TEST (GnssIndexing, CheckWindowWrap)
   EXPECT_MAT_FINITE(salsa.current_v_);
 }
 
-TEST (GnssIndexing, CheckWindowWrapPlus)
+TEST (GpsIndexing, CheckWindowWrapPlus)
 {
   Salsa salsa;
   salsa.init("../params/salsa.yaml");
@@ -167,6 +189,10 @@ TEST (GnssIndexing, CheckWindowWrapPlus)
   Simulator sim;
   sim.load("../lib/multirotor_sim/params/sim_params.yaml");
   sim.gnss_enabled_ = false;
+  sim.mocap_enabled_ = false;
+  sim.raw_gnss_enabled_ = false;
+  sim.vo_enabled_ = false;
+  sim.camera_enabled_ = false;
 
   sim.register_estimator(&salsa);
 
@@ -184,7 +210,9 @@ TEST (GnssIndexing, CheckWindowWrapPlus)
     else
       EXPECT_TRUE(salsa.imu_[i].active_);
 
-    EXPECT_TRUE(salsa.mocap_[i].active_);
+    for (int j = 0; j < sim.satellites_.size(); j++)
+      EXPECT_TRUE(salsa.prange_[i][j].active_);
+    EXPECT_FALSE(salsa.mocap_[i].active_);
 
     EXPECT_EQ(salsa.mocap_[i].x_idx_, i);
     EXPECT_EQ(salsa.imu_[i].from_idx_, i);
@@ -197,31 +225,3 @@ TEST (GnssIndexing, CheckWindowWrapPlus)
   EXPECT_MAT_FINITE(salsa.current_v_);
 }
 
-TEST (GnssIndexing, CurrentStateAlwaysValid)
-{
-  Salsa salsa;
-  salsa.init("../params/salsa.yaml");
-
-  Simulator sim;
-  sim.load("../lib/multirotor_sim/params/sim_params.yaml");
-  sim.gnss_enabled_ = false;
-
-  sim.register_estimator(&salsa);
-
-  while (salsa.current_node_ < Salsa::N+3)
-  {
-    sim.run();
-    if (salsa.current_node_ == -1)
-    {
-      EXPECT_TRUE(std::isnan(salsa.current_t_));
-      EXPECT_MAT_NAN(salsa.current_x_.arr());
-      EXPECT_MAT_NAN(salsa.current_v_);
-    }
-    else
-    {
-      EXPECT_FINITE(salsa.current_t_);
-      EXPECT_MAT_FINITE(salsa.current_x_.arr());
-      EXPECT_MAT_FINITE(salsa.current_v_);
-    }
-  }
-}

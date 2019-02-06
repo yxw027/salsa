@@ -46,6 +46,8 @@ TEST (MocapIndexing, CheckFirstNode)
       EXPECT_MAT_NAN(salsa.v_.col(i));
       EXPECT_MAT_NAN(salsa.tau_.col(i));
     }
+    for (int j = 0; j < Salsa::N_SAT; j++)
+      EXPECT_FALSE(salsa.prange_[i][j].active_);
   }
   EXPECT_MAT_FINITE(salsa.imu_bias_);
 
@@ -106,6 +108,8 @@ TEST (MocapIndexing, CheckSecondNode)
       EXPECT_MAT_NAN(salsa.v_.col(i));
       EXPECT_MAT_NAN(salsa.tau_.col(i));
     }
+    for (int j = 0; j < Salsa::N_SAT; j++)
+      EXPECT_FALSE(salsa.prange_[i][j].active_);
   }
 
   EXPECT_MAT_FINITE(salsa.x_.col(1));
@@ -161,6 +165,8 @@ TEST (MocapIndexing, CheckWindowWrap)
     EXPECT_MAT_FINITE(salsa.x_.col(i));
     EXPECT_MAT_FINITE(salsa.v_.col(i));
     EXPECT_MAT_FINITE(salsa.tau_.col(i));
+    for (int j = 0; j < Salsa::N_SAT; j++)
+      EXPECT_FALSE(salsa.prange_[i][j].active_);
   }
   EXPECT_FINITE(salsa.current_t_);
   EXPECT_MAT_FINITE(salsa.current_x_.arr());
@@ -202,6 +208,8 @@ TEST (MocapIndexing, CheckWindowWrapPlus)
     EXPECT_MAT_FINITE(salsa.x_.col(i));
     EXPECT_MAT_FINITE(salsa.v_.col(i));
     EXPECT_MAT_FINITE(salsa.tau_.col(i));
+    for (int j = 0; j < Salsa::N_SAT; j++)
+      EXPECT_FALSE(salsa.prange_[i][j].active_);
   }
   EXPECT_FINITE(salsa.current_t_);
   EXPECT_MAT_FINITE(salsa.current_x_.arr());
