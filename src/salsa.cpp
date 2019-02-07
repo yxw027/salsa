@@ -27,6 +27,10 @@ void Salsa::load(const string& filename)
   get_yaml_node("dt_m", filename, dt_m_);
   get_yaml_node("dt_c", filename, dt_c_);
   get_yaml_node("log_prefix", filename, log_prefix_);
+
+  Vector2d clk_bias_diag;
+  get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
+  clk_bias_R_ = clk_bias_diag.asDiagonal();
 }
 
 void Salsa::initState()
@@ -53,6 +57,10 @@ void Salsa::initFactors()
   imu_.reserve(N);
   for (int i = 0; i < N; i++)
     imu_.push_back(ImuFunctor());
+
+  clk_.reserve(N);
+  for (int i = 0; i < N; i++)
+    clk_.push_back(ClockBiasFunctor(clk_bias_R_));
 
   mocap_.reserve(N);
   for (int i = 0; i < N; i++)
@@ -93,7 +101,7 @@ void Salsa::addImuFactors(ceres::Problem &problem)
   {
     if (imu_[i].active_)
     {
-      int from_idx = imu_[i].from_idx_;
+      int from_idx = x_idx_;
       int to_idx = (from_idx+1)%N;
       FunctorShield<ImuFunctor>* ptr = new FunctorShield<ImuFunctor>(&imu_[i]);
       problem.AddResidualBlock(new ImuFactorAD(ptr),
@@ -117,6 +125,36 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
       problem.AddResidualBlock(new MocapFactorAD(ptr),
                                NULL,
                                x_.data() + n*7);
+    }
+  }
+}
+
+void Salsa::addRawGnssFactors(ceres::Problem &problem)
+{
+  for (int n = 0; n < N; n++)
+  {
+    for (int s = 0; s < N_SAT; s++)
+    {
+      if (prange_[n][s].active_)
+      {
+        FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&prange_[n][s]);
+        problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
+                                 NULL,
+                                 x_.data() + n*7,
+                                 v_.data() + n*3,
+                                 tau_.data() + n*2,
+                                 x_e2n_.data());
+      }
+    }
+    if (clk_[n].active_)
+    {
+      int from_idx = n;
+      int to_idx = (from_idx+1)%N;
+      FunctorShield<ClockBiasFunctor>* ptr = new FunctorShield<ClockBiasFunctor>(&clk_[n]);
+      problem.AddResidualBlock(new ClockBiasFactorAD(ptr),
+                               NULL,
+                               tau_.data() + from_idx*2,
+                               tau_.data() + to_idx*2);
     }
   }
 }
@@ -153,8 +191,8 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 
   current_t_ = t;
   imu_[x_idx_].integrate(t, z, R);
-  imu_[x_idx_].estimateXj(x_.data() + imu_[x_idx_].from_idx_*7,
-                          v_.data() + imu_[x_idx_].from_idx_*3,
+  imu_[x_idx_].estimateXj(x_.data() + x_idx_*7,
+                          v_.data() + x_idx_*3,
                           current_x_.data(),
                           current_v_.data());
 
@@ -176,9 +214,10 @@ void Salsa::finishNode(const double& t)
 
   imu_[x_idx_].integrate(t, imu_[x_idx_].u_, imu_[x_idx_].cov_);
   imu_[x_idx_].finished();
+  clk_[x_idx_].init(t - imu_[x_idx_].t0_);
 
   // Best Guess of next state
-  int from_idx = imu_[x_idx_].from_idx_;
+  int from_idx = x_idx_;
   int to_idx = (from_idx + 1) % N;
   imu_[x_idx_].estimateXj(x_.data() + 7*from_idx,
                           v_.data() + 3*from_idx,
@@ -196,6 +235,7 @@ void Salsa::finishNode(const double& t)
 
   // Prepare the next imu factor
   imu_[next_x_idx].reset(t, imu_bias_, to_idx);
+  clk_[next_x_idx].active_ = false;
   x_idx_ = next_x_idx;
   current_node_++;
 }

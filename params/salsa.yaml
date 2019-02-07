@@ -11,3 +11,5 @@ x_u2b: [0, 0, 0,
 
 dt_m: 0
 dt_c: 0
+
+R_clock_bias: [1e-6, 1e-7]

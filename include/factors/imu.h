@@ -58,7 +58,6 @@ public:
         P_.setZero();
         J_.setZero();
 
-        from_idx_ = from_idx;
         active_ = false;
     }
 
@@ -240,7 +239,6 @@ public:
     };
 
     bool active_;
-    int from_idx_;
     double t0_;
     double delta_t_;
     Vec6 b_;

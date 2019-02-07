@@ -11,10 +11,16 @@ class ClockBiasFunctor
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    ClockBiasFunctor(const double& dt, const Matrix2d& cov)
+    ClockBiasFunctor(const Matrix2d& cov)
     {
-        dt_ = dt;
         Xi_ = cov.inverse().llt().matrixL().transpose();
+        active_ = false;
+    }
+
+    void init(const double& dt)
+    {
+      dt_ = dt;
+      active_ = true;
     }
 
     template <typename T>
@@ -33,6 +39,7 @@ public:
         return true;
     }
 
+    bool active_;
     double dt_;
     Matrix2d Xi_;
 };

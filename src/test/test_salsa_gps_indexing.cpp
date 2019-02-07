@@ -31,6 +31,7 @@ TEST (GpsIndexing, CheckFirstNode)
   for (int i = 0; i < Salsa::N; i++)
   {
     EXPECT_FALSE(salsa.imu_[i].active_);
+    EXPECT_FALSE(salsa.clk_[i].active_);
     if (i == 0)
     {
       EXPECT_TRUE(salsa.initialized_[i]);
@@ -60,7 +61,6 @@ TEST (GpsIndexing, CheckFirstNode)
   EXPECT_MAT_FINITE(salsa.current_v_);
 
   EXPECT_EQ(salsa.x_idx_, 0);
-  EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
 }
 
 TEST (GpsIndexing, CheckSecondNode)
@@ -88,6 +88,7 @@ TEST (GpsIndexing, CheckSecondNode)
     {
       EXPECT_TRUE(salsa.initialized_[i]);
       EXPECT_TRUE(salsa.imu_[i].active_);
+      EXPECT_TRUE(salsa.clk_[i].active_);
       EXPECT_FALSE(salsa.mocap_[i].active_);
       for (int j = 0; j < sim.satellites_.size(); j++)
         EXPECT_TRUE(salsa.prange_[i][j].active_);
@@ -101,6 +102,7 @@ TEST (GpsIndexing, CheckSecondNode)
       for (int j = 0; j < sim.satellites_.size(); j++)
         EXPECT_TRUE(salsa.prange_[i][j].active_);
       EXPECT_FALSE(salsa.imu_[i].active_);
+      EXPECT_FALSE(salsa.clk_[i].active_);
       EXPECT_FALSE(salsa.mocap_[i].active_);
       EXPECT_MAT_FINITE(salsa.x_.col(i));
       EXPECT_MAT_FINITE(salsa.v_.col(i));
@@ -112,6 +114,7 @@ TEST (GpsIndexing, CheckSecondNode)
         EXPECT_FALSE(salsa.prange_[i][j].active_);
       EXPECT_FALSE(salsa.initialized_[i]);
       EXPECT_FALSE(salsa.imu_[i].active_);
+      EXPECT_FALSE(salsa.clk_[i].active_);
       EXPECT_FALSE(salsa.mocap_[i].active_);
       EXPECT_MAT_NAN(salsa.x_.col(i));
       EXPECT_MAT_NAN(salsa.v_.col(i));
@@ -131,8 +134,6 @@ TEST (GpsIndexing, CheckSecondNode)
 
   EXPECT_EQ(salsa.current_node_, 1);
   EXPECT_EQ(salsa.x_idx_, 1);
-  EXPECT_EQ(salsa.imu_[0].from_idx_, 0);
-  EXPECT_EQ(salsa.imu_[1].from_idx_, 1);
 }
 
 TEST (GpsIndexing, CheckWindowWrap)
@@ -160,15 +161,20 @@ TEST (GpsIndexing, CheckWindowWrap)
   for (int i = 0; i < Salsa::N; i++)
   {
     if (i == 0)
+    {
       EXPECT_FALSE(salsa.imu_[i].active_);
+      EXPECT_FALSE(salsa.clk_[i].active_);
+    }
     else
+    {
       EXPECT_TRUE(salsa.imu_[i].active_);
+      EXPECT_TRUE(salsa.clk_[i].active_);
+    }
 
     for (int j = 0; j < sim.satellites_.size(); j++)
       EXPECT_TRUE(salsa.prange_[i][j].active_);
     EXPECT_FALSE(salsa.mocap_[i].active_);
 
-    EXPECT_EQ(salsa.imu_[i].from_idx_, i);
     EXPECT_MAT_FINITE(salsa.x_.col(i));
     EXPECT_MAT_FINITE(salsa.v_.col(i));
     EXPECT_MAT_FINITE(salsa.tau_.col(i));
@@ -203,15 +209,20 @@ TEST (GpsIndexing, CheckWindowWrapPlus)
   for (int i = 0; i < Salsa::N; i++)
   {
     if (i == 3)
+    {
       EXPECT_FALSE(salsa.imu_[i].active_);
+      EXPECT_FALSE(salsa.clk_[i].active_);
+    }
     else
+    {
       EXPECT_TRUE(salsa.imu_[i].active_);
+      EXPECT_TRUE(salsa.clk_[i].active_);
+    }
 
     for (int j = 0; j < sim.satellites_.size(); j++)
       EXPECT_TRUE(salsa.prange_[i][j].active_);
     EXPECT_FALSE(salsa.mocap_[i].active_);
 
-    EXPECT_EQ(salsa.imu_[i].from_idx_, i);
     EXPECT_MAT_FINITE(salsa.x_.col(i));
     EXPECT_MAT_FINITE(salsa.v_.col(i));
     EXPECT_MAT_FINITE(salsa.tau_.col(i));

@@ -15,6 +15,7 @@
 #include "factors/pseudorange.h"
 #include "factors/clock_dynamics.h"
 #include "factors/carrier_phase.h"
+#include "factors/clock_dynamics.h"
 
 #include "salsa/logger.h"
 
@@ -66,6 +67,7 @@ public:
   void addResidualBlocks(ceres::Problem& problem);
   void addImuFactors(ceres::Problem& problem);
   void addMocapFactors(ceres::Problem& problem);
+  void addRawGnssFactors(ceres::Problem& problem);
 
   void pointPositioning(const GTime& t, const VecVec3& z, std::vector<Satellite>& sat, Vector3d &xhat) const;
 
@@ -86,6 +88,7 @@ public:
   int current_node_;
 
   std::vector<ImuFunctor> imu_;
+  std::vector<ClockBiasFunctor> clk_;
   std::vector<MocapFunctor> mocap_;
   std::vector<std::vector<PseudorangeFunctor>> prange_;
   std::vector<ClockBiasFunctor> clock_bias_;
@@ -104,6 +107,7 @@ public:
   double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
   double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
   GTime start_time_;
+  Matrix2d clk_bias_R_;
 
 
 };

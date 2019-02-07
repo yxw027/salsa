@@ -194,7 +194,8 @@ TEST(Pseudorange, TrajectoryClockDynamics)
                                          x_e2n_hat.data());
                 if (n > 0)
                 {
-                    clock_funcs.push_back(new ClockBiasFunctor(sim.t_ - t.back(), tau_cov));
+                    clock_funcs.push_back(new ClockBiasFunctor(tau_cov));
+                    clock_funcs.back()->init(sim.t_ - t.back());
                     problem.AddResidualBlock(new ClockBiasFactorAD(new FunctorShield<ClockBiasFunctor>(clock_funcs.back())),
                                          NULL, tauhat.data() + (n-1)*2, tauhat.data() + n*2);
                 }
