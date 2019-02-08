@@ -69,6 +69,8 @@ public:
   void addMocapFactors(ceres::Problem& problem);
   void addRawGnssFactors(ceres::Problem& problem);
 
+  void renderGraph(const std::string& filename);
+
   void pointPositioning(const GTime& t, const VecVec3& z, std::vector<Satellite>& sat, Vector3d &xhat) const;
 
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;

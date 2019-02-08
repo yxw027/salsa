@@ -64,18 +64,18 @@ public:
         Vec3 v_ECEF = x_e2n.q().rota(x.q().rota(v_b));
         Vec3 p_ECEF = x_e2n.transforma(x.t());
         Vec3 los_to_sat = sat_pos - p_ECEF;
+        T los_dist = los_to_sat.norm();
 
         Vec2 rho_hat;
         rho_hat(0) = los_to_sat.norm() + ion_delay + (T)Satellite::C_LIGHT*(clk(0)- sat_clk_bias(0));
         rho_hat(1) = (sat_vel - v_ECEF).dot(los_to_sat.normalized()) + (T)Satellite::C_LIGHT*(clk(1) - sat_clk_bias(1));
 
-        res = Xi_ * (rho - rho_hat);
+        res = (rho - rho_hat);
 
         /// TODO: Check if time or rec_pos have deviated too much and re-calculate ion_delay and earth rotation effect
 
         return true;
     }
-
     bool active_ = false;
     GTime t;
     Vector2d rho;

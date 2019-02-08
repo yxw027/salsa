@@ -101,7 +101,7 @@ void Salsa::addImuFactors(ceres::Problem &problem)
   {
     if (imu_[i].active_)
     {
-      int from_idx = x_idx_;
+      int from_idx = i;
       int to_idx = (from_idx+1)%N;
       FunctorShield<ImuFunctor>* ptr = new FunctorShield<ImuFunctor>(&imu_[i]);
       problem.AddResidualBlock(new ImuFactorAD(ptr),
@@ -174,6 +174,7 @@ void Salsa::solve()
   addResidualBlocks(problem);
   addImuFactors(problem);
   addMocapFactors(problem);
+  addRawGnssFactors(problem);
 
   ceres::Solve(options_, &problem, &summary_);
 
@@ -322,7 +323,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
 {
   if (x_idx_ < 0)
   {
-    Vector3d p_ecef;
+    Vector3d p_ecef = Vector3d::Zero();
     /// TODO: Velocity Least-Squares
     pointPositioning(t, z, sat, p_ecef);
     x_e2n_ = WSG84::x_ecef2ned(p_ecef);
@@ -341,15 +342,16 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
 
     if (sat.size() > 8)
     {
-      Vector3d p_ecef;
+      Vector3d p_ecef = Vector3d::Zero(); /// TODO: use IMU position estimate
       /// TODO: Velocity Least-Squares
       pointPositioning(t, z, sat, p_ecef);
-      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
+//      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
 
       for (int i = 0; i < sat.size(); i++)
         prange_[x_idx_][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
 
-      solve();
+//      solve();
     }
   }
 }
+

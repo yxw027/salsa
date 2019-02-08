@@ -146,6 +146,7 @@ public:
         A = Mat9::Identity() + A*dt + 1/2.0 * A*A*dt*dt;
         B = B*dt;
 
+        auto P_prev = P_;
         P_ = A*P_*A.transpose() + B*cov*B.transpose();
         J_ = A*J_ + B;
 

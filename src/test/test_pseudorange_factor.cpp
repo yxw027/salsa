@@ -246,3 +246,49 @@ TEST(Pseudorange, TrajectoryClockDynamics)
       delete func;
 
 }
+
+TEST(Pseudorange, ImuTrajectory)
+{
+  Simulator sim;
+  sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+  sim.vo_enabled_ = false;
+  sim.mocap_enabled_ = false;
+  sim.alt_enabled_ = false;
+  sim.gnss_enabled_ = false;
+  sim.raw_gnss_enabled_ = true;
+  sim.tmax_ = 10.0;
+
+  string filename = "/tmp/Salsa.tmp.yaml";
+  ofstream tmp(filename);
+  YAML::Node node;
+  node["x_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+  node["x_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+  node["x_u2b"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+  node["dt_m"] = 0.0;
+  node["dt_c"] = 0.0;
+  node["log_prefix"] = "/tmp/Salsa.Pseudorange.ImuTrajectory";
+  node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
+  tmp << node;
+  tmp.close();
+
+  Salsa salsa;
+  salsa.init(filename);
+
+  sim.register_estimator(&salsa);
+
+  Logger log("/tmp/Salsa.Pseudorange.ImuTrajectory.Truth.log");
+  while(sim.run())
+  {
+    Vector3d sim_ecef = sim.get_position_ecef();
+    Vector3d salsa_ecef = WSG84::ned2ecef(salsa.x_e2n_, salsa.current_x_.t());
+    if (salsa.current_node_ >= 0)
+    {
+      log.log(sim.t_);
+      log.logVectors(WSG84::ecef2ned(salsa.x_e2n_, sim.get_position_ecef()), sim.state().q.arr_, sim.state().v);
+    }
+  }
+
+
+
+
+}

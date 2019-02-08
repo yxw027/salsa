@@ -19,7 +19,7 @@ TEST (Salsa, PointPositioningInit)
   YAML::Node node;
   node["ref_LLA"] = std::vector<double>{40.247082 * DEG2RAD, -111.647776 * DEG2RAD, 1387.998309};
   node["gnss_update_rate"] = 5;
-  node["use_raw_gnss_truth"] = false;
+  node["use_raw_gnss_truth"] = true;
   node["pseudorange_stdev"] = 3.0;
   node["pseudorange_rate_stdev"] = 0.1;
   node["carrier_phase_stdev"] = 0.01;
@@ -45,7 +45,7 @@ TEST (Salsa, PointPositioningInit)
   Vector3d p_ecef_true = WSG84::ned2ecef(sim.X_e2n_, x.p);
   Vector3d p_ecef_hat = WSG84::ned2ecef(salsa.x_e2n_, salsa.x_.col(0).topRows<3>());
 
-  EXPECT_NEAR(p_ecef_hat.x(), p_ecef_true.x(), 3.0);
-  EXPECT_NEAR(p_ecef_hat.y(), p_ecef_true.y(), 3.0);
-  EXPECT_NEAR(p_ecef_hat.z(), p_ecef_true.z(), 5.0);
+  EXPECT_NEAR(p_ecef_hat.x(), p_ecef_true.x(), 1e-5);
+  EXPECT_NEAR(p_ecef_hat.y(), p_ecef_true.y(), 1e-5);
+  EXPECT_NEAR(p_ecef_hat.z(), p_ecef_true.z(), 1e-5);
 }
