@@ -75,7 +75,7 @@ public:
 
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
-  void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R, std::vector<Satellite>& sat) override;
+  void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R, std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
 
   double current_t_;
   Xformd current_x_;
@@ -89,6 +89,7 @@ public:
   Vector6d imu_bias_;
   int current_node_;
 
+  double switch_weight_;
   std::vector<ImuFunctor> imu_;
   std::vector<ClockBiasFunctor> clk_;
   std::vector<MocapFunctor> mocap_;

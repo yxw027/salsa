@@ -14,8 +14,8 @@
 #include "geometry/support.h"
 #include "multirotor_sim/simulator.h"
 #include "multirotor_sim/controller.h"
+#include "multirotor_sim/estimator_wrapper.h"
 #include "salsa/num_diff.h"
-#include "salsa/estimator_wrapper.h"
 #include "salsa/logger.h"
 #include "salsa/test_common.h"
 

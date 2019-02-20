@@ -35,6 +35,7 @@ void Salsa::load(const string& filename)
 
 void Salsa::initState()
 {
+  switch_weight_ = 10.0;
   for (int i = 0; i < N; i++)
   {
     initialized_[i] = false;
@@ -319,7 +320,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
   }
 }
 
-void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, std::vector<Satellite> &sat)
+void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, std::vector<Satellite> &sat, const std::vector<bool>& slip)
 {
   if (x_idx_ < 0)
   {
@@ -331,7 +332,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
     initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
 
     for (int i = 0; i < sat.size(); i++)
-      prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
+      prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>(), switch_weight_);
 
     x_idx_ = 0;
     return;
@@ -348,7 +349,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
 //      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
 
       for (int i = 0; i < sat.size(); i++)
-        prange_[x_idx_][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
+        prange_[x_idx_][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>(), switch_weight_);
 
 //      solve();
     }

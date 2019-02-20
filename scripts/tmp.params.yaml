@@ -1,0 +1,14 @@
+clock_walk_stdev: 1e-07
+carrier_phase_stdev: 0.01
+start_time_week: 2026
+pseudorange_rate_stdev: 0.1
+ephemeris_filename: ../sample/eph.dat
+start_time_tow_sec: 165029
+ref_LLA:
+  - 0.7024440952201444
+  - -1.948621293729105
+  - 1387.998309
+clock_init_stdev: 0.0001
+pseudorange_stdev: 3
+gnss_update_rate: 5
+use_raw_gnss_truth: true
