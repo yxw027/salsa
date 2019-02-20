@@ -28,6 +28,9 @@ TEST (Salsa, PointPositioningInit)
   node["start_time_tow_sec"] = 165029;
   node["clock_init_stdev"] = 1e-4;
   node["clock_walk_stdev"] = 1e-7;
+  node["multipath_prob"] = 0;
+  node["cycle_slip_prob"] = 0;
+  node["multipath_error_range"] = 0;
   tmp_file << node;
   tmp_file.close();
 
