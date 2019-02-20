@@ -86,6 +86,7 @@ public:
   Matrix<double, 7, N> x_; int x_idx_;
   Matrix<double, 3, N> v_;
   Matrix<double, 2, N> tau_;
+  Matrix<double, N_SAT, 1> s_;
   Vector6d imu_bias_;
   int current_node_;
 

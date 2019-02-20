@@ -27,6 +27,7 @@ void Salsa::load(const string& filename)
   get_yaml_node("dt_m", filename, dt_m_);
   get_yaml_node("dt_c", filename, dt_c_);
   get_yaml_node("log_prefix", filename, log_prefix_);
+  get_yaml_node("switch_weight", filename, switch_weight_);
 
   Vector2d clk_bias_diag;
   get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
@@ -35,7 +36,6 @@ void Salsa::load(const string& filename)
 
 void Salsa::initState()
 {
-  switch_weight_ = 10.0;
   for (int i = 0; i < N; i++)
   {
     initialized_[i] = false;
@@ -45,6 +45,7 @@ void Salsa::initState()
     tau_.col(i).setConstant(NAN);
   }
   imu_bias_.setZero();
+  s_.setConstant(1.0);
 
   x_idx_ = -1;
   current_node_ = -1;
@@ -92,6 +93,10 @@ void Salsa::addResidualBlocks(ceres::Problem &problem)
       problem.AddParameterBlock(v_.data() + n*3, 3);
       problem.AddParameterBlock(tau_.data() + n*2, 2);
     }
+  }
+  for (int s = 0; s < N_SAT; s++)
+  {
+      problem.AddParameterBlock(s_.data() + s, 1);
   }
   problem.AddParameterBlock(imu_bias_.data(), 6);
 }
@@ -322,7 +327,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 
 void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, std::vector<Satellite> &sat, const std::vector<bool>& slip)
 {
-  if (x_idx_ < 0)
+  if (x_idx_ < 0 && sat.size() > 8)
   {
     Vector3d p_ecef = Vector3d::Zero();
     /// TODO: Velocity Least-Squares

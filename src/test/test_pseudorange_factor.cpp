@@ -282,6 +282,7 @@ TEST(Pseudorange, ImuTrajectory)
   node["dt_c"] = 0.0;
   node["log_prefix"] = "/tmp/Salsa.Pseudorange.ImuTrajectory";
   node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
+  node["switch_weight"] = 10.0;
   tmp << node;
   tmp.close();
 

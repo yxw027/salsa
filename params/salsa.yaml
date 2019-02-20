@@ -13,3 +13,4 @@ dt_m: 0
 dt_c: 0
 
 R_clock_bias: [1e-6, 1e-7]
+switch_weight: 10.0

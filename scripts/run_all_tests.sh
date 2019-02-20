@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/bash 
 EXIT_CODE=0
 
 function print_result() {
@@ -16,9 +15,14 @@ FAILED=()
 for file in ../build/test*
 do
   if [ -x $file ]; then
-    ./$file
-    if [ $? -ne 0 ]; then
-       FAILED=("${FAILED[@]}" $file)
+    if [[ "$file" == *test_results* ]]; then
+      :
+    else
+      echo_blue "./$file"
+      ./$file
+      if [ $? -ne 0 ]; then
+         FAILED=("${FAILED[@]}" $file)
+      fi
     fi
   fi
 done
