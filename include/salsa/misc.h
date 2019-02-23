@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cmath>
+#include <stdio.h>
 #include <gtest/gtest.h>
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
 #define SALSA_ASSERT(condition, ...) \
     do { \
         if (! (condition)) { \
@@ -12,8 +13,22 @@
             assert(condition); \
         } \
     } while (false)
+//#else
+//#   define SALSA_ASSERT(...)
+//#endif
+
+#ifndef DEBUGPRINT
+#define DEBUGPRINT 0
+#endif
+
+#if DEBUGPRINT
+#define SL std::cout << __LINE__ << std::endl
+#define SD(f_, ...) printf((f_), ##__VA_ARGS__)
+#define SD_S(args) std::cout << args;
 #else
-#   define SALSA_ASSERT(...)
+#define SL
+#define SD(...)
+#define SD_S(...)
 #endif
 
 

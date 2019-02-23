@@ -25,13 +25,16 @@ public:
     void poseCB(const rosbag::MessageInstance& m);
 
     rosbag::Bag bag_;
-    rosbag::View view_;
+    rosbag::View* view_;
     string bag_filename_;
     string param_filename_;
     double start_;
     double duration_;
     double end_;
 
+    int imu_count_between_nodes_;
+
+    Quatd q_mocap_to_NED_pos_, q_mocap_to_NED_att_;
     ros::Time bag_start_;
     ros::Time bag_duration_;
     ros::Time bag_end_;
@@ -41,4 +44,6 @@ public:
     string seen_imu_topic_;
 
     Matrix6d mocap_R_;
+    Logger truth_log_;
+    Logger imu_log_;
 };

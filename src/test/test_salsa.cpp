@@ -27,7 +27,7 @@ TEST (Salsa, MocapSimulation)
   node["x_u2b"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
   node["dt_m"] = 0.0;
   node["dt_c"] = 0.0;
-  node["log_prefix"] = "/tmp/Salsa.MocapSimulation";
+  node["log_prefix"] = "/tmp/Salsa/MocapSimulation/";
   node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
   node["switch_weight"] = 10.0;
   tmp << node;
@@ -38,11 +38,11 @@ TEST (Salsa, MocapSimulation)
 
   sim.register_estimator(&salsa);
 
-  Logger truth_log(salsa.log_prefix_ + ".Truth.log");
+  Logger true_state_log(salsa.log_prefix_ + "Truth.log");
 
   while (sim.run())
   {
-    truth_log.log(sim.t_);
-    truth_log.logVectors(sim.state().X.arr(), sim.state().v);
+    true_state_log.log(sim.t_);
+    true_state_log.logVectors(sim.state().X.arr(), sim.state().v);
   }
 }

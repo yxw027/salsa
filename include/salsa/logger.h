@@ -19,7 +19,14 @@ using namespace Eigen;
 class Logger
 {
 public:
-    Logger(std::string filename)
+    Logger() {}
+
+    Logger(const std::string filename)
+    {
+        open(filename);
+    }
+
+    void open(const std::string& filename)
     {
         file_.open(filename);
     }

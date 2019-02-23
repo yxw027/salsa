@@ -1,3 +1,2 @@
 from plotResults import plotResults
-
-plotResults("/tmp/Salsa.Pseudorange.ImuTrajectory")
+plotResults("/tmp/Salsa/MocapSimulation")

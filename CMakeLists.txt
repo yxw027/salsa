@@ -4,6 +4,11 @@ project(salsa)
 set(CMAKE_CXX_STANDARD 14)
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+if(${SALSA_WINDOW_SIZE})
+    add_definitions(-DSALSA_WINDOW_SIZE=${SALSA_WINDOW_SIZE})
+    message("Defining Custom Window Size: ${SALSA_WINDOW_SIZE}")
+endif()
+
 include(cotire)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -27,11 +32,13 @@ include_directories(include
 
 add_library(salsa
     src/salsa.cpp
+    src/factors/xform.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry
     pthread
     multirotor_sim
+    stdc++fs
     ${YAML_CPP_LIBRARIES}
     ${CERES_LIBRARIES})
 cotire(salsa)

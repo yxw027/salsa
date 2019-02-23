@@ -1,11 +1,13 @@
 #include <Eigen/Core>
 #include "geometry/xform.h"
 #include "salsa/salsa.h"
+#include <experimental/filesystem>
 
 
 using namespace std;
 using namespace Eigen;
 using namespace xform;
+namespace fs = std::experimental::filesystem;
 
 Salsa::Salsa()
 {}
@@ -21,11 +23,11 @@ void Salsa::init(const string& filename)
 
 void Salsa::load(const string& filename)
 {
-  get_yaml_eigen("x_u2m", filename, x_u2m_.arr());
-  get_yaml_eigen("x_u2c", filename, x_u2c_.arr());
-  get_yaml_eigen("x_u2b", filename, x_u2b_.arr());
-  get_yaml_node("dt_m", filename, dt_m_);
-  get_yaml_node("dt_c", filename, dt_c_);
+  get_yaml_eigen("X_u2m", filename, x_u2m_.arr());
+  get_yaml_eigen("q_u2b", filename, x_u2c_.q().arr_);
+  get_yaml_eigen("X_u2c", filename, x_u2b_.arr());
+  get_yaml_node("tm", filename, dt_m_);
+  get_yaml_node("tc", filename, dt_c_);
   get_yaml_node("log_prefix", filename, log_prefix_);
   get_yaml_node("switch_weight", filename, switch_weight_);
 
@@ -79,8 +81,11 @@ void Salsa::initFactors()
 
 void Salsa::initLog()
 {
-  state_log_ = new Logger(log_prefix_ + ".State.log");
-  opt_log_ = new Logger(log_prefix_ + ".Opt.log");
+  if (!fs::exists(fs::path(log_prefix_).parent_path()))
+      fs::create_directories(fs::path(log_prefix_).parent_path());
+
+  state_log_ = new Logger(log_prefix_ + "State.log");
+  opt_log_ = new Logger(log_prefix_ + "Opt.log");
 }
 
 void Salsa::addResidualBlocks(ceres::Problem &problem)
@@ -182,19 +187,23 @@ void Salsa::solve()
   addMocapFactors(problem);
   addRawGnssFactors(problem);
 
+  SD("SOLVING\n");
   ceres::Solve(options_, &problem, &summary_);
 
   if (opt_log_)
   {
-    opt_log_->logVectors(t_, x_, v_, tau_, imu_bias_);
+    opt_log_->logVectors(t_, x_, v_, tau_, imu_bias_, s_);
   }
 }
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 {
-
   if (x_idx_ < 0)
+  {
+    SD("ImuCB - Waiting for Mocap\n");
     return;
+  }
+  SD("ImuCb\n");
 
   current_t_ = t;
   imu_[x_idx_].integrate(t, z, R);
@@ -305,8 +314,10 @@ void Salsa::pointPositioning(const GTime &t, const VecVec3 &z, std::vector<Satel
 
 void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 {
+  SD("Mocap Callback\n");
   if (x_idx_ < 0)
   {
+    SD("Initialized Mocap\n");
     initialize(t, z, Vector3d::Zero(), Vector2d::Zero());
     mocap_[x_idx_].init(z.arr(), Vector6d::Zero(), R);
     return;

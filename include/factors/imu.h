@@ -32,6 +32,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     ImuFunctor()
     {
+        n_updates_ = 0;
         t0_ = INFINITY;
         delta_t_ = 0.0;
         b_.setZero();
@@ -243,7 +244,7 @@ public:
     double t0_;
     double delta_t_;
     Vec6 b_;
-    int n_updates_ = 0;
+    int n_updates_;
 
     Mat9 P_;
     Mat9 Xi_;
