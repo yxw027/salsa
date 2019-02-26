@@ -28,6 +28,7 @@ public:
     rosbag::View* view_;
     string bag_filename_;
     string param_filename_;
+    string log_prefix_;
     double start_;
     double duration_;
     double end_;

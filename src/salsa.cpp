@@ -30,6 +30,17 @@ void Salsa::load(const string& filename)
   get_yaml_node("tc", filename, dt_c_);
   get_yaml_node("log_prefix", filename, log_prefix_);
   get_yaml_node("switch_weight", filename, switch_weight_);
+  get_yaml_node("acc_wander_weight", filename, acc_wander_weight_);
+  get_yaml_node("gyro_wander_weight", filename, gyro_wander_weight_);
+
+  Vector6d cov_diag;
+  cov_diag << acc_wander_weight_*acc_wander_weight_,
+              acc_wander_weight_*acc_wander_weight_,
+              acc_wander_weight_*acc_wander_weight_,
+              gyro_wander_weight_*gyro_wander_weight_,
+              gyro_wander_weight_*gyro_wander_weight_,
+              gyro_wander_weight_*gyro_wander_weight_;
+  acc_bias_xi_ = cov_diag.cwiseInverse().asDiagonal();
 
   Vector2d clk_bias_diag;
   get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
@@ -77,6 +88,7 @@ void Salsa::initFactors()
     for (int j = 0; j < N_SAT; j++)
       prange_[i].push_back(PseudorangeFunctor());
   }
+  bias_ = new ImuBiasDynamicsFunctor(imu_bias_, acc_bias_xi_);
 }
 
 void Salsa::initLog()
@@ -124,6 +136,11 @@ void Salsa::addImuFactors(ceres::Problem &problem)
                                imu_bias_.data());
     }
   }
+  bias_->setBias(imu_bias_);
+  FunctorShield<ImuBiasDynamicsFunctor>* ptr = new FunctorShield<ImuBiasDynamicsFunctor>(bias_);
+  problem.AddResidualBlock(new ImuBiasFactorAD(ptr),
+                           NULL,
+                           imu_bias_.data());
 }
 
 void Salsa::addMocapFactors(ceres::Problem &problem)
@@ -219,7 +236,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
   if (state_log_)
   {
     state_log_->log(current_t_);
-    state_log_->logVectors(current_x_.arr(), current_v_);
+    state_log_->logVectors(current_x_.arr(), current_v_, imu_bias_);
   }
 }
 

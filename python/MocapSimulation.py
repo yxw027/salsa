@@ -1,2 +1,8 @@
 from plotResults import plotResults
-plotResults("/tmp/Salsa/MocapSimulation")
+import subprocess
+
+process = subprocess.Popen(("./test_salsa", "--gtest_filter=Salsa.MocapSimulation"), cwd="../build")
+process.wait()
+
+
+plotResults("/tmp/Salsa/MocapSimulation/")

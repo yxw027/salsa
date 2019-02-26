@@ -255,7 +255,33 @@ public:
     Mat96 J_;
     Vec3 gravity_ = (Vec3() << 0, 0, 9.80665).finished();
 };
-
-
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;
+
+
+class ImuBiasDynamicsFunctor
+{
+public:
+    ImuBiasDynamicsFunctor(const Vector6d& bias_prev, const Matrix6d& xi) :
+        bias_prev_(bias_prev),
+        Xi_(xi)
+    {}
+    void setBias(const Vector6d& bias_prev)
+    {
+        bias_prev_ = bias_prev;
+    }
+
+    template <typename T>
+    bool operator() (const T* _b, T* _res) const
+    {
+        typedef Matrix<T,6,1> Vec6;
+        Map<const Vec6> b(_b);
+        Map<Vec6> res(_res);
+        res = Xi_ * (b - bias_prev_);
+        return true;
+    }
+    Vector6d bias_prev_;
+    const Matrix6d Xi_;
+};
+typedef ceres::AutoDiffCostFunction<FunctorShield<ImuBiasDynamicsFunctor>, 6, 6> ImuBiasFactorAD;
+typedef ceres::AutoDiffCostFunction<ImuBiasDynamicsFunctor, 6, 6> UnshieldedImuBiasFactorAD;

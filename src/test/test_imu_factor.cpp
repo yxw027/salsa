@@ -55,7 +55,7 @@ TEST(ImuFactor, Propagation)
     Xformd x0 = multirotor.state().X;
     Vector3d v0 = multirotor.state().v;
 
-    MTLogger log("/tmp/ImuFactor.CheckPropagation.log");
+    Logger log("/tmp/ImuFactor.CheckPropagation.log");
 
     Xformd xhat = multirotor.state().X;
     Vector3d vhat = multirotor.state().v;
@@ -115,7 +115,7 @@ TEST(ImuFactor, ErrorStateDynamics)
     std::default_random_engine gen;
     std::normal_distribution<double> normal;
 
-    MTLogger log("/tmp/ImuFactor.CheckDynamics.log");
+    Logger log("/tmp/ImuFactor.CheckDynamics.log");
 
 
     Matrix6d cov = Matrix6d::Identity() * 1e-3;
@@ -251,12 +251,15 @@ TEST(ImuFactor, MultiWindow)
 {
     Simulator multirotor(false, 2);
     multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
+    multirotor.accel_noise_stdev_ = 0;
+    multirotor.gyro_noise_stdev_ = 0;
 
     const int N = 100;
     double dt_m = 0;
     Xformd x_u2m = Xformd::Identity();
 
     Vector6d b, bhat;
+    bhat = b;
     b.block<3,1>(0,0) = multirotor.accel_bias_;
     b.block<3,1>(3,0) = multirotor.gyro_bias_;
 
@@ -279,8 +282,8 @@ TEST(ImuFactor, MultiWindow)
     }
     problem.AddParameterBlock(bhat.data(), 6);
 
-    xhat.col(0) = multirotor.dyn_.get_state().X.elements();
-    vhat.col(0) = multirotor.dyn_.get_state().v;
+    xhat.col(0) = multirotor.state().X.elements();
+    vhat.col(0) = multirotor.state().v;
     x.col(0) = xhat.col(0);
     v.col(0) = vhat.col(0);
 
@@ -308,7 +311,7 @@ TEST(ImuFactor, MultiWindow)
     double next_node = node_dt;
     Matrix6d P = Matrix6d::Identity();
     Vector6d vel;
-    vel << multirotor.dyn_.get_state().v, multirotor.dyn_.get_state().w;
+    vel << multirotor.state().v, multirotor.state().w;
 
     MocapFunctor func(dt_m, x_u2m);
     func.init(multirotor.state().X.arr_, vel, P);
@@ -325,14 +328,15 @@ TEST(ImuFactor, MultiWindow)
             node += 1;
 
             // estimate next node pose and velocity with IMU preintegration
-//            factor->estimateXj(xhat.data()+7*(node-1), vhat.data()+3*(node-1), xhat.data()+7*(node), vhat.data()+3*(node));
-            xhat.col(node) = (multirotor.dyn_.get_state().X + 1.0 * Vector6d::Random()).elements();
+            factor->estimateXj(xhat.data()+7*(node-1), vhat.data()+3*(node-1),
+                               xhat.data()+7*(node), vhat.data()+3*(node));
+//            xhat.col(node) = (multirotor.state().X + 0.5 * Vector6d::Random()).elements();
             // Calculate the Information Matrix of the IMU factor
             factor->finished();
 
             // Save off True Pose and Velocity for Comparison
-            x.col(node) = multirotor.dyn_.get_state().X.elements();
-            v.col(node) = multirotor.dyn_.get_state().v;
+            x.col(node) = multirotor.state().X.elements();
+            v.col(node) = multirotor.state().v;
 
 
             // Add IMU factor to graph

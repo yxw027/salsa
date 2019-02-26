@@ -12,4 +12,5 @@ OptType = np.dtype([('t', (np.float64, N)),
 
 StateType = np.dtype([('t', np.float64),
                       ('x', (np.float64, 7)),
-                      ('v', (np.float64, 3))])
+                      ('v', (np.float64, 3)),
+                      ('b', (np.float64, 6))])

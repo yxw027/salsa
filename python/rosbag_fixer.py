@@ -26,7 +26,7 @@ def adjustTime(inputfile, outputfile):
     print ("done")
 
 if __name__ == '__main__':
-    adjustTime("/home/superjax/rosbag/mocap_manual/MocapCalCollect3.bag",
-               "/home/superjax/rosbag/mocap_manual/MocapCalCollect3Adjust.bag")
-
+    adjustTime("/home/superjax/rosbag/MocapCalCollect2.bag",
+               "/home/superjax/rosbag/MocapCalCollect2Adjust.bag")
+Vector6d::Zero()
 

@@ -12,18 +12,18 @@ def plotResults(prefix):
     state = np.fromfile(prefix + "State.log", dtype=StateType)
     truth = np.fromfile(prefix + "Truth.log", dtype=StateType)
     opt = np.fromfile(prefix + "Opt.log", dtype=OptType)
-    imu = np.reshape(np.fromfile(prefix + "Imu.log", dtype=np.float64), (-1,7))
 
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+    pw = plotWindow()
+    
     f = plt.figure()
     plt.suptitle('Bias')
     for i in range(3):
         for j in range(2):
             plt.subplot(3,2,i*2+j+1)
-            plt.plot(np.max(opt['t'], axis=1), opt['imu_bias'][:,j*3+i])
+            plt.plot(state['t'], state['b'][:, j*3+i])
             plt.title(imu_titles[j*3+i])
-    pw = plotWindow()
     pw.addPlot("Bias", f)
 
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
@@ -67,22 +67,22 @@ def plotResults(prefix):
     pw.addPlot("Velocity", f)
 
 
-    f = plt.figure()
-    plt.suptitle('Acc')
-    for i in range(3):
-        plt.subplot(3, 1, i+1)
-        plt.title(imu_titles[i])
-        plt.plot(imu[:,0], imu[:,i+1])
-    pw.addPlot("Acc", f)
+    # f = plt.figure()
+    # plt.suptitle('Acc')
+    # for i in range(3):
+    #     plt.subplot(3, 1, i+1)
+    #     plt.title(imu_titles[i])
+    #     plt.plot(imu[:,0], imu[:,i+1])
+    # pw.addPlot("Acc", f)
 
 
-    f = plt.figure()
-    plt.suptitle('Omega')
-    for i in range(3):
-        plt.subplot(3, 1, i+1)
-        plt.title(imu_titles[i+3])
-        plt.plot(imu[:,0], imu[:,i+4])
-    pw.addPlot("Omega", f)
+    # f = plt.figure()
+    # plt.suptitle('Omega')
+    # for i in range(3):
+    #     plt.subplot(3, 1, i+1)
+    #     plt.title(imu_titles[i+3])
+    #     plt.plot(imu[:,0], imu[:,i+4])
+    # pw.addPlot("Omega", f)
 
 
 

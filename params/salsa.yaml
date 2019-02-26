@@ -19,6 +19,8 @@ accel_noise_stdev: 2.0
 gyro_noise_stdev: 0.3
 position_noise_stdev: 0.005
 attitude_noise_stdev: 0.005
+acc_wander_weight: 0.03
+gyro_wander_weight: 0.01
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]

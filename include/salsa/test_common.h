@@ -1,5 +1,9 @@
+#pragma once
 #include <gtest/gtest.h>
 #include <cmath>
+#include <string>
+#include <fstream>
+#include <yaml-cpp/yaml.h>
 
 #define DEG2RAD (M_PI / 180.0)
 #define RAD2DEG (180.0 / M_PI)
@@ -89,3 +93,23 @@ do {\
 
 
 #define EXPECT_FINITE(val) EXPECT_TRUE(std::isfinite(val))
+
+inline std::string default_params()
+{
+    std::string filename = "/tmp/Salsa.default.yaml";
+    std::ofstream tmp(filename);
+    YAML::Node node;
+    node["X_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+    node["X_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+    node["q_u2b"] = std::vector<double>{1, 0, 0, 0};
+    node["tm"] = 0.0;
+    node["tc"] = 0.0;
+    node["log_prefix"] = "/tmp/Salsa/MocapSimulation/";
+    node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
+    node["switch_weight"] = 10.0;
+    node["acc_wander_weight"] = 0.003;
+    node["gyro_wander_weight"] = 0.001;
+    tmp << node;
+    tmp.close();
+    return filename;
+}

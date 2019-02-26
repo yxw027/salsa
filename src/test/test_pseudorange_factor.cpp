@@ -272,22 +272,8 @@ TEST(Pseudorange, ImuTrajectory)
   sim.raw_gnss_enabled_ = true;
   sim.tmax_ = 10.0;
 
-  string filename = "/tmp/Salsa.tmp.yaml";
-  ofstream tmp(filename);
-  YAML::Node node;
-  node["x_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-  node["x_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-  node["x_u2b"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-  node["dt_m"] = 0.0;
-  node["dt_c"] = 0.0;
-  node["log_prefix"] = "/tmp/Salsa.Pseudorange.ImuTrajectory";
-  node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
-  node["switch_weight"] = 10.0;
-  tmp << node;
-  tmp.close();
-
   Salsa salsa;
-  salsa.init(filename);
+  salsa.init(default_params());
 
   sim.register_estimator(&salsa);
 

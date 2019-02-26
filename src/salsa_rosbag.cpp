@@ -47,6 +47,7 @@ void SalsaRosbag::displayHelp()
   cout << "-s <seconds>  start time" << endl;
   cout << "-d <seconds>  duration" << endl;
   cout << "-i <topic>    IMU Topic" << endl;
+  cout << "-p <prefix>   Log Prefix" << endl;
   exit(0);
 }
 
@@ -63,6 +64,7 @@ void SalsaRosbag::getArgs(int argc, char** argv)
   argparse.getCmdOption("-s", start_);
   argparse.getCmdOption("-d", duration_);
   argparse.getCmdOption("-i", seen_imu_topic_);
+  argparse.getCmdOption("-p", log_prefix_);
 }
 
 void SalsaRosbag::openBag()
@@ -167,8 +169,9 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     imu_count_between_nodes_ = 0;
   }
   Vector3d v = Vector3d::Zero();
+  Vector6d b = Vector6d::Zero();
   truth_log_.log(t);
-  truth_log_.logVectors(z.arr(), v);
+  truth_log_.logVectors(z.arr(), v, b);
 }
 
 int main(int argc, char** argv)

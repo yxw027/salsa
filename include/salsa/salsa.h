@@ -91,7 +91,12 @@ public:
   int current_node_;
 
   double switch_weight_;
+  double acc_wander_weight_;
+  double gyro_wander_weight_;
+  Matrix6d acc_bias_xi_;
+
   std::vector<ImuFunctor> imu_;
+  ImuBiasDynamicsFunctor* bias_;
   std::vector<ClockBiasFunctor> clk_;
   std::vector<MocapFunctor> mocap_;
   std::vector<std::vector<PseudorangeFunctor>> prange_;

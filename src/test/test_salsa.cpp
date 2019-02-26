@@ -19,22 +19,8 @@ TEST (Salsa, MocapSimulation)
   sim.raw_gnss_enabled_ = false;
   sim.tmax_ = 10.0;
 
-  string filename = "/tmp/Salsa.tmp.yaml";
-  ofstream tmp(filename);
-  YAML::Node node;
-  node["x_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-  node["x_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-  node["x_u2b"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-  node["dt_m"] = 0.0;
-  node["dt_c"] = 0.0;
-  node["log_prefix"] = "/tmp/Salsa/MocapSimulation/";
-  node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
-  node["switch_weight"] = 10.0;
-  tmp << node;
-  tmp.close();
-
   Salsa salsa;
-  salsa.init(filename);
+  salsa.init(default_params());
 
   sim.register_estimator(&salsa);
 
@@ -43,6 +29,6 @@ TEST (Salsa, MocapSimulation)
   while (sim.run())
   {
     true_state_log.log(sim.t_);
-    true_state_log.logVectors(sim.state().X.arr(), sim.state().v);
+    true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_);
   }
 }

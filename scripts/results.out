@@ -1,110 +1,0 @@
-Running main() from gtest_main.cc
-[==========] Running 7 tests from 1 test case.
-[----------] Global test environment set-up.
-[----------] 7 tests from ImuFactor
-[ RUN      ] ImuFactor.compile
-[       OK ] ImuFactor.compile (0 ms)
-[ RUN      ] ImuFactor.reset
-[       OK ] ImuFactor.reset (0 ms)
-[ RUN      ] ImuFactor.Propagation
-[       OK ] ImuFactor.Propagation (226 ms)
-[ RUN      ] ImuFactor.ErrorStateDynamics
-[       OK ] ImuFactor.ErrorStateDynamics (44 ms)
-[ RUN      ] ImuFactor.DynamicsJacobians
-[       OK ] ImuFactor.DynamicsJacobians (3 ms)
-[ RUN      ] ImuFactor.BiasJacobians
-[       OK ] ImuFactor.BiasJacobians (166 ms)
-[ RUN      ] ImuFactor.MultiWindow
-/home/superjax/work/salsa/src/test/test_imu_factor.cpp:380: Failure
-Expected: (errorf) <= (error0), actual: 1568.59 vs 228.996
-[  FAILED  ] ImuFactor.MultiWindow (362 ms)
-[----------] 7 tests from ImuFactor (801 ms total)
-
-[----------] Global test environment tear-down
-[==========] 7 tests from 1 test case ran. (801 ms total)
-[  PASSED  ] 6 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] ImuFactor.MultiWindow
-
- 1 FAILED TEST
-Running main() from gtest_main.cc
-[==========] Running 3 tests from 1 test case.
-[----------] Global test environment set-up.
-[----------] 3 tests from MTLogger
-[ RUN      ] MTLogger.SingleThread
-[       OK ] MTLogger.SingleThread (8 ms)
-[ RUN      ] MTLogger.MultiThread
-[       OK ] MTLogger.MultiThread (17 ms)
-[ RUN      ] MTLogger.Different_Types
-[       OK ] MTLogger.Different_Types (0 ms)
-[----------] 3 tests from MTLogger (25 ms total)
-
-[----------] Global test environment tear-down
-[==========] 3 tests from 1 test case ran. (25 ms total)
-[  PASSED  ] 3 tests.
-Running main() from gtest_main.cc
-[==========] Running 0 tests from 0 test cases.
-[==========] 0 tests from 0 test cases ran. (0 ms total)
-[  PASSED  ] 0 tests.
-Running main() from gtest_main.cc
-[==========] Running 0 tests from 0 test cases.
-[==========] 0 tests from 0 test cases ran. (0 ms total)
-[  PASSED  ] 0 tests.
-Running main() from gtest_main.cc
-[==========] Running 1 test from 1 test case.
-[----------] Global test environment set-up.
-[----------] 1 test from Salsa
-[ RUN      ] Salsa.PointPositioningInit
-unknown file: Failure
-C++ exception with description "Unable to load multipath_prob from tmp.params.yaml" thrown in the test body.
-[  FAILED  ] Salsa.PointPositioningInit (4 ms)
-[----------] 1 test from Salsa (4 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test case ran. (4 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] Salsa.PointPositioningInit
-
- 1 FAILED TEST
-Running main() from gtest_main.cc
-[==========] Running 4 tests from 2 test cases.
-[----------] Global test environment set-up.
-[----------] 2 tests from TestPseudorange
-[ RUN      ] TestPseudorange.CheckResidualAtInit
-[       OK ] TestPseudorange.CheckResidualAtInit (0 ms)
-[ RUN      ] TestPseudorange.CheckResidualAfterMoving
-    1.71391 -0.00123245           0
-   0.989531 -0.00194869           0
-/home/superjax/work/salsa/src/test/test_pseudorange_factor.cpp:120: Failure
-The difference between (true_res)(row, col) and (res)(row,col) is 0.72438249426023549, which exceeds (1e-4), where
-(true_res)(row, col) evaluates to 0.98953064469559604,
-(res)(row,col) evaluates to 1.7139131389558315, and
-(1e-4) evaluates to 0.0001.
-/home/superjax/work/salsa/src/test/test_pseudorange_factor.cpp:120: Failure
-The difference between (true_res)(row, col) and (res)(row,col) is 0.0007162315978741108, which exceeds (1e-4), where
-(true_res)(row, col) evaluates to -0.0019486855898771128,
-(res)(row,col) evaluates to -0.001232453992003002, and
-(1e-4) evaluates to 0.0001.
-[  FAILED  ] TestPseudorange.CheckResidualAfterMoving (1 ms)
-[----------] 2 tests from TestPseudorange (1 ms total)
-
-[----------] 2 tests from Pseudorange
-[ RUN      ] Pseudorange.TrajectoryClockDynamics
-Running main() from gtest_main.cc
-[==========] Running 1 test from 1 test case.
-[----------] Global test environment set-up.
-[----------] 1 test from Salsa
-[ RUN      ] Salsa.MocapSimulation
-  [▏                                       ]  0% [35<8:715, 3428.57it/s]   [▍                                       ]  1% [71<9:744, 3056.34it/s]   [▋                                       ]  1% [105<9:895, 3000.00it/s]   [▋                                       ]  1% [140<10:029, 2950.00it/s]   [▊                                       ]  2% [176<10:447, 2823.86it/s]   [▉                                       ]  2% [210<10:559, 2785.71it/s]   [▉                                       ]  2% [246<10:851, 2703.25it/s]   [█                                       ]  3% [282<10:908, 2680.85it/s]   [█▏                                      ]  3% [317<11:004, 2649.84it/s]   [█▎                                      ]  3% [352<11:076, 2625.00it/s]   [█▍                                      ]  3% [387<11:130, 2604.65it/s]   [█▋                                      ]  4% [423<11:197, 2581.56it/s]   [█▋                                      ]  4% [458<11:156, 2582.97it/s]   [█▊                                      ]  4% [492<11:093, 2589.43it/s]   [█▉                                      ]  5% [528<11:136, 2571.97it/s]   [█▉                                      ]  5% [564<11:169, 2556.74it/s]   [██                                      ]  5% [600<11:141, 2555.00it/s]   [██▏                                     ]  5% [637<11:181, 2538.46it/s]   [██▎                                     ]  6% [672<11:179, 2531.25it/s]   [██▋                                     ]  6% [707<11:122, 2536.07it/s]   [██▋                                     ]  6% [741<11:127, 2527.67it/s]   [██▊                                     ]  7% [778<11:124, 2520.57it/s]   [████████████████████████████████████████]  100% [793<, 37831.02it/s] 
-[       OK ] Salsa.MocapSimulation (1013 ms)
-[----------] 1 test from Salsa (1013 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test case ran. (1013 ms total)
-[  PASSED  ] 1 test.
-Running main() from gtest_main.cc
-[==========] Running 4 tests from 1 test case.
-[----------] Global test environment set-up.
-[----------] 4 tests from GpsIndexing
-[ RUN      ] GpsIndexing.CheckFirstNode
