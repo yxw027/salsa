@@ -273,7 +273,7 @@ TEST(Pseudorange, ImuTrajectory)
   sim.tmax_ = 10.0;
 
   Salsa salsa;
-  salsa.init(default_params());
+  salsa.init(default_params("/tmp/Salsa/Pseudorange/ImuTrajectory"));
 
   sim.register_estimator(&salsa);
 

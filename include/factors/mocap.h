@@ -10,33 +10,11 @@ using namespace xform;
 struct MocapFunctor
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MocapFunctor(double& dt_m, Xformd& x_u2m) :
-    dt_m_{dt_m},
-    x_u2m_{x_u2m}
-
-  {
-    active_ = false;
-
-  }
-
-  void init(const Vector7d& _xm, const Vector6d& _xmdot, const Matrix6d& _P)
-  {
-    Xi_ = _P.inverse().llt().matrixL().transpose();
-    xmdot_ = _xmdot;
-    xm_ = _xm;
-    active_ = true;
-  }
+  MocapFunctor(double& dt_m, Xformd& x_u2m);
+  void init(const Vector7d& _xm, const Vector6d& _xmdot, const Matrix6d& _P);
 
   template<typename T>
-  bool operator()(const T* _xu, T* _res) const
-  {
-    typedef Matrix<T,6,1> Vec6;
-    Map<Vec6> res(_res);
-    Xform<T> xu(_xu);
-    res = Xi_ * ((xm_ + (dt_m_ * xmdot_)) - (xu.template otimes<T,double>(x_u2m_)));
-    // res = Xi_ * (x_ - x);
-    return true;
-  }
+  bool operator()(const T* _xu, T* _res) const;
 
   bool active_;
   Xformd xm_;

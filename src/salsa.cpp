@@ -171,7 +171,8 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
                                  x_.data() + n*7,
                                  v_.data() + n*3,
                                  tau_.data() + n*2,
-                                 x_e2n_.data());
+                                 x_e2n_.data(),
+                                 s_.data() + s);
       }
     }
     if (clk_[n].active_)
@@ -357,6 +358,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
 {
   if (x_idx_ < 0 && sat.size() > 8)
   {
+    SL;
     Vector3d p_ecef = Vector3d::Zero();
     /// TODO: Velocity Least-Squares
     pointPositioning(t, z, sat, p_ecef);
@@ -372,19 +374,22 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
   }
   else
   {
+    SL;
     finishNode((t-start_time_).toSec());
 
     if (sat.size() > 8)
     {
+      SD("point positioning");
       Vector3d p_ecef = Vector3d::Zero(); /// TODO: use IMU position estimate
       /// TODO: Velocity Least-Squares
       pointPositioning(t, z, sat, p_ecef);
-//      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
-
+      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
       for (int i = 0; i < sat.size(); i++)
         prange_[x_idx_][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>(), switch_weight_);
 
-//      solve();
+      solve();
+
+      SL;
     }
   }
 }

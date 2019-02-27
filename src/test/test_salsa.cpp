@@ -20,7 +20,7 @@ TEST (Salsa, MocapSimulation)
   sim.tmax_ = 10.0;
 
   Salsa salsa;
-  salsa.init(default_params());
+  salsa.init(default_params("/tmp/Salsa/MocapSimulation/"));
 
   sim.register_estimator(&salsa);
 
@@ -31,4 +31,29 @@ TEST (Salsa, MocapSimulation)
     true_state_log.log(sim.t_);
     true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_);
   }
+}
+
+TEST (Salsa, RawGNSSSimulation)
+{
+    Simulator sim(true);
+    sim.load("../lib/multirotor_sim/params/sim_params.yaml");
+    sim.vo_enabled_ = false;
+    sim.mocap_enabled_ = false;
+    sim.alt_enabled_ = false;
+    sim.gnss_enabled_ = false;
+    sim.raw_gnss_enabled_ = true;
+    sim.tmax_ = 10.0;
+
+    Salsa salsa;
+    salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));
+
+    sim.register_estimator(&salsa);
+
+    Logger true_state_log(salsa.log_prefix_ + "Truth.log");
+
+    while (sim.run())
+    {
+        true_state_log.log(sim.t_);
+        true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_);
+    }
 }

@@ -30,14 +30,24 @@ include_directories(include
     ${EIGEN3_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIR})
 
+add_library(factors
+    src/factors/xform.cpp
+    src/factors/imu.cpp
+    src/factors/mocap.cpp
+    src/factors/pseudorange.cpp)
+target_link_libraries(factors
+    geometry
+    multirotor_sim
+    ${CERES_LIBRARIES})
+
 add_library(salsa
     src/salsa.cpp
-    src/factors/xform.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry
     pthread
     multirotor_sim
+    factors
     stdc++fs
     ${YAML_CPP_LIBRARIES}
     ${CERES_LIBRARIES})
@@ -80,13 +90,13 @@ if (${GTEST_FOUND})
     endfunction()
 
 	make_gtest(test_salsa src/test/test_salsa.cpp)
-	make_gtest(test_salsa_mocap_indexing src/test/test_salsa_mocap_indexing.cpp)
-	make_gtest(test_salsa_gps_indexing src/test/test_salsa_gps_indexing.cpp)
-	make_gtest(test_mocap_factor src/test/test_mocap_factor.cpp)
-	make_gtest(test_pseudorange_factor src/test/test_pseudorange_factor.cpp)
-	make_gtest(test_imu_factor src/test/test_imu_factor.cpp)
-	make_gtest(test_logger src/test/test_logger.cpp)
-	make_gtest(test_point_positioning src/test/test_point_positioning.cpp)
-    make_gtest(test_misc src/test/test_misc.cpp)
+#	make_gtest(test_salsa_mocap_indexing src/test/test_salsa_mocap_indexing.cpp)
+#	make_gtest(test_salsa_gps_indexing src/test/test_salsa_gps_indexing.cpp)
+#	make_gtest(test_mocap_factor src/test/test_mocap_factor.cpp)
+#	make_gtest(test_pseudorange_factor src/test/test_pseudorange_factor.cpp)
+#	make_gtest(test_imu_factor src/test/test_imu_factor.cpp)
+#	make_gtest(test_logger src/test/test_logger.cpp)
+#	make_gtest(test_point_positioning src/test/test_point_positioning.cpp)
+#    make_gtest(test_misc src/test/test_misc.cpp)
 endif()
 

@@ -2,6 +2,7 @@ import numpy as np
 from typedefs import StateType, OptType
 from plotWindow import plotWindow
 import matplotlib.pyplot as plt
+import os
 
 
 def plotResults(prefix):
@@ -9,9 +10,9 @@ def plotResults(prefix):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
 
-    state = np.fromfile(prefix + "State.log", dtype=StateType)
-    truth = np.fromfile(prefix + "Truth.log", dtype=StateType)
-    opt = np.fromfile(prefix + "Opt.log", dtype=OptType)
+    state = np.fromfile(os.path.join(prefix,"State.log"), dtype=StateType)
+    truth = np.fromfile(os.path.join(prefix,"Truth.log"), dtype=StateType)
+    opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
 
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]

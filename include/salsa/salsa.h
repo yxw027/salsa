@@ -22,6 +22,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace xform;
+using namespace multirotor_sim;
 
 #ifndef SALSA_WINDOW_SIZE
 #define SALSA_WINDOW_SIZE 10

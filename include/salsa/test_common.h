@@ -94,7 +94,7 @@ do {\
 
 #define EXPECT_FINITE(val) EXPECT_TRUE(std::isfinite(val))
 
-inline std::string default_params()
+inline std::string default_params(const std::string& prefix)
 {
     std::string filename = "/tmp/Salsa.default.yaml";
     std::ofstream tmp(filename);
@@ -104,7 +104,7 @@ inline std::string default_params()
     node["q_u2b"] = std::vector<double>{1, 0, 0, 0};
     node["tm"] = 0.0;
     node["tc"] = 0.0;
-    node["log_prefix"] = "/tmp/Salsa/MocapSimulation/";
+    node["log_prefix"] = prefix;
     node["R_clock_bias"] = std::vector<double>{1e-6, 1e-8};
     node["switch_weight"] = 10.0;
     node["acc_wander_weight"] = 0.003;
