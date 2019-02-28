@@ -98,10 +98,13 @@ void Salsa::initLog()
 
   state_log_ = new Logger(log_prefix_ + "State.log");
   opt_log_ = new Logger(log_prefix_ + "Opt.log");
+  raw_gnss_res_log_ = new Logger(log_prefix_+ "RawRes.log");
 }
 
 void Salsa::addResidualBlocks(ceres::Problem &problem)
 {
+  problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD);
+  problem.SetParameterBlockConstant(x_e2n_.data());
   for (int n = 0; n < N; n++)
   {
     if (initialized_[n])
@@ -114,6 +117,7 @@ void Salsa::addResidualBlocks(ceres::Problem &problem)
   for (int s = 0; s < N_SAT; s++)
   {
       problem.AddParameterBlock(s_.data() + s, 1);
+      problem.SetParameterBlockConstant(s_.data() + s);
   }
   problem.AddParameterBlock(imu_bias_.data(), 6);
 }
@@ -171,8 +175,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
                                  x_.data() + n*7,
                                  v_.data() + n*3,
                                  tau_.data() + n*2,
-                                 x_e2n_.data(),
-                                 s_.data() + s);
+                                 x_e2n_.data());
       }
     }
     if (clk_[n].active_)
@@ -202,28 +205,24 @@ void Salsa::solve()
 
   addResidualBlocks(problem);
   addImuFactors(problem);
-  addMocapFactors(problem);
+//  addMocapFactors(problem);
   addRawGnssFactors(problem);
 
   SD("SOLVING\n");
   ceres::Solve(options_, &problem, &summary_);
 
-  if (opt_log_)
-  {
-    opt_log_->logVectors(t_, x_, v_, tau_, imu_bias_, s_);
-  }
+  logOptimizedWindow();
+  logRawGNSSRes();
 }
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 {
+  current_t_ = t;
   if (x_idx_ < 0)
   {
-    SD("ImuCB - Waiting for Mocap\n");
     return;
   }
-  SD("ImuCb\n");
 
-  current_t_ = t;
   imu_[x_idx_].integrate(t, z, R);
   imu_[x_idx_].estimateXj(x_.data() + x_idx_*7,
                           v_.data() + x_idx_*3,
@@ -237,7 +236,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
   if (state_log_)
   {
     state_log_->log(current_t_);
-    state_log_->logVectors(current_x_.arr(), current_v_, imu_bias_);
+    state_log_->logVectors(current_x_.arr(), current_v_, imu_bias_, tau_.col(x_idx_));
   }
 }
 
@@ -246,9 +245,9 @@ void Salsa::finishNode(const double& t)
 {
   int next_x_idx = (x_idx_ + 1) % N;
 
-  imu_[x_idx_].integrate(t, imu_[x_idx_].u_, imu_[x_idx_].cov_);
+//  imu_[x_idx_].integrate(t, imu_[x_idx_].u_, imu_[x_idx_].cov_);
   imu_[x_idx_].finished();
-  clk_[x_idx_].init(t - imu_[x_idx_].t0_);
+  clk_[x_idx_].init(imu_[x_idx_].delta_t_);
 
   // Best Guess of next state
   int from_idx = x_idx_;
@@ -346,11 +345,12 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 
     finishNode(t);
 
-    x_.col(x_idx_) = z.elements();
-    Vector6d zdot = (Xformd(x_.col(x_idx_)) - Xformd(x_.col(prev_x_idx))) / (t - t_[prev_x_idx]);
-    mocap_[x_idx_].init(z.arr(), zdot, R);
+//    x_.col(x_idx_) = z.elements();
+//    Vector6d zdot = (Xformd(x_.col(x_idx_)) - Xformd(x_.col(prev_x_idx))) / (t - t_[prev_x_idx]);
+//    mocap_[x_idx_].init(z.arr(), zdot, R);
 
-    solve();
+//    solve();
+
   }
 }
 
@@ -358,39 +358,77 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
 {
   if (x_idx_ < 0 && sat.size() > 8)
   {
-    SL;
     Vector3d p_ecef = Vector3d::Zero();
     /// TODO: Velocity Least-Squares
-    pointPositioning(t, z, sat, p_ecef);
-    x_e2n_ = WSG84::x_ecef2ned(p_ecef);
-    start_time_ = t;
-    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
+//    pointPositioning(t, z, sat, p_ecef);
+//    x_e2n_ = WSG84::x_ecef2ned(p_ecef);
+    start_time_ = t - current_t_;
+    initialize(current_t_, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
 
     for (int i = 0; i < sat.size(); i++)
-      prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>(), switch_weight_);
-
-    x_idx_ = 0;
+    {
+//      prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
+    }
     return;
   }
   else
   {
-    SL;
     finishNode((t-start_time_).toSec());
 
     if (sat.size() > 8)
     {
-      SD("point positioning");
       Vector3d p_ecef = Vector3d::Zero(); /// TODO: use IMU position estimate
       /// TODO: Velocity Least-Squares
-      pointPositioning(t, z, sat, p_ecef);
-      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
-      for (int i = 0; i < sat.size(); i++)
-        prange_[x_idx_][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>(), switch_weight_);
+//      pointPositioning(t, z, sat, p_ecef);
+//      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
+      for (int s = 0; s < sat.size(); s++)
+      {
+//          prange_[x_idx_][s].init(t, z[s].topRows<2>(), sat[s], p_ecef, R[s].topLeftCorner<2,2>());
+      }
 
-      solve();
-
-      SL;
+//      solve();
     }
   }
+}
+
+void Salsa::logOptimizedWindow()
+{
+    if (opt_log_)
+    {
+      opt_log_->logVectors(t_, x_, v_, tau_, imu_bias_, s_);
+    }
+}
+
+
+void Salsa::logRawGNSSRes()
+{
+    for (int n = 0; n < N; n++)
+    {
+        raw_gnss_res_log_->log(t_[n]);
+    }
+    for (int n = 0; n < N; n++)
+    {
+        for (int s = 0; s < N_SAT; s++)
+        {
+            Vector2d res = Vector2d::Constant(NAN);
+            if (prange_[n][s].active_)
+            {
+                prange_[n][s](x_.data() + n*7, v_.data() + n*3, tau_.data() + n*2, x_e2n_.data(), res.data());
+            }
+            raw_gnss_res_log_->logVectors(res);
+        }
+    }
+    for (int n = 0; n < N; n++)
+    {
+        for (int s = 0; s < N_SAT; s++)
+        {
+            int id = -1;
+            if (prange_[n][s].active_)
+            {
+                id = s;
+            }
+            raw_gnss_res_log_->log(id);
+        }
+    }
 }
 

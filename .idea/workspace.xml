@@ -2,19 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e3f9ddaa-f3e1-4679-8a0b-6001076c707d" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/include/salsa/salsa_rosbag.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/salsa/salsa_rosbag.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/salsa/test_common.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/salsa/test_common.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python/MocapSimulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/MocapSimulation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/salsa.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/salsa.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/factors/pseudorange.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/factors/pseudorange.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/salsa/salsa.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/salsa/salsa.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/multirotor_sim" beforeDir="false" afterPath="$PROJECT_DIR$/lib/multirotor_sim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/multirotor_sim/params/sim_params.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/lib/multirotor_sim/params/sim_params.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/multirotor_sim/src/simulator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/multirotor_sim/src/simulator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python/RawGNSSSimulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/RawGNSSSimulation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/python/plotResults.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/plotResults.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python/rosbag_fixer.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/rosbag_fixer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/python/typedefs.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/typedefs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample/eph.dat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/results.out" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/run_all_tests.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/run_all_tests.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/factors/pseudorange.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/factors/pseudorange.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/salsa.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/salsa.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/salsa_rosbag.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/salsa_rosbag.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/test_imu_factor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/test_imu_factor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/test_pseudorange_factor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/test_pseudorange_factor.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/test_salsa.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/test_salsa.cpp" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -25,30 +25,20 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/salsa$rosbag_fixer.coverage" NAME="rosbag_fixer Coverage Results" MODIFIED="1550803704694" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/python" />
+    <SUITE FILE_PATH="coverage/salsa$MocapSimulation.coverage" NAME="MocapSimulation Coverage Results" MODIFIED="1551397892171" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/python" />
     <SUITE FILE_PATH="coverage/salsa$plotResults.coverage" NAME="plotResults Coverage Results" MODIFIED="1550805022771" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/python" />
+    <SUITE FILE_PATH="coverage/salsa$RawGNSSSimulation.coverage" NAME="RawGNSSSimulation Coverage Results" MODIFIED="1551397896914" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/python" />
     <SUITE FILE_PATH="coverage/salsa$MocapHardware.coverage" NAME="MocapHardware Coverage Results" MODIFIED="1551205185987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/python" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/plotResults.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="552">
-              <caret line="24" column="54" selection-start-line="24" selection-start-column="54" selection-end-line="24" selection-end-column="54" />
+            <state relative-caret-position="529">
+              <caret line="23" column="47" selection-start-line="23" selection-start-column="47" selection-end-line="23" selection-end-column="47" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/python/rosbag_fixer.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="460">
-              <caret line="20" column="58" selection-start-line="20" selection-start-column="58" selection-end-line="20" selection-end-column="58" />
-              <folding>
-                <element signature="e#0#13#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -64,10 +54,37 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/python/MocapHardware.py">
+        <entry file="file://$PROJECT_DIR$/lib/multirotor_sim/params/sim_params.yaml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="414">
-              <caret line="18" column="40" lean-forward="true" selection-start-line="18" selection-start-column="40" selection-end-line="18" selection-end-column="40" />
+            <state relative-caret-position="426">
+              <caret line="119" column="21" selection-start-line="119" selection-start-column="21" selection-end-line="119" selection-end-column="21" />
+              <caret line="120" column="20" selection-start-line="120" selection-start-column="20" selection-end-line="120" selection-end-column="20" />
+              <caret line="121" column="22" selection-start-line="121" selection-start-column="22" selection-end-line="121" selection-end-column="22" />
+              <caret line="122" column="25" selection-start-line="122" selection-start-column="25" selection-end-line="122" selection-end-column="25" />
+              <caret line="123" column="21" selection-start-line="123" selection-start-column="21" selection-end-line="123" selection-end-column="21" />
+              <caret line="124" column="18" selection-start-line="124" selection-start-column="18" selection-end-line="124" selection-end-column="18" />
+              <caret line="125" column="21" selection-start-line="125" selection-start-column="21" selection-end-line="125" selection-end-column="21" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/python/RawGNSSSimulation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="161">
+              <caret line="7" column="1" selection-start-line="7" selection-start-column="1" selection-end-line="8" selection-end-column="56" />
+              <folding>
+                <element signature="e#0#35#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/python/MocapSimulation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="115">
+              <caret line="5" selection-start-line="5" selection-end-line="5" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
               </folding>
@@ -78,8 +95,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/typedefs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="15" column="25" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="25" />
+            <state relative-caret-position="437">
+              <caret line="19" column="28" selection-start-line="19" selection-start-column="28" selection-end-line="19" selection-end-column="28" />
             </state>
           </provider>
         </entry>
@@ -100,17 +117,19 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/python/rosbag_fixer.py" />
-        <option value="$PROJECT_DIR$/python/typedefs.py" />
         <option value="$PROJECT_DIR$/params/salsa.yaml" />
+        <option value="$PROJECT_DIR$/lib/multirotor_sim/params/sim_params.yaml" />
+        <option value="$PROJECT_DIR$/python/MocapSimulation.py" />
+        <option value="$PROJECT_DIR$/python/typedefs.py" />
         <option value="$PROJECT_DIR$/python/plotResults.py" />
+        <option value="$PROJECT_DIR$/python/RawGNSSSimulation.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="970" />
-    <option name="y" value="27" />
-    <option name="width" value="950" />
-    <option name="height" value="1173" />
+    <option name="x" value="2123" />
+    <option name="width" value="940" />
+    <option name="height" value="881" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -118,7 +137,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -135,12 +153,19 @@
               <item name="salsa" type="b2602c69:ProjectViewProjectNode" />
               <item name="salsa" type="47feb1d3:ProjectViewModuleNode" />
               <item name="salsa" type="462c0819:PsiDirectoryNode" />
+              <item name="params" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="salsa" type="b2602c69:ProjectViewProjectNode" />
+              <item name="salsa" type="47feb1d3:ProjectViewModuleNode" />
+              <item name="salsa" type="462c0819:PsiDirectoryNode" />
               <item name="python" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -162,7 +187,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.MocapHardware">
+  <component name="RunManager" selected="Python.RawGNSSSimulation">
     <configuration name="MocapHardware" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="salsa" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -177,6 +202,50 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/python/MocapHardware.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="MocapSimulation" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="salsa" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/python" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/python/MocapSimulation.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="RawGNSSSimulation" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="salsa" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="/usr/bin/python2.7" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/python" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/python/RawGNSSSimulation.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -231,6 +300,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.RawGNSSSimulation" />
+        <item itemvalue="Python.MocapSimulation" />
         <item itemvalue="Python.MocapHardware" />
         <item itemvalue="Python.plotResults" />
         <item itemvalue="Python.rosbag_fixer" />
@@ -249,22 +320,25 @@
       <updated>1550800648262</updated>
       <workItem from="1550800651015" duration="5119000" />
       <workItem from="1551204149835" duration="1028000" />
+      <workItem from="1551310004579" duration="374000" />
+      <workItem from="1551310390357" duration="1296000" />
+      <workItem from="1551392328926" duration="5208000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="6147000" />
+    <option name="totallyTimeSpent" value="13025000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="-7" width="1920" height="1207" extended-state="6" />
+    <frame x="1920" y="-34" width="1920" height="1234" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.22329059" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23130342" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.32929292" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3287037" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -293,6 +367,11 @@
           <line>9</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/python/plotResults.py</url>
+          <line>22</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
@@ -307,16 +386,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/params/salsa.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="414">
-          <caret line="18" column="21" selection-start-line="18" selection-start-column="21" selection-end-line="18" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python/rosbag_fixer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="460">
+        <state relative-caret-position="391">
           <caret line="20" column="58" selection-start-line="20" selection-start-column="58" selection-end-line="20" selection-end-column="58" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
@@ -327,26 +399,66 @@
     <entry file="file://$PROJECT_DIR$/python/MocapHardware.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="414">
-          <caret line="18" column="40" lean-forward="true" selection-start-line="18" selection-start-column="40" selection-end-line="18" selection-end-column="40" />
+          <caret line="18" column="40" selection-start-line="18" selection-start-column="40" selection-end-line="18" selection-end-column="40" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/params/salsa.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="414">
+          <caret line="18" column="21" selection-start-line="18" selection-start-column="21" selection-end-line="18" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/multirotor_sim/params/sim_params.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="426">
+          <caret line="119" column="21" selection-start-line="119" selection-start-column="21" selection-end-line="119" selection-end-column="21" />
+          <caret line="120" column="20" selection-start-line="120" selection-start-column="20" selection-end-line="120" selection-end-column="20" />
+          <caret line="121" column="22" selection-start-line="121" selection-start-column="22" selection-end-line="121" selection-end-column="22" />
+          <caret line="122" column="25" selection-start-line="122" selection-start-column="25" selection-end-line="122" selection-end-column="25" />
+          <caret line="123" column="21" selection-start-line="123" selection-start-column="21" selection-end-line="123" selection-end-column="21" />
+          <caret line="124" column="18" selection-start-line="124" selection-start-column="18" selection-end-line="124" selection-end-column="18" />
+          <caret line="125" column="21" selection-start-line="125" selection-start-column="21" selection-end-line="125" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/python/typedefs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="15" column="25" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="25" />
+        <state relative-caret-position="437">
+          <caret line="19" column="28" selection-start-line="19" selection-start-column="28" selection-end-line="19" selection-end-column="28" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/python/plotResults.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="552">
-          <caret line="24" column="54" selection-start-line="24" selection-start-column="54" selection-end-line="24" selection-end-column="54" />
+        <state relative-caret-position="529">
+          <caret line="23" column="47" selection-start-line="23" selection-start-column="47" selection-end-line="23" selection-end-column="47" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/MocapSimulation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="115">
+          <caret line="5" selection-start-line="5" selection-end-line="5" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/RawGNSSSimulation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="7" column="1" selection-start-line="7" selection-start-column="1" selection-end-line="8" selection-end-column="56" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
           </folding>
         </state>
       </provider>

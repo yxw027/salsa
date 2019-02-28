@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
     <content url="file:///opt/ros/melodic/lib/python2.7/dist-packages" />
-    <orderEntry type="jdk" jdkName="Python 2.7 (salsa)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 2.7.12 (/usr/bin/python2.7)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

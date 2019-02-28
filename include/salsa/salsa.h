@@ -60,7 +60,10 @@ public:
   void initFactors();
   void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
   void initSolverOptions();
+
   void initLog();
+  void logRawGNSSRes();
+  void logOptimizedWindow();
 
   void finishNode(const double& t);
 
@@ -108,6 +111,7 @@ public:
 
   Logger* state_log_ = nullptr;
   Logger* opt_log_ = nullptr;
+  Logger* raw_gnss_res_log_ = nullptr;
 
   std::string log_prefix_;
   Xformd x_u2m_; // transform from imu to mocap frame

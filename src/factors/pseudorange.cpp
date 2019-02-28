@@ -5,10 +5,10 @@ using namespace Eigen;
 
 PseudorangeFunctor::PseudorangeFunctor()
 {
-  active_ = false;
+    active_ = false;
 }
 
-void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, const Satellite& sat, const Vector3d& _rec_pos_ecef, const Matrix2d& cov, const double& sweight)
+void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, const Satellite& sat, const Vector3d& _rec_pos_ecef, const Matrix2d& cov)
 {
     // We don't have ephemeris for this satellite, we can't do anything with it yet
     if (sat.eph_.A == 0)
@@ -36,7 +36,7 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, const Satel
 }
 
 template <typename T>
-bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk, const T* _x_e2n, const T* _s, T* _res) const
+bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk, const T* _x_e2n, T* _res) const
 {
     typedef Matrix<T,3,1> Vec3;
     typedef Matrix<T,2,1> Vec2;
@@ -47,32 +47,23 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk, con
     Map<const Vec2> clk(_clk);
     Xform<T> x_e2n(_x_e2n);
     Map<Vec2> res(_res);
-    T s = (*_s);
-    if (s > 1.0)
-        s = (T)1.0;
-    else if (s < 0.0)
-        s = (T)0.0;
 
 
     Vec3 v_ECEF = x_e2n.q().rota(x.q().rota(v_b));
     Vec3 p_ECEF = x_e2n.transforma(x.t());
     Vec3 los_to_sat = sat_pos - p_ECEF;
-    T los_dist = los_to_sat.norm();
 
     Vec2 rho_hat;
     rho_hat(0) = los_to_sat.norm() + ion_delay + (T)Satellite::C_LIGHT*(clk(0)- sat_clk_bias(0));
     rho_hat(1) = (sat_vel - v_ECEF).dot(los_to_sat.normalized()) + (T)Satellite::C_LIGHT*(clk(1) - sat_clk_bias(1));
 
-    res = s * (rho - rho_hat);
-    _res[2] = sw * (s - 1.0);
+    res = Xi_ * (rho - rho_hat);
 
     /// TODO: Check if time or rec_pos have deviated too much and re-calculate ion_delay and earth rotation effect
 
     return true;
 }
-template bool PseudorangeFunctor::operator()<double>(const double* _x, const double* _v, const double* _clk, const double* _x_e2n, const double* _s, double* _res) const;
-typedef ceres::Jet<double, 20> jactype;
-template bool PseudorangeFunctor::operator()<jactype>(const jactype* _x, const jactype* _v, const jactype* _clk, const jactype* _x_e2n, const jactype* _s, jactype* _res) const;
 
-
-typedef ceres::AutoDiffCostFunction<FunctorShield<PseudorangeFunctor>, 3, 7, 3, 2, 7, 1> PseudorangeFactorAD;
+template bool PseudorangeFunctor::operator()<double>(const double* _x, const double* _v, const double* _clk, const double* _x_e2n, double* _res) const;
+typedef ceres::Jet<double, 19> jactype;
+template bool PseudorangeFunctor::operator()<jactype>(const jactype* _x, const jactype* _v, const jactype* _clk, const jactype* _x_e2n, jactype* _res) const;

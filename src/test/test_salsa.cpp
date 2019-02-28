@@ -29,7 +29,7 @@ TEST (Salsa, MocapSimulation)
   while (sim.run())
   {
     true_state_log.log(sim.t_);
-    true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_);
+    true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});
   }
 }
 
@@ -42,7 +42,7 @@ TEST (Salsa, RawGNSSSimulation)
     sim.alt_enabled_ = false;
     sim.gnss_enabled_ = false;
     sim.raw_gnss_enabled_ = true;
-    sim.tmax_ = 10.0;
+    sim.tmax_ = 2.0;
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));
@@ -53,7 +53,8 @@ TEST (Salsa, RawGNSSSimulation)
 
     while (sim.run())
     {
+        salsa.x_e2n_ = sim.X_e2n_;
         true_state_log.log(sim.t_);
-        true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_);
+        true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});
     }
 }
