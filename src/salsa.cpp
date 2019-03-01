@@ -171,7 +171,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
       {
         FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&prange_[n][s]);
         problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
-                                 NULL,
+                                 new ceres::HuberLoss(2.0),
                                  x_.data() + n*7,
                                  v_.data() + n*3,
                                  tau_.data() + n*2,
@@ -205,10 +205,9 @@ void Salsa::solve()
 
   addResidualBlocks(problem);
   addImuFactors(problem);
-//  addMocapFactors(problem);
+  addMocapFactors(problem);
   addRawGnssFactors(problem);
 
-  SD("SOLVING\n");
   ceres::Solve(options_, &problem, &summary_);
 
   logOptimizedWindow();
@@ -245,7 +244,7 @@ void Salsa::finishNode(const double& t)
 {
   int next_x_idx = (x_idx_ + 1) % N;
 
-//  imu_[x_idx_].integrate(t, imu_[x_idx_].u_, imu_[x_idx_].cov_);
+  imu_[x_idx_].integrate(t, imu_[x_idx_].u_, imu_[x_idx_].cov_);
   imu_[x_idx_].finished();
   clk_[x_idx_].init(imu_[x_idx_].delta_t_);
 
@@ -331,7 +330,6 @@ void Salsa::pointPositioning(const GTime &t, const VecVec3 &z, std::vector<Satel
 
 void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 {
-  SD("Mocap Callback\n");
   if (x_idx_ < 0)
   {
     SD("Initialized Mocap\n");
@@ -345,11 +343,11 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 
     finishNode(t);
 
-//    x_.col(x_idx_) = z.elements();
-//    Vector6d zdot = (Xformd(x_.col(x_idx_)) - Xformd(x_.col(prev_x_idx))) / (t - t_[prev_x_idx]);
-//    mocap_[x_idx_].init(z.arr(), zdot, R);
+    x_.col(x_idx_) = z.elements();
+    Vector6d zdot = (Xformd(x_.col(x_idx_)) - Xformd(x_.col(prev_x_idx))) / (t - t_[prev_x_idx]);
+    mocap_[x_idx_].init(z.arr(), zdot, R);
 
-//    solve();
+    solve();
 
   }
 }
@@ -358,16 +356,17 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
 {
   if (x_idx_ < 0 && sat.size() > 8)
   {
+    SD("Initialized Raw GNSS\n");
     Vector3d p_ecef = Vector3d::Zero();
     /// TODO: Velocity Least-Squares
-//    pointPositioning(t, z, sat, p_ecef);
-//    x_e2n_ = WSG84::x_ecef2ned(p_ecef);
+    pointPositioning(t, z, sat, p_ecef);
+    x_e2n_ = WSG84::x_ecef2ned(p_ecef);
     start_time_ = t - current_t_;
     initialize(current_t_, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
 
     for (int i = 0; i < sat.size(); i++)
     {
-//      prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
+      prange_[0][i].init(t, z[i].topRows<2>(), sat[i], p_ecef, R[i].topLeftCorner<2,2>());
     }
     return;
   }
@@ -379,14 +378,14 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R, 
     {
       Vector3d p_ecef = Vector3d::Zero(); /// TODO: use IMU position estimate
       /// TODO: Velocity Least-Squares
-//      pointPositioning(t, z, sat, p_ecef);
-//      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
+      pointPositioning(t, z, sat, p_ecef);
+      x_.block<3,1>(0, x_idx_) = WSG84::ecef2ned(x_e2n_, p_ecef);
       for (int s = 0; s < sat.size(); s++)
       {
-//          prange_[x_idx_][s].init(t, z[s].topRows<2>(), sat[s], p_ecef, R[s].topLeftCorner<2,2>());
+          prange_[x_idx_][s].init(t, z[s].topRows<2>(), sat[s], p_ecef, R[s].topLeftCorner<2,2>());
       }
 
-//      solve();
+      solve();
     }
   }
 }

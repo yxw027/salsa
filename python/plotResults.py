@@ -26,6 +26,26 @@ def plotClockBias(state, truth, opt):
             plt.legend()
     return f
 
+def plotImuBias(state, truth, opt):
+    f = plt.figure()
+    plt.suptitle('Bias')
+    imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
+                  r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+    for i in range(3):
+        for j in range(2):
+            plt.subplot(3, 2, i * 2 + j + 1)
+            plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
+            plt.plot(state['t'], state['b'][:, j * 3 + i], label=r'\hat{x}')
+            plt.title(imu_titles[j * 3 + i])
+        if i == 0:
+            plt.legend()
+    return f
+
+
+def fixQuat(x):
+    x['x'][:,3:] *= np.sign(x['x'][:,3,None])
+    return x
+
 
 
 def plotResults(prefix):
@@ -33,8 +53,8 @@ def plotResults(prefix):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
 
-    state = np.fromfile(os.path.join(prefix,"State.log"), dtype=StateType)
-    truth = np.fromfile(os.path.join(prefix,"Truth.log"), dtype=StateType)
+    state = fixQuat(np.fromfile(os.path.join(prefix,"State.log"), dtype=StateType))
+    truth = fixQuat(np.fromfile(os.path.join(prefix,"Truth.log"), dtype=StateType))
     opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
     rawGPSRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=RawGNSSResType)
 
@@ -82,16 +102,9 @@ def plotResults(prefix):
             plt.legend()
     pw.addPlot("Velocity", f)
 
-    f = plt.figure()    
-    plt.suptitle('Bias')
-    for i in range(3):
-        for j in range(2):
-            plt.subplot(3,2,i*2+j+1)
-            plt.plot(state['t'], state['b'][:, j*3+i])
-            plt.title(imu_titles[j*3+i])
-    pw.addPlot("Bias", f)
 
 
+    pw.addPlot("IMU Bias", plotImuBias(state, truth, opt))
     pw.addPlot("Clock Bias", plotClockBias(state, truth, opt))
 
     f = plotRawRes(rawGPSRes)

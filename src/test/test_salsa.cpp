@@ -7,7 +7,6 @@
 #include "salsa/salsa.h"
 #include "salsa/test_common.h"
 
-
 TEST (Salsa, MocapSimulation)
 {
   Simulator sim(true);
@@ -42,7 +41,6 @@ TEST (Salsa, RawGNSSSimulation)
     sim.alt_enabled_ = false;
     sim.gnss_enabled_ = false;
     sim.raw_gnss_enabled_ = true;
-    sim.tmax_ = 2.0;
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));

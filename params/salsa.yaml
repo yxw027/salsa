@@ -15,12 +15,12 @@ log_prefix: "/tmp/Salsa/"
 R_clock_bias: [1e-6, 1e-7]
 switch_weight: 1000.0
 
-accel_noise_stdev: 2.0
+accel_noise_stdev:  0.2
 gyro_noise_stdev: 0.3
 position_noise_stdev: 0.005
 attitude_noise_stdev: 0.005
-acc_wander_weight: 0.03
-gyro_wander_weight: 0.01
+acc_wander_weight: 0.2
+gyro_wander_weight: 0.1
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
