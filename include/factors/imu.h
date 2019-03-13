@@ -22,8 +22,8 @@ public:
     void errorStateDynamics(const Vector10d& y, const Vector9d& dy,
                             const Vector6d& u, const Vector6d& eta, Vector9d& dydot);
     void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot, Matrix9d& A, Matrix96&B);
-    void boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp);
-    void boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d);
+    static void boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp);
+    static void boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d);
     void integrate(const double& _t, const Vector6d& u, const Matrix6d& cov);
     void estimateXj(const double* _xi, const double* _vi, double* _xj, double* _vj) const;
     void finished(int to_idx);

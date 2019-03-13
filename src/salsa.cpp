@@ -32,6 +32,7 @@ void Salsa::load(const string& filename)
   get_yaml_eigen("X_u2c", filename, x_u2b_.arr());
   get_yaml_node("tm", filename, dt_m_);
   get_yaml_node("tc", filename, dt_c_);
+  get_yaml_node("N", filename, N_);
   get_yaml_node("log_prefix", filename, log_prefix_);
   get_yaml_node("switch_weight", filename, switch_weight_);
   get_yaml_node("acc_wander_weight", filename, acc_wander_weight_);
@@ -277,10 +278,10 @@ void Salsa::finishNode(const double& t, bool new_keyframe)
 
 void Salsa::cleanUpSlidingWindow()
 {
-    if (current_kf_ <= N)
+    if (current_kf_ <= N_)
         return;
 
-    int oldest_desired_kf = current_kf_ - N;
+    int oldest_desired_kf = current_kf_ - N_;
     while (xbuf_[xbuf_tail_].kf != oldest_desired_kf)
     {
         SALSA_ASSERT(xbuf_tail_ != xbuf_head_, "Cleaned up too much!");

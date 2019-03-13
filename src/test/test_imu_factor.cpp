@@ -27,35 +27,26 @@ using namespace multirotor_sim;
 
 TEST(ImuFactor, compile)
 {
-    ImuFunctor imu;
-}
-
-TEST(ImuFactor, reset)
-{
-    ImuFunctor imu;
-    Vector6d b0;
-    b0 << 0, 1, 2, 3, 4, 5;
-    imu.reset(0, b0);
+    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
 }
 
 TEST(ImuFactor, Propagation)
 {
     Simulator multirotor(false, 1);
-    multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
+    multirotor.load(imu_only());
 
 
     typedef ImuFunctor IMU;
-    IMU imu;
     Vector6d b0;
     b0.setZero();
     Matrix6d cov = Matrix6d::Identity() * 1e-3;
 
     multirotor.run();
-    imu.reset(multirotor.t_, b0);
+    IMU* imu = new IMU(multirotor.t_, b0, 0, 0);
     Xformd x0 = multirotor.state().X;
     Vector3d v0 = multirotor.state().v;
 
-    Logger log("/tmp/ImuFactor.CheckPropagation.log");
+    salsa::Logger log("/tmp/ImuFactor.CheckPropagation.log");
 
     Xformd xhat = multirotor.state().X;
     Vector3d vhat = multirotor.state().v;
@@ -67,31 +58,31 @@ TEST(ImuFactor, Propagation)
     multirotor.tmax_ = 10.0;
     while (multirotor.run())
     {
-        imu.integrate(multirotor.t_, multirotor.imu(), cov);
+        imu->integrate(multirotor.t_, multirotor.imu(), cov);
 
         if (std::abs(multirotor.t_ - next_reset) <= multirotor.dt_ /2.0)
         {
-            imu.reset(multirotor.t_, b0);
+            delete imu;
+            imu = new IMU(multirotor.t_, b0, 0, 0);
             x0 = multirotor.state().X;
             v0 = multirotor.state().v;
             next_reset += 1.0;
         }
 
-        imu.estimateXj(x0.data(), v0.data(), xhat.data(), vhat.data());
+        imu->estimateXj(x0.data(), v0.data(), xhat.data(), vhat.data());
         log.log(multirotor.t_);
         log.logVectors(xhat.elements(), vhat, multirotor.state().X.elements(), multirotor.state().v, multirotor.imu());
         EXPECT_MAT_NEAR(xhat.t(), multirotor.state().X.t(), 0.076);
         EXPECT_QUAT_NEAR(xhat.q(), multirotor.state().X.q(), 0.01);
         EXPECT_MAT_NEAR(vhat, multirotor.state().v, 0.05);
     }
+    delete imu;
 }
 
 
 TEST(ImuFactor, ErrorStateDynamics)
 {
     typedef ImuFunctor IMU;
-    IMU y;
-    IMU yhat;
     Vector9d dy;
     double t = 0;
     const double Tmax = 10.0;
@@ -99,8 +90,8 @@ TEST(ImuFactor, ErrorStateDynamics)
 
     Vector6d bias;
     bias.setZero();
-    y.reset(t, bias);
-    yhat.reset(t, bias);
+    IMU y(t, bias, 0, 0);
+    IMU yhat(t, bias, 0, 0);
     IMU::boxplus(y.y_, Vector9d::Constant(0.01), yhat.y_);
     IMU::boxminus(y.y_, yhat.y_, dy);
 
@@ -115,7 +106,7 @@ TEST(ImuFactor, ErrorStateDynamics)
     std::default_random_engine gen;
     std::normal_distribution<double> normal;
 
-    Logger log("/tmp/ImuFactor.CheckDynamics.log");
+    salsa::Logger log("/tmp/ImuFactor.CheckDynamics.log");
 
 
     Matrix6d cov = Matrix6d::Identity() * 1e-3;
@@ -163,23 +154,20 @@ TEST(ImuFactor, DynamicsJacobians)
         eta0.setZero();
         dy0.setZero();
 
-        ImuFunctor f;
-        f.reset(0, b0);
+        ImuFunctor f(0, b0, 0, 0);
         f.dynamics(y0, u0, ydot, A, B);
         Vector9d dy0;
 
         auto yfun = [&y0, &cov, &b0, &u0, &eta0](const Vector9d& dy)
         {
-            ImuFunctor f;
-            f.reset(0, b0);
+            ImuFunctor f(0, b0, 0, 0);
             Vector9d dydot;
             f.errorStateDynamics(y0, dy, u0, eta0, dydot);
             return dydot;
         };
         auto etafun = [&y0, &cov, &b0, &dy0, &u0](const Vector6d& eta)
         {
-            ImuFunctor f;
-            f.reset(0, b0);
+            ImuFunctor f(0, b0, 0, 0);
             Vector9d dydot;
             f.errorStateDynamics(y0, dy0, u0, eta, dydot);
             return dydot;
@@ -199,7 +187,7 @@ TEST(ImuFactor, DynamicsJacobians)
 TEST(ImuFactor, BiasJacobians)
 {
     Simulator multirotor(false, 2);
-    multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
+    multirotor.load(imu_only());
     std::vector<Vector6d,Eigen::aligned_allocator<Vector6d>> meas;
     std::vector<double> t;
     multirotor.dt_ = 0.001;
@@ -216,8 +204,7 @@ TEST(ImuFactor, BiasJacobians)
     Eigen::Matrix<double, 9, 6> J, JFD;
 
     b0.setZero();
-    ImuFunctor f;
-    f.reset(0, b0);
+    ImuFunctor f(0, b0, 0, 0);
     Vector10d y0 = f.y_;
     for (int i = 0; i < meas.size(); i++)
     {
@@ -227,8 +214,7 @@ TEST(ImuFactor, BiasJacobians)
 
     auto fun = [&cov, &meas, &t, &y0](const Vector6d& b0)
     {
-        ImuFunctor f;
-        f.reset(0, b0);
+        ImuFunctor f(0, b0, 0, 0);
         for (int i = 0; i < meas.size(); i++)
         {
             f.integrate(t[i], meas[i], cov);
@@ -247,10 +233,10 @@ TEST(ImuFactor, BiasJacobians)
     ASSERT_MAT_NEAR(J, JFD, 1e-4);
 }
 
-TEST(ImuFactor, MultiWindow)
+TEST(DISABLED_ImuFactor, MultiWindow)
 {
     Simulator multirotor(false, 2);
-    multirotor.load("../lib/multirotor_sim/params/sim_params.yaml");
+    multirotor.load(imu_only());
     multirotor.accel_noise_stdev_ = 0;
     multirotor.gyro_noise_stdev_ = 0;
 
@@ -288,8 +274,7 @@ TEST(ImuFactor, MultiWindow)
     v.col(0) = vhat.col(0);
 
     std::vector<ImuFunctor*> factors;
-    factors.push_back(new ImuFunctor(0, bhat));
-
+    factors.push_back(new ImuFunctor(0, bhat, 0, 0));
 
     int node = 0;
     ImuFunctor* factor = factors[node];
@@ -313,8 +298,7 @@ TEST(ImuFactor, MultiWindow)
     Vector6d vel;
     vel << multirotor.state().v, multirotor.state().w;
 
-    MocapFunctor func(dt_m, x_u2m);
-    func.init(multirotor.state().X.arr_, vel, P);
+    MocapFunctor func(dt_m, x_u2m, multirotor.state().X.arr_, vel, P, 0, 0, 0);
     FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&func);
     problem.AddResidualBlock(new MocapFactorAD(ptr), NULL, xhat.data());
     while (node < N)
@@ -332,7 +316,7 @@ TEST(ImuFactor, MultiWindow)
                                xhat.data()+7*(node), vhat.data()+3*(node));
 //            xhat.col(node) = (multirotor.state().X + 0.5 * Vector6d::Random()).elements();
             // Calculate the Information Matrix of the IMU factor
-            factor->finished();
+            factor->finished(node);
 
             // Save off True Pose and Velocity for Comparison
             x.col(node) = multirotor.state().X.elements();
@@ -346,12 +330,11 @@ TEST(ImuFactor, MultiWindow)
                                      bhat.data());
 
             // Start a new Factor
-            factors.push_back(new ImuFunctor(multirotor.t_, bhat));
+            factors.push_back(new ImuFunctor(multirotor.t_, bhat, 0, 0));
             factor = factors[node];
             vel << multirotor.dyn_.get_state().v, multirotor.dyn_.get_state().w;
 
-            MocapFunctor func(dt_m, x_u2m);
-            func.init(multirotor.state().X.arr_, vel, P);
+            MocapFunctor func(dt_m, x_u2m, multirotor.state().X.arr_, vel, P, 0, 0, 0);
             FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&func);
             problem.AddResidualBlock(new MocapFactorAD(ptr), NULL, xhat.data()+7*(node));
         }
@@ -363,7 +346,7 @@ TEST(ImuFactor, MultiWindow)
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = false;
     Solver::Summary summary;
-    MTLogger log("/tmp/ImuFactor.MultiWindow.log");
+    salsa::Logger log("/tmp/ImuFactor.MultiWindow.log");
 
     MatrixXd xhat0 = xhat;
     MatrixXd vhat0 = vhat;

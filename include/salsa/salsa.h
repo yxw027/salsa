@@ -57,16 +57,6 @@ class Logger;
 class Salsa : public multirotor_sim::EstimatorBase
 {
 public:
-
-  enum
-  {
-    N = SALSA_WINDOW_SIZE,
-    N_FEAT = SALSA_NUM_FEATURES,
-    N_SAT = SALSA_NUM_SATELLITES,
-
-  };
-
-
   Salsa();
 
   void init(const std::string& filename);
@@ -140,6 +130,8 @@ public:
   double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
   GTime start_time_;
   Matrix2d clk_bias_Xi_;
+
+  int N_;
 
 
 };

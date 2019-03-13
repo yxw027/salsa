@@ -11,7 +11,7 @@
 TEST (Salsa, PointPositioningInit)
 {
   Simulator sim;
-  Salsa salsa;
+  salsa::Salsa salsa;
   salsa.init("../params/salsa.yaml");
 
   std::string filename = "tmp.params.yaml";
@@ -46,7 +46,7 @@ TEST (Salsa, PointPositioningInit)
   sim.update_raw_gnss_meas();
 
   Vector3d p_ecef_true = WSG84::ned2ecef(sim.X_e2n_, x.p);
-  Vector3d p_ecef_hat = WSG84::ned2ecef(salsa.x_e2n_, salsa.x_.col(0).topRows<3>());
+  Vector3d p_ecef_hat = WSG84::ned2ecef(salsa.x_e2n_, salsa.xbuf_[0].x.t());
 
   EXPECT_NEAR(p_ecef_hat.x(), p_ecef_true.x(), 1e-5);
   EXPECT_NEAR(p_ecef_hat.y(), p_ecef_true.y(), 1e-5);

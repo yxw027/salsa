@@ -98,11 +98,10 @@ inline std::string default_params(const std::string& prefix)
 {
     std::string filename = "/tmp/Salsa.default.yaml";
     std::ofstream tmp(filename);
-    YAML::Node node = YAML::LoadFile("../params/salsa.yaml");
+    YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/salsa.yaml");
     node["X_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["X_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["q_u2b"] = std::vector<double>{1, 0, 0, 0};
-    node["anchor_xi"] = std::vector<double>{1000, 1000, 1000, 300, 300, 300, 500, 500, 500, 300, 300};
     node["tm"] = 0.0;
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;
@@ -110,3 +109,42 @@ inline std::string default_params(const std::string& prefix)
     tmp.close();
     return filename;
 }
+
+inline std::string imu_only()
+{
+    std::string filename = "/tmp/Salsa.imu_only.yaml";
+    std::ofstream tmp(filename);
+    YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+    node["imu_enabled"] =  true;
+    node["alt_enabled"] =  false;
+    node["baro_enabled"] =  false;
+    node["mocap_enabled"] =  false;
+    node["vo_enabled"] =  false;
+    node["camera_enabled"] =  false;
+    node["gnss_enabled"] =  false;
+    node["raw_gnss_enabled"] =  false;
+
+    tmp << node;
+    tmp.close();
+    return filename;
+}
+
+inline std::string imu_mocap()
+{
+  std::string filename = "/tmp/Salsa.imu_only.yaml";
+  std::ofstream tmp(filename);
+  YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+  node["imu_enabled"] =  true;
+  node["alt_enabled"] =  false;
+  node["baro_enabled"] =  false;
+  node["mocap_enabled"] =  true;
+  node["vo_enabled"] =  false;
+  node["camera_enabled"] =  false;
+  node["gnss_enabled"] =  false;
+  node["raw_gnss_enabled"] =  false;
+
+  tmp << node;
+  tmp.close();
+  return filename;
+}
+

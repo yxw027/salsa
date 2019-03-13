@@ -11,7 +11,7 @@ using namespace std;
 TEST (MTLogger, SingleThread)
 {
   std::string filename = "/tmp/Logger.dat";
-  MTLogger log(filename);
+  salsa::MTLogger log(filename);
   const int N = 256;
 
   MatrixXd data1(N, N), data2(N, N), data3(N, N), data4(N,N), data5(N,N);
@@ -68,7 +68,7 @@ TEST (MTLogger, SingleThread)
 TEST (MTLogger, MultiThread)
 {
   std::string filename = "/tmp/Logger.dat";
-  MTLogger log(filename);
+  salsa::MTLogger log(filename);
   const int N = 256;
 
   MatrixXd data1(N, N), data2(N, N), data3(N, N), data4(N,N), data5(N,N);
@@ -110,7 +110,7 @@ TEST (MTLogger, MultiThread)
 TEST (MTLogger, Different_Types)
 {
     std::string filename = "/tmp/Logger.dat";
-    MTLogger log(filename);
+    salsa::MTLogger log(filename);
 
     int a = 7;
     double b = 28.02;
