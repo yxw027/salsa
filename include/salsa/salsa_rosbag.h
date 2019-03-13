@@ -10,6 +10,8 @@
 #include "salsa/salsa.h"
 #include "multirotor_sim/utils.h"
 
+using namespace salsa;
+
 class SalsaRosbag
 {
 public:

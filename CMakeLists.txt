@@ -34,6 +34,8 @@ add_library(factors
     src/factors/xform.cpp
     src/factors/imu.cpp
     src/factors/mocap.cpp
+    src/factors/feat.cpp
+    src/factors/anchor.cpp
     src/factors/pseudorange.cpp)
 target_link_libraries(factors
     geometry

@@ -16,6 +16,9 @@
 using namespace std;
 using namespace Eigen;
 
+namespace salsa
+{
+
 class Logger
 {
 public:
@@ -206,5 +209,6 @@ public:
   int buf_free_;
   thread* write_thread;
 };
+}
 
 

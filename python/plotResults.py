@@ -72,7 +72,7 @@ def plotResults(prefix):
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x'][:,i], label='x')
-        plt.plot(state['t'], state['x'][:,i], label=r'\hat{x}')
+        plt.plot(state['t'], state['x'][:,i], label=r'$\hat{x}$')
         # plt.plot(state[:,0], state[:,i], label=r'\hat{x}')
         if i == 0:
             plt.legend()

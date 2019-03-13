@@ -14,36 +14,23 @@ using namespace xform;
 class ImuFunctor
 {
 public:
-    enum
-    {
-        NRES = 9
-    };
-    typedef Quat<double> QuatT;
-    typedef Xform<double> XformT;
-    typedef Matrix<double, 3, 1> Vec3;
-    typedef Matrix<double, 6, 1> Vec6;
-    typedef Matrix<double, 9, 1> Vec9;
-    typedef Matrix<double, 10, 1> Vec10;
-
-    typedef Matrix<double, 6, 6> Mat6;
-    typedef Matrix<double, 9, 9> Mat9;
-    typedef Matrix<double, 9, 6> Mat96;
+    typedef Matrix<double, 9, 6> Matrix96;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    ImuFunctor();
-    ImuFunctor(const double& _t0, const Vec6& b0);
+    ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node);
 
-    void reset(const double& _t0, const Vec6& b0, int from_idx=-1);
-    void errorStateDynamics(const Vec10& y, const Vec9& dy, const Vec6& u, const Vec6& eta, Vec9& dydot);
-    void dynamics(const Vec10& y, const Vec6& u, Vec9& ydot, Mat9& A, Mat96&B);
-    void boxplus(const Vec10& y, const Vec9& dy, Vec10& yp);
-    void boxminus(const Vec10& y1, const Vec10& y2, Vec9& d);
-    void integrate(const double& _t, const Vec6& u, const Mat6& cov);
+    void errorStateDynamics(const Vector10d& y, const Vector9d& dy,
+                            const Vector6d& u, const Vector6d& eta, Vector9d& dydot);
+    void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot, Matrix9d& A, Matrix96&B);
+    void boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp);
+    void boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d);
+    void integrate(const double& _t, const Vector6d& u, const Matrix6d& cov);
     void estimateXj(const double* _xi, const double* _vi, double* _xj, double* _vj) const;
-    void finished();
+    void finished(int to_idx);
 
     template<typename T>
-    bool operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj, const T* _b, T* residuals) const;
+    bool operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj,
+                    const T* _b, T* residuals) const;
 
     enum : int
     {
@@ -65,20 +52,23 @@ public:
         Q = 6,
     };
 
-    bool active_;
+    int from_idx_;
+    int to_idx_;
+    int from_node_;
+
     double t0_;
     double delta_t_;
-    Vec6 b_;
+    Vector6d b_;
     int n_updates_;
 
-    Mat9 P_;
-    Mat9 Xi_;
-    Vec10 y_;
-    Vec6 u_;
-    Mat6 cov_;
+    Matrix9d P_;
+    Matrix9d Xi_;
+    Vector10d y_;
+    Vector6d u_;
+    Matrix6d cov_;
 
-    Mat96 J_;
-    Vec3 gravity_ = (Vec3() << 0, 0, 9.80665).finished();
+    Matrix96 J_;
+    Vector3d gravity_ = (Vector3d() << 0, 0, 9.80665).finished();
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;

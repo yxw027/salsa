@@ -102,6 +102,7 @@ inline std::string default_params(const std::string& prefix)
     node["X_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["X_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["q_u2b"] = std::vector<double>{1, 0, 0, 0};
+    node["anchor_xi"] = std::vector<double>{1000, 1000, 1000, 300, 300, 300, 500, 500, 500, 300, 300};
     node["tm"] = 0.0;
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;

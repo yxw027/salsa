@@ -10,18 +10,20 @@ using namespace xform;
 struct MocapFunctor
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MocapFunctor(double& dt_m, Xformd& x_u2m);
-  void init(const Vector7d& _xm, const Vector6d& _xmdot, const Matrix6d& _P);
+  MocapFunctor(const double &dt_m, const Xformd &x_u2m, const Vector7d& _xm,
+               const Vector6d& _xmdot, const Matrix6d& _Xi, int idx, int node, int kf);
 
   template<typename T>
   bool operator()(const T* _xu, T* _res) const;
 
-  bool active_;
+  int idx_;
+  int node_;
+  int kf_;
   Xformd xm_;
   Vector6d xmdot_;
   Matrix6d Xi_;
-  double& dt_m_;
-  Xformd& x_u2m_;
+  const double& dt_m_;
+  const Xformd& x_u2m_;
 };
 
 

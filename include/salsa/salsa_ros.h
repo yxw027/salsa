@@ -6,9 +6,11 @@
 
 #include <Eigen/Core>
 
-using namespace Eigen;
-
 #include "salsa/salsa.h"
+
+using namespace Eigen;
+using namespace salsa;
+
 
 class SalsaROS
 {

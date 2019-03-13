@@ -36,16 +36,16 @@ void SalsaROS::imuCB(const sensor_msgs::ImuConstPtr& msg)
   {
     nav_msgs::Odometry odom;
     odom.header.stamp = msg->header.stamp;
-    odom.pose.pose.position.x = salsa_.current_x_.t().x();
-    odom.pose.pose.position.y = salsa_.current_x_.t().y();
-    odom.pose.pose.position.z = salsa_.current_x_.t().z();
-    odom.pose.pose.orientation.w = salsa_.current_x_.q().w();
-    odom.pose.pose.orientation.x = salsa_.current_x_.q().x();
-    odom.pose.pose.orientation.y = salsa_.current_x_.q().y();
-    odom.pose.pose.orientation.z = salsa_.current_x_.q().z();
-    odom.twist.twist.linear.x = salsa_.current_v_.x();
-    odom.twist.twist.linear.y = salsa_.current_v_.y();
-    odom.twist.twist.linear.z = salsa_.current_v_.z();
+    odom.pose.pose.position.x = salsa_.current_state_.x.t().x();
+    odom.pose.pose.position.y = salsa_.current_state_.x.t().y();
+    odom.pose.pose.position.z = salsa_.current_state_.x.t().z();
+    odom.pose.pose.orientation.w = salsa_.current_state_.x.q().w();
+    odom.pose.pose.orientation.x = salsa_.current_state_.x.q().x();
+    odom.pose.pose.orientation.y = salsa_.current_state_.x.q().y();
+    odom.pose.pose.orientation.z = salsa_.current_state_.x.q().z();
+    odom.twist.twist.linear.x = salsa_.current_state_.v.x();
+    odom.twist.twist.linear.y = salsa_.current_state_.v.y();
+    odom.twist.twist.linear.z = salsa_.current_state_.v.z();
     odom.twist.twist.angular.x = msg->angular_velocity.x;
     odom.twist.twist.angular.y = msg->angular_velocity.y;
     odom.twist.twist.angular.z = msg->angular_velocity.z;

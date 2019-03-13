@@ -1,8 +1,11 @@
-#pragma once
+ #pragma once
 
 #include <memory>
+#include <deque>
 
 #include <Eigen/Core>
+#include <Eigen/StdVector>
+
 #include "geometry/xform.h"
 #include "multirotor_sim/estimator_base.h"
 #include "multirotor_sim/satellite.h"
@@ -16,13 +19,18 @@
 #include "factors/clock_dynamics.h"
 #include "factors/carrier_phase.h"
 #include "factors/clock_dynamics.h"
+#include "factors/anchor.h"
 
 #include "salsa/logger.h"
+#include "salsa/state.h"
 
 using namespace std;
 using namespace Eigen;
 using namespace xform;
-using namespace multirotor_sim;
+using multirotor_sim::VecMat3;
+using multirotor_sim::VecVec3;
+
+#define STATE_BUF_SIZE 50
 
 #ifndef SALSA_WINDOW_SIZE
 #define SALSA_WINDOW_SIZE 10
@@ -35,6 +43,14 @@ using namespace multirotor_sim;
 #ifndef SALSA_NUM_SATELLITES
 #define SALSA_NUM_SATELLITES 20
 #endif
+namespace salsa
+{
+
+typedef std::deque<MocapFunctor, aligned_allocator<MocapFunctor>> MocapDeque;
+typedef std::vector<PseudorangeFunctor, aligned_allocator<PseudorangeFunctor>> PseudorangeVec;
+typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
+typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
+typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
 
 class MTLogger;
 class Logger;
@@ -65,46 +81,48 @@ public:
   void logRawGNSSRes();
   void logOptimizedWindow();
 
-  void finishNode(const double& t);
+  void finishNode(const double& t, bool new_keyframe);
+  void cleanUpSlidingWindow();
 
   void solve();
-  void addResidualBlocks(ceres::Problem& problem);
+  void addParameterBlocks(ceres::Problem& problem);
   void addImuFactors(ceres::Problem& problem);
   void addMocapFactors(ceres::Problem& problem);
-  void addRawGnssFactors(ceres::Problem& problem);
+  void addOriginConstraint(ceres::Problem& problem);
+//  void addRawGnssFactors(ceres::Problem& problem);
 
   void renderGraph(const std::string& filename);
 
-  void pointPositioning(const GTime& t, const VecVec3& z, std::vector<Satellite>& sat, Vector3d &xhat) const;
+  void pointPositioning(const GTime& t, const VecVec3& z,
+                        std::vector<Satellite>& sat, Vector3d &xhat) const;
 
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
-  void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R, std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
+  void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R,
+                       std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
 
-  double current_t_;
-  Xformd current_x_;
-  Vector3d current_v_;
+  State current_state_;
 
-  bool initialized_[N];
-  Matrix<double, N, 1> t_;
-  Matrix<double, 7, N> x_; int x_idx_;
-  Matrix<double, 3, N> v_;
-  Matrix<double, 2, N> tau_;
-  Matrix<double, N_SAT, 1> s_;
+  int xbuf_head_, xbuf_tail_;
+  salsa::State xbuf_[STATE_BUF_SIZE];
+  vector<double> s_;
   Vector6d imu_bias_;
   int current_node_;
+  int oldest_node_;
+  int current_kf_;
 
   double switch_weight_;
   double acc_wander_weight_;
   double gyro_wander_weight_;
   Matrix6d acc_bias_xi_;
+  Matrix11d anchor_xi_;
 
-  std::vector<ImuFunctor> imu_;
+  ImuDeque imu_;
   ImuBiasDynamicsFunctor* bias_;
-  std::vector<ClockBiasFunctor> clk_;
-  std::vector<MocapFunctor> mocap_;
-  std::vector<std::vector<PseudorangeFunctor>> prange_;
-  std::vector<ClockBiasFunctor> clock_bias_;
+  AnchorFunctor* anchor_;
+  MocapDeque mocap_;
+  PseudorangeDeque prange_;
+  ClockBiasDeque clk_;
 
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
@@ -121,7 +139,8 @@ public:
   double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
   double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
   GTime start_time_;
-  Matrix2d clk_bias_R_;
+  Matrix2d clk_bias_Xi_;
 
 
 };
+}

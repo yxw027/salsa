@@ -3,24 +3,7 @@
 using namespace Eigen;
 using namespace xform;
 
-ImuFunctor::ImuFunctor()
-{
-    n_updates_ = 0;
-    t0_ = INFINITY;
-    delta_t_ = 0.0;
-    b_.setZero();
-    y_.setZero();
-    P_.setZero();
-    J_.setZero();
-    active_ = false;
-}
-ImuFunctor::ImuFunctor(const double& _t0, const Vec6& b0)
-{
-    reset(_t0, b0);
-}
-
-
-void ImuFunctor::reset(const double& _t0, const Vec6& b0, int from_idx)
+ImuFunctor::ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node)
 {
     delta_t_ = 0.0;
     t0_ = _t0;
@@ -32,14 +15,17 @@ void ImuFunctor::reset(const double& _t0, const Vec6& b0, int from_idx)
     P_.setZero();
     J_.setZero();
 
-    active_ = false;
+    from_idx_ = from_idx;
+    to_idx_ = -1;
+    from_node_ = from_node;
 }
 
-void ImuFunctor::errorStateDynamics(const Vec10& y, const Vec9& dy, const Vec6& u, const Vec6& eta, Vec9& dydot)
+void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, const Vector6d& u,
+                                    const Vector6d& eta, Vector9d& dydot)
 {
     auto dalpha = dy.segment<3>(ALPHA);
     auto dbeta = dy.segment<3>(BETA);
-    QuatT gamma(y.data()+GAMMA);
+    Quatd gamma(y.data()+GAMMA);
     auto a = u.segment<3>(ACC);
     auto w = u.segment<3>(OMEGA);
     auto ba = b_.segment<3>(ACC);
@@ -59,11 +45,12 @@ void ImuFunctor::errorStateDynamics(const Vec10& y, const Vec9& dy, const Vec6& 
 // A = d(dydot)/d(dy) <-- error state
 // B = d(dydot)/d(eta) <-- error state
 // Because of the error state, ydot != Ay+Bu
-void ImuFunctor::dynamics(const Vec10& y, const Vec6& u, Vec9& ydot, Mat9& A, Mat96&B)
+void ImuFunctor::dynamics(const Vector10d& y, const Vector6d& u,
+                          Vector9d& ydot, Matrix9d& A, Matrix96&B)
 {
     auto alpha = y.segment<3>(ALPHA);
     auto beta = y.segment<3>(BETA);
-    QuatT gamma(y.data()+GAMMA);
+    Quatd gamma(y.data()+GAMMA);
     auto a = u.segment<3>(ACC);
     auto w = u.segment<3>(OMEGA);
     auto ba = b_.segment<3>(ACC);
@@ -84,40 +71,40 @@ void ImuFunctor::dynamics(const Vec10& y, const Vec6& u, Vec9& ydot, Mat9& A, Ma
 }
 
 
-void ImuFunctor::boxplus(const Vec10& y, const Vec9& dy, Vec10& yp)
+void ImuFunctor::boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp)
 {
     yp.segment<3>(P) = y.segment<3>(P) + dy.segment<3>(P);
     yp.segment<3>(V) = y.segment<3>(V) + dy.segment<3>(V);
-    yp.segment<4>(Q) = (QuatT(y.segment<4>(Q)) + dy.segment<3>(Q)).elements();
+    yp.segment<4>(Q) = (Quatd(y.segment<4>(Q)) + dy.segment<3>(Q)).elements();
 }
 
 
-void ImuFunctor::boxminus(const Vec10& y1, const Vec10& y2, Vec9& d)
+void ImuFunctor::boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d)
 {
     d.segment<3>(P) = y1.segment<3>(P) - y2.segment<3>(P);
     d.segment<3>(V) = y1.segment<3>(V) - y2.segment<3>(V);
-    d.segment<3>(Q) = QuatT(y1.segment<4>(Q)) - QuatT(y2.segment<4>(Q));
+    d.segment<3>(Q) = Quatd(y1.segment<4>(Q)) - Quatd(y2.segment<4>(Q));
 }
 
 
-void ImuFunctor::integrate(const double& _t, const Vec6& u, const Mat6& cov)
+void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& cov)
 {
     SALSA_ASSERT((cov.array() == cov.array()).all(), "NaN detected in covariance on propagation");
     SALSA_ASSERT((u.array() == u.array()).all(), "NaN detected in covariance on propagation");
     n_updates_++;
     double dt = _t - (t0_ + delta_t_);
     delta_t_ = _t - t0_;
-    Vec9 ydot;
-    Mat9 A;
-    Mat96 B;
-    Vec10 yp;
+    Vector9d ydot;
+    Matrix9d A;
+    Matrix96 B;
+    Vector10d yp;
     u_ = u;
     cov_ = cov;
     dynamics(y_, u, ydot, A, B);
     boxplus(y_, ydot * dt, yp);
     y_ = yp;
 
-    A = Mat9::Identity() + A*dt + 1/2.0 * A*A*dt*dt;
+    A = Matrix9d::Identity() + A*dt + 1/2.0 * A*A*dt*dt;
     B = B*dt;
 
     auto P_prev = P_;
@@ -133,11 +120,11 @@ void ImuFunctor::estimateXj(const double* _xi, const double* _vi, double* _xj, d
 {
     auto alpha = y_.segment<3>(ALPHA);
     auto beta = y_.segment<3>(BETA);
-    QuatT gamma(y_.data()+GAMMA);
-    XformT xi(_xi);
-    XformT xj(_xj);
-    Map<const Vec3> vi(_vi);
-    Map<Vec3> vj(_vj);
+    Quatd gamma(y_.data()+GAMMA);
+    Xformd xi(_xi);
+    Xformd xj(_xj);
+    Map<const Vector3d> vi(_vi);
+    Map<Vector3d> vj(_vj);
 
     xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
     vj = gamma.rotp(vi + xi.q_.rotp(gravity_)*delta_t_ + beta);
@@ -145,19 +132,20 @@ void ImuFunctor::estimateXj(const double* _xi, const double* _vi, double* _xj, d
 }
 
 
-void ImuFunctor::finished()
+void ImuFunctor::finished(int to_idx)
 {
-  active_ = true;
+  to_idx_ = to_idx;
   if (n_updates_ < 2)
   {
-    P_ = P_ + Mat9::Identity() * 1e-10;
+    P_ = P_ + Matrix9d::Identity() * 1e-10;
   }
   Xi_ = P_.inverse().llt().matrixL().transpose();
   SALSA_ASSERT((Xi_.array() == Xi_.array()).all(), "NaN detected in IMU information matrix");
 }
 
 template<typename T>
-bool ImuFunctor::operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj, const T* _b, T* residuals) const
+bool ImuFunctor::operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj,
+                            const T* _b, T* residuals) const
 {
     typedef Matrix<T,3,1> VecT3;
     typedef Matrix<T,6,1> VecT6;
@@ -176,8 +164,8 @@ bool ImuFunctor::operator()(const T* _xi, const T* _xj, const T* _vi, const T* _
     Quat<T> q_dy;
     q_dy.arr_(0) = (T)1.0;
     q_dy.arr_.template segment<3>(1) = 0.5 * dy.template segment<3>(GAMMA);
-    y.template segment<4>(6) = (QuatT(y_.template segment<4>(6)).otimes<T,T>(q_dy)).elements();
-//        y.template segment<4>(6) = (QuatT(y_.template segment<4>(6)).otimes<T,T>(Quat<T>::exp(dy.template segment<3>(6)))).elements();
+    y.template segment<4>(6) = (Quatd(y_.template segment<4>(6)).otimes<T,T>(q_dy)).elements();
+//        y.template segment<4>(6) = (Quatd(y_.template segment<4>(6)).otimes<T,T>(Quat<T>::exp(dy.template segment<3>(6)))).elements();
 
     Map<VecT3> alpha(y.data()+ALPHA);
     Map<VecT3> beta(y.data()+BETA);

@@ -7,6 +7,8 @@
 #include "salsa/salsa.h"
 #include "salsa/test_common.h"
 
+using namespace salsa;
+
 TEST (Salsa, MocapSimulation)
 {
   Simulator sim(true);
@@ -28,7 +30,8 @@ TEST (Salsa, MocapSimulation)
   while (sim.run())
   {
     true_state_log.log(sim.t_);
-    true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});
+    true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,
+                              sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});
   }
 }
 
@@ -53,6 +56,7 @@ TEST (Salsa, RawGNSSSimulation)
     {
         salsa.x_e2n_ = sim.X_e2n_;
         true_state_log.log(sim.t_);
-        true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_, sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});
+        true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,
+                                  sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});
     }
 }
