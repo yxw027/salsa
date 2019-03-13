@@ -1,4 +1,4 @@
-#include "salsa/salsa_rosbag.h"
+  #include "salsa/salsa_rosbag.h"
 
 using namespace std;
 
@@ -168,10 +168,12 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     salsa_.mocapCallback(t, z, mocap_R_);
     imu_count_between_nodes_ = 0;
   }
-  Vector3d v = Vector3d::Zero();
-  Vector6d b = Vector6d::Zero();
+
+  Vector3d v = Vector3d::Ones() * NAN;
+  Vector6d b = Vector6d::Ones() * NAN;
+  Vector2d tau = Vector2d::Ones() * NAN;
   truth_log_.log(t);
-  truth_log_.logVectors(z.arr(), v, b);
+  truth_log_.logVectors(z.arr(), v, b, tau);
 }
 
 int main(int argc, char** argv)
