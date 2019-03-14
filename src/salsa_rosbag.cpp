@@ -84,7 +84,8 @@ void SalsaRosbag::openBag()
 double SalsaRosbag::getEndTime()
 {
   end_ = start_ + duration_;
-  end_ = (end_ < view_->getEndTime().toSec() - view_->getBeginTime().toSec()) ? end_ : view_->getEndTime().toSec() - view_->getBeginTime().toSec();
+  end_ = (end_ < view_->getEndTime().toSec() - view_->getBeginTime().toSec())
+          ? end_ : view_->getEndTime().toSec() - view_->getBeginTime().toSec();
   cout << "Playing bag from: = " << start_ << "s to: " << end_ << "s" << endl;
   return end_;
 }
