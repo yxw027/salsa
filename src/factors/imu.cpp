@@ -23,7 +23,7 @@ ImuFunctor::ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int 
 void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, const Vector6d& u,
                                     const Vector6d& eta, Vector9d& dydot)
 {
-    auto dalpha = dy.segment<3>(ALPHA);
+//    auto dalpha = dy.segment<3>(ALPHA);
     auto dbeta = dy.segment<3>(BETA);
     Quatd gamma(y.data()+GAMMA);
     auto a = u.segment<3>(ACC);
@@ -36,7 +36,7 @@ void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, cons
     auto eta_w = eta.segment<3>(OMEGA);
 
     dydot.segment<3>(ALPHA) = dbeta;
-    dydot.segment<3>(BETA) = -gamma.rota(skew(a - ba)*dgamma) - gamma.rota(eta_a);
+    dydot.segment<3>(BETA) = -gamma.rota(skew(a - ba)*dgamma + eta_a);
     dydot.segment<3>(GAMMA) = -skew(w - bw)*dgamma - eta_w;
 }
 
@@ -63,7 +63,7 @@ void ImuFunctor::dynamics(const Vector10d& y, const Vector6d& u,
     A.setZero();
     A.block<3,3>(ALPHA, BETA) = I_3x3;
     A.block<3,3>(BETA, GAMMA) = -gamma.R().transpose() * skew(a - ba);
-    A.block<3,3>(GAMMA, GAMMA) = skew(bw-w);
+    A.block<3,3>(GAMMA, GAMMA) = -skew(w-bw);
 
     B.setZero();
     B.block<3,3>(BETA, ACC) = -gamma.R().transpose();
@@ -207,8 +207,3 @@ bool ImuBiasDynamicsFunctor::operator()(const T* _b, T* _res) const
 template bool ImuBiasDynamicsFunctor::operator ()<double>(const double* _b, double* _res) const;
 typedef ceres::Jet<double, 6> jactype2;
 template bool ImuBiasDynamicsFunctor::operator ()<jactype2>(const jactype2* _b, jactype2* _res) const;
-
-
-Vector6d bias_prev_;
-const Matrix6d Xi_;
-

@@ -8,8 +8,13 @@ PseudorangeFunctor::PseudorangeFunctor()
     active_ = false;
 }
 
-void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, const Satellite& sat, const Vector3d& _rec_pos_ecef, const Matrix2d& cov)
+void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, const Satellite& sat,
+                              const Vector3d& _rec_pos_ecef, const Matrix2d& cov,
+                              int node, int kf, int idx)
 {
+    node_ = node;
+    kf_ = kf;
+    idx_ = idx;
     // We don't have ephemeris for this satellite, we can't do anything with it yet
     if (sat.eph_.A == 0)
         return;
@@ -36,7 +41,8 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, const Satel
 }
 
 template <typename T>
-bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk, const T* _x_e2n, T* _res) const
+bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
+                                    const T* _x_e2n, T* _res) const
 {
     typedef Matrix<T,3,1> Vec3;
     typedef Matrix<T,2,1> Vec2;
@@ -55,11 +61,13 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk, con
 
     Vec2 rho_hat;
     rho_hat(0) = los_to_sat.norm() + ion_delay + (T)Satellite::C_LIGHT*(clk(0)- sat_clk_bias(0));
-    rho_hat(1) = (sat_vel - v_ECEF).dot(los_to_sat.normalized()) + (T)Satellite::C_LIGHT*(clk(1) - sat_clk_bias(1));
+    rho_hat(1) = (sat_vel - v_ECEF).dot(los_to_sat.normalized())
+                   + (T)Satellite::C_LIGHT*(clk(1) - sat_clk_bias(1));
 
     res = Xi_ * (rho - rho_hat);
 
-    /// TODO: Check if time or rec_pos have deviated too much and re-calculate ion_delay and earth rotation effect
+    /// TODO: Check if time or rec_pos have deviated too much
+    /// and re-calculate ion_delay and earth rotation effect
 
     return true;
 }

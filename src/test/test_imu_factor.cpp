@@ -229,7 +229,7 @@ TEST(ImuFactor, BiasJacobians)
     };
 
     JFD = calc_jac(fun, b0, nullptr, nullptr, bm, 1e-5);
-//    std::cout << "FD:\n" << JFD << "\nA:\n" << J <<std::endl;
+    std::cout << "FD:\n" << JFD << "\nA:\n" << J <<std::endl;
     ASSERT_MAT_NEAR(J, JFD, 1e-4);
 }
 

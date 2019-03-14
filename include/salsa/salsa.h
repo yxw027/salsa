@@ -46,6 +46,7 @@ using multirotor_sim::VecVec3;
 namespace salsa
 {
 
+typedef Matrix<double, 11, 1> Vector11d;
 typedef std::deque<MocapFunctor, aligned_allocator<MocapFunctor>> MocapDeque;
 typedef std::vector<PseudorangeFunctor, aligned_allocator<PseudorangeFunctor>> PseudorangeVec;
 typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
@@ -79,12 +80,12 @@ public:
   void addImuFactors(ceres::Problem& problem);
   void addMocapFactors(ceres::Problem& problem);
   void addOriginConstraint(ceres::Problem& problem);
-//  void addRawGnssFactors(ceres::Problem& problem);
+  void addRawGnssFactors(ceres::Problem& problem);
 
   void renderGraph(const std::string& filename);
 
   void pointPositioning(const GTime& t, const VecVec3& z,
-                        std::vector<Satellite>& sat, Vector3d &xhat) const;
+                        std::vector<Satellite>& sat, Vector8d &xhat) const;
 
   void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;

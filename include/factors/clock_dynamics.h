@@ -11,36 +11,31 @@ class ClockBiasFunctor
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    ClockBiasFunctor(const Matrix2d& cov)
-    {
-        Xi_ = cov.inverse().llt().matrixL().transpose();
-        active_ = false;
-    }
-
-    void init(const double& dt)
-    {
-      dt_ = dt;
-      active_ = true;
-    }
+    ClockBiasFunctor(const Matrix2d& Xi, double dt, int from_idx, int from_node, int to_idx);
 
     template <typename T>
-    bool operator()(const T* _taui, const T* _tauj, T* _res) const
-    {
-        typedef Matrix<T,2,1> Vec2;
+    bool operator()(const T* _taui, const T* _tauj, T* _res) const;
 
-        Map<const Vec2> tau_i(_taui);
-        Map<const Vec2> tau_j(_tauj);
-        Map<Vec2> res(_res);
-
-        res(0) = (tau_i(0) + tau_i(1) * (T)dt_) - tau_j(0);
-        res(1) = (tau_i(1)) - tau_j(1);
-
-        res = Xi_ * res;
-        return true;
-    }
-
-    bool active_;
+    int from_node_;
+    int from_idx_;
+    int to_idx_;
     double dt_;
     Matrix2d Xi_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasFunctor>, 2, 2, 2> ClockBiasFactorAD;
+
+
+//class ClockBiasPinFunctor
+//{
+//public:
+//    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+//    ClockBiasPinFunctor(const Vector2d& tau_prev, const Matrix2d& Xi);
+//    void setTauPrev(const Vector2d& tau_prev);
+
+//    template <typename T>
+//    bool operator()(const T* _tau, T* res) const;
+
+//    Vector2d tau_prev_;
+//    Matrix2d Xi_;
+//};
+//typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasPinFunctor>, 2, 2> ClockBiasPinFunctorAD;

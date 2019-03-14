@@ -16,11 +16,17 @@ class PseudorangeFunctor
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     PseudorangeFunctor();
-    void init(const GTime& _t, const Vector2d& _rho, const Satellite& sat, const Vector3d& _rec_pos_ecef, const Matrix2d& cov);
+    void init(const GTime& _t, const Vector2d& _rho, const Satellite& sat,
+              const Vector3d& _rec_pos_ecef, const Matrix2d& cov,
+              int node, int kf, int idx);
     template <typename T>
-    bool operator()(const T* _x, const T* _v, const T* _clk, const T* _x_e2n, T* _res) const;
+    bool operator()(const T* _x, const T* _v, const T* _clk,
+                    const T* _x_e2n, T* _res) const;
 
     bool active_ = false;
+    int node_;
+    int kf_;
+    int idx_;
     GTime t;
     Vector2d rho;
     Vector3d sat_pos;

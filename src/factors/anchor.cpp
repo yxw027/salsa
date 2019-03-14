@@ -23,7 +23,7 @@ bool AnchorFunctor::operator()(const T* _x, const T* _v, const T* _tau, T* _res)
 
     res.template segment<6>(0) = x_->x.boxminus(x);
     res.template segment<3>(6) = v - x_->v;
-    res.template segment<2>(9) = tau - x_->tau;
+    res.template segment<2>(9) = 1e9*(tau - x_->tau);
 
     res = Xi_ * res;
     return true;

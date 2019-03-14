@@ -30,15 +30,11 @@ TEST (Salsa, MocapSimulation)
   }
 }
 
-TEST (DISABLED_Salsa, RawGNSSSimulation)
+TEST (Salsa, RawGNSSSimulation)
 {
     Simulator sim(true);
-    sim.load("../lib/multirotor_sim/params/sim_params.yaml");
-    sim.vo_enabled_ = false;
-    sim.mocap_enabled_ = false;
-    sim.alt_enabled_ = false;
-    sim.gnss_enabled_ = false;
-    sim.raw_gnss_enabled_ = true;
+    sim.load(imu_raw_gnss());
+    sim.tmax_ = 10;
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));

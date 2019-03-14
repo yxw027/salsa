@@ -53,7 +53,7 @@ pw.addPlot("Attitude", f)
 
 f = plt.figure()
 plt.suptitle('Input')
-labels=['a_x', 'a_y', 'a_z', r'$\omega_x$', r'$\omega_{y}$', r'$\omega_{z}$']
+labels=[r'$a_{x}$', r'$a_{y}$', r'$a_{z}$', r'$\omega_{x}$', r'$\omega_{y}$', r'$\omega_{z}$']
 for j in range(2):
     for i in range(3):
         plt.subplot(3, 2, i*2+1 + j)

@@ -36,6 +36,7 @@ add_library(factors
     src/factors/mocap.cpp
     src/factors/feat.cpp
     src/factors/anchor.cpp
+    src/factors/clock_dynamics.cpp
     src/factors/pseudorange.cpp)
 target_link_libraries(factors
     geometry
@@ -101,7 +102,7 @@ if (${GTEST_FOUND})
 #        make_gtest(test_pseudorange_factor src/test/test_pseudorange_factor.cpp)
         make_gtest(test_imu_factor src/test/test_imu_factor.cpp)
         make_gtest(test_logger src/test/test_logger.cpp)
-#        make_gtest(test_point_positioning src/test/test_point_positioning.cpp)
+        make_gtest(test_point_positioning src/test/test_point_positioning.cpp)
         make_gtest(test_misc src/test/test_misc.cpp)
 
 endif()
