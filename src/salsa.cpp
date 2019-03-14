@@ -242,7 +242,7 @@ void Salsa::finishNode(const double& t, bool new_keyframe)
     // Finish the transition factors
     imu.integrate(t, imu.u_, imu.cov_);
     imu.finished(to_idx);
-    clk_.emplace_back(clk_bias_Xi_, imu.delta_t_, current_node_, imu.from_idx_, to_idx);
+    clk_.emplace_back(clk_bias_Xi_, imu.delta_t_, imu.from_idx_, current_node_, to_idx);
 
     // Set up the next node
     xbuf_[to_idx].t = t;
@@ -436,7 +436,12 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
         {
             Vector8d pp_sol = Vector8d::Zero();
             pointPositioning(t, z, sats, pp_sol);
-            xbuf_[xbuf_head_].x.t() = WSG84::ecef2ned(x_e2n_, pp_sol.topRows<3>());
+            auto phat = pp_sol.segment<3>(0);
+            auto vhat = pp_sol.segment<3>(3);
+            auto that = pp_sol.segment<2>(6);
+            xbuf_[xbuf_head_].x.t() = WSG84::ecef2ned(x_e2n_, phat);
+            xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
+            xbuf_[xbuf_head_].tau = that;
 
             prange_.emplace_back(sats.size());
             for (int s = 0; s < sats.size(); s++)

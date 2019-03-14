@@ -17,10 +17,10 @@ switch_weight: 1000.0
 
 accel_noise_stdev:  0.2
 gyro_noise_stdev: 0.3
-position_noise_stdev: 0.005
-attitude_noise_stdev: 0.005
-acc_wander_weight: 0.01
-gyro_wander_weight: 0.005
+position_noise_stdev: 0.001
+attitude_noise_stdev: 0.001
+acc_wander_weight: 0.005
+gyro_wander_weight: 0.002
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]

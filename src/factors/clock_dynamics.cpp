@@ -8,7 +8,6 @@ ClockBiasFunctor::ClockBiasFunctor(const Matrix2d& Xi, double dt,
     dt_ = dt;
     to_idx_ = to_idx;
     from_node_ = from_node;
-    std::cout << "create clk bias from "<< from_node << " to " << to_idx << std::endl;
 }
 
 
