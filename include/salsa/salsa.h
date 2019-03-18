@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <deque>
+#include <experimental/filesystem>
 
 #include <Eigen/Core>
 #include <Eigen/StdVector>
@@ -29,6 +30,7 @@ using namespace Eigen;
 using namespace xform;
 using multirotor_sim::VecMat3;
 using multirotor_sim::VecVec3;
+using multirotor_sim::ImageFeat;
 
 #define STATE_BUF_SIZE 50
 
@@ -71,6 +73,7 @@ public:
   void initLog();
   void logRawGNSSRes();
   void logOptimizedWindow();
+  void renderGraph(const std::string& filename);
 
   void finishNode(const double& t, bool new_keyframe);
   void cleanUpSlidingWindow();
@@ -82,7 +85,6 @@ public:
   void addOriginConstraint(ceres::Problem& problem);
   void addRawGnssFactors(ceres::Problem& problem);
 
-  void renderGraph(const std::string& filename);
 
   void pointPositioning(const GTime& t, const VecVec3& z,
                         std::vector<Satellite>& sat, Vector8d &xhat) const;
@@ -91,6 +93,8 @@ public:
   void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
   void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R,
                        std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
+  void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
+                     const Matrix1d& R_depth) override;
 
   State current_state_;
 

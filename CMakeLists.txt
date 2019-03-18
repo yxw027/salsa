@@ -45,6 +45,9 @@ target_link_libraries(factors
 
 add_library(salsa
     src/salsa.cpp
+    src/salsa_mocap.cpp
+    src/salsa_gnss.cpp
+    src/salsa_vision.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry
@@ -103,6 +106,7 @@ if (${GTEST_FOUND})
         make_gtest(test_imu_factor src/test/test_imu_factor.cpp)
         make_gtest(test_logger src/test/test_logger.cpp)
         make_gtest(test_point_positioning src/test/test_point_positioning.cpp)
+        make_gtest(test_feat_factor src/test/test_feat_factor.cpp)
         make_gtest(test_misc src/test/test_misc.cpp)
 
 endif()
