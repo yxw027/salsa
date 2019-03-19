@@ -21,7 +21,7 @@ TEST (FeatFactor, InitZeroResidual)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj);
+    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj, 0, 0, 0, 0);
 
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
@@ -48,7 +48,7 @@ TEST (FeatFactor, Withc2bTransform)
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj);
+    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj, 0, 0, 0, 0);
 
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
@@ -74,7 +74,7 @@ TEST (FeatFactor, Withc2bTransformAndNoise)
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj);
+    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj, 0, 0, 0, 0);
 
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
@@ -124,7 +124,7 @@ TEST (FeatFactor, SimulatedFeatures)
         cam.invProj(z0.pixs[i], 1.0, zeta0);
         cam.invProj(z_.pixs[i], 1.0, zeta1);
 
-        FeatFunctor f(x_b2c, Matrix2d::Identity(), zeta0, zeta1);
+        FeatFunctor f(x_b2c, Matrix2d::Identity(), zeta0, zeta1, 0, 0, 0, 0);
         double rho = 1.0/z0.depths[i];
         Vector2d res;
         f(x0.data(), sim.state().X.data(), &rho, res.data());

@@ -38,4 +38,29 @@ public:
     }
 };
 
+class Features
+{
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  int id; // image label
+  double t; // time stamp of this image
+  std::vector<Vector3d, aligned_allocator<Vector3d>> zetas; // unit vectors to features
+  std::vector<double> depths; // feature distances corresponding to feature measurements
+  std::vector<int> feat_ids; // feature ids corresonding to pixel measurements
+
+  void reserve(const int& N)
+  {
+    zetas.reserve(N);
+    depths.reserve(N);
+    feat_ids.reserve(N);
+  }
+
+  void clear()
+  {
+    zetas.clear();
+    depths.clear();
+    feat_ids.clear();
+  }
+};
+
 }

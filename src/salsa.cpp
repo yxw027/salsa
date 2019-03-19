@@ -49,6 +49,13 @@ void Salsa::load(const string& filename)
     Vector2d clk_bias_diag;
     get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
     clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
+
+    get_yaml_eigen("focal_len", filename, cam_.focal_len_);
+    get_yaml_eigen("distortion", filename, cam_.distortion_);
+    get_yaml_eigen("cam_center", filename, cam_.cam_center_);
+    get_yaml_node("cam_skew", filename, cam_.s_);
+    get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
+    get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
 }
 
 void Salsa::initState()
@@ -332,6 +339,14 @@ void Salsa::logOptimizedWindow()
 
         opt_log_->logVectors(imu_bias_);
     }
+}
+
+const State& Salsa::lastKfState()
+{
+    int it = xbuf_tail_;
+    while (xbuf_[it].kf < 0)
+        it = (it - 1 + STATE_BUF_SIZE) % STATE_BUF_SIZE;
+    return xbuf_[it];
 }
 
 

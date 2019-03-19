@@ -148,11 +148,12 @@ inline std::string imu_mocap()
   return filename;
 }
 
-inline std::string imu_feat(bool noise=false)
+inline std::string imu_feat(bool noise=false, double tmax=10.0)
 {
     std::string filename = "/tmp/Salsa.imu_only.yaml";
     std::ofstream tmp(filename);
     YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+    node["tmax"] = tmax;
     node["imu_enabled"] =  true;
     node["alt_enabled"] =  false;
     node["baro_enabled"] =  false;

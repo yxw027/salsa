@@ -1,9 +1,14 @@
 #include "factors/feat.h"
 
 FeatFunctor::FeatFunctor(const Xformd& x_b2c, const Matrix2d& cov,
-                         const Vector3d &zetai, Vector3d &zetaj) :
+                         const Vector3d &zetai, const Vector3d &zetaj,
+                         int from_node, int from_idx, int from_kf, int to_idx) :
   zetai_(zetai), zetaj_(zetaj),
-  x_b2c_(x_b2c)
+  x_b2c_(x_b2c),
+  from_node_(from_node),
+  from_idx_(from_idx),
+  from_kf_(from_kf),
+  to_idx_(to_idx)
 {
   Xi_ = cov.inverse().llt().matrixL().transpose();
   Pz_.block<1,3>(0,0) = zetai_.cross(e_x).transpose();
@@ -28,9 +33,6 @@ bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho, T* _res
     Vec3 p_I2cj = (xj.q().rota(p_b2c) + xj.t());
     Vec3 p_I2l = xi.t() + (xi.q().rota(R_b2c.transpose() * zi + p_b2c));
     Vec3 zj_hat = R_b2c * xj.q().rotp(p_I2l - p_I2cj);
-//    Vec3 p_I2cj = xj.t();
-//    Vec3 p_I2l = xi.t() + xi.q().rota(zi);
-//    Vec3 zj_hat = xj.q().rotp(p_I2l - p_I2cj);
     zj_hat.normalize();
 
 

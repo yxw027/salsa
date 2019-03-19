@@ -91,6 +91,7 @@ if (${GTEST_FOUND})
         src/test/test_point_positioning.cpp
         src/test/test_feat_factor.cpp
         src/test/test_misc.cpp
+        src/test/test_vision.cpp
 #        src/test/test_salsa_mocap_indexing.cpp
 #        src/test/test_pseudorange_factor.cpp
 #        src/test/test_salsa_gps_indexing.cpp

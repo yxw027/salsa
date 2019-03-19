@@ -35,17 +35,6 @@ using multirotor_sim::ImageFeat;
 
 #define STATE_BUF_SIZE 50
 
-#ifndef SALSA_WINDOW_SIZE
-#define SALSA_WINDOW_SIZE 10
-#endif
-
-#ifndef SALSA_NUM_FEATURES
-#define SALSA_NUM_FEATURES 120
-#endif
-
-#ifndef SALSA_NUM_SATELLITES
-#define SALSA_NUM_SATELLITES 20
-#endif
 namespace salsa
 {
 
@@ -56,13 +45,19 @@ typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> Pseudorang
 typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
 typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
 typedef std::deque<FeatFunctor, aligned_allocator<FeatFunctor>> FeatDeque;
-struct pi0
+struct Feat
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    int id;
-    Vector3d pi;
+    int idx0;
+    int node0;
+    int kf0;
+    Vector3d z;
+    double rho;
+    Feat(int _idx, int _node, int _kf0, const Vector3d& _z, const double& _rho) :
+        idx0(_idx), node0(_node), kf0(_kf0), z(_z), rho(_rho){}
 };
-typedef std::deque<pi0, aligned_allocator<pi0>> Pi0Deque;
+typedef std::map<int, Feat, std::less<int>,
+                 aligned_allocator<std::pair<const int, Feat>>> FeatMap;
 
 class MTLogger;
 class Logger;
@@ -86,6 +81,8 @@ public:
 
   void finishNode(const double& t, bool new_keyframe);
   void cleanUpSlidingWindow();
+  const State& lastKfState();
+  bool calcNewKeyframeCondition(const Features& z);
 
   void solve();
   void addParameterBlocks(ceres::Problem& problem);
@@ -104,6 +101,9 @@ public:
                        std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
   void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
                      const Matrix1d& R_depth) override;
+  void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, const Matrix1d& R_depth);
+
+  bool isTrackedFeature(int id) const;
 
   State current_state_;
 
@@ -128,7 +128,7 @@ public:
   PseudorangeDeque prange_;
   ClockBiasDeque clk_;
   FeatDeque feat_;
-  Pi0Deque pi0_;
+  FeatMap xfeat_;
 
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
@@ -138,15 +138,21 @@ public:
   Logger* raw_gnss_res_log_ = nullptr;
 
   std::string log_prefix_;
+  Camera<double> cam_;
   Xformd x_u2m_; // transform from imu to mocap frame
   Xformd x_u2b_; // transform from imu to body frame
   Xformd x_u2c_; // transform from imu to camera frame
   Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
   double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
   double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
-  Camera<double> cam_;
   GTime start_time_;
   Matrix2d clk_bias_Xi_;
+
+  double kf_parallax_thresh_ = 20.0;
+  double kf_feature_thresh_ = 40;
+  Features kf_feat_;
+  int kf_Nmatch_feat_;
+  double kf_parallax_;
 
   int N_;
 

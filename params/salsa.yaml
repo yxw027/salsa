@@ -22,6 +22,13 @@ attitude_noise_stdev: 0.001
 acc_wander_weight: 0.005
 gyro_wander_weight: 0.002
 
+focal_len: [250.0, 250.0]
+cam_center: [320, 240]
+cam_skew: 0.0
+distortion: [0, 0, 0, 0, 0]
+kf_parallax_thresh: 30
+kf_feature_thresh: 50
+
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
 anchor_cov: [0.001, 0.001, 0.001, 

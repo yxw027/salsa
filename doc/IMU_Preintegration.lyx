@@ -900,5 +900,67 @@ where
 
 \end_layout
 
+\begin_layout Subsection
+Keyframe Selection
+\end_layout
+
+\begin_layout Standard
+New keyframes are selected under two conditions.
+ The first is when the average parallax exceeds some threshold.
+ The average parallax between frames 
+\begin_inset Formula $i$
+\end_inset
+
+ and 
+\begin_inset Formula $j$
+\end_inset
+
+ of 
+\begin_inset Formula $N$
+\end_inset
+
+ pixel measurements is given by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{1}{N}\sum_{n=0}^{N-1}\norm{\pi\left(R_{j}^{i}\pi^{-1}\left(\lambda_{n}^{j}\right)-\lambda_{n}^{i}\right)}_{2},
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\pi$
+\end_inset
+
+ is the camera projection function which maps pixel measurements 
+\begin_inset Formula $\lambda^{i}$
+\end_inset
+
+ into the associated unit vector 
+\begin_inset Formula $\zeta_{i/c}^{c}$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\pi\left(\lambda^{i}\right)=\zeta_{i/c}^{c}
+\]
+
+\end_inset
+
+and 
+\begin_inset Formula $R_{j}^{i}$
+\end_inset
+
+ is the rotation between frames.
+\end_layout
+
+\begin_layout Standard
+We also select keyframes when the number of tracked pixels between keyframes
+ drops below a specified value.
+\end_layout
+
 \end_body
 \end_document
