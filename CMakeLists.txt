@@ -83,31 +83,28 @@ if (${GTEST_FOUND})
     message(STATUS "GTEST_FOUND - Building salsa tests")
     add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
     add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
-    function(make_gtest test_name source_file)
-        add_executable(${test_name} ${source_file})
-        target_link_libraries(${test_name}
-            salsa
-            geometry
-            gtest
-            gtest_main
-            multirotor_sim
-            ${GTEST_LIBRARIES}
-            ${CERES_LIBRARIES}
-            )
-        cotire(${test_name})
-        add_test(NAME ${test_name} COMMAND ${test_name} --gtest_color=yes)
-    endfunction()
-
-	make_gtest(test_salsa src/test/test_salsa.cpp)
-#        make_gtest(test_salsa_mocap_indexing src/test/test_salsa_mocap_indexing.cpp)
-#        make_gtest(test_salsa_gps_indexing src/test/test_salsa_gps_indexing.cpp)
-        make_gtest(test_mocap_factor src/test/test_mocap_factor.cpp)
-#        make_gtest(test_pseudorange_factor src/test/test_pseudorange_factor.cpp)
-        make_gtest(test_imu_factor src/test/test_imu_factor.cpp)
-        make_gtest(test_logger src/test/test_logger.cpp)
-        make_gtest(test_point_positioning src/test/test_point_positioning.cpp)
-        make_gtest(test_feat_factor src/test/test_feat_factor.cpp)
-        make_gtest(test_misc src/test/test_misc.cpp)
-
+    add_executable(test_salsa
+        src/test/test_salsa.cpp
+        src/test/test_mocap_factor.cpp
+        src/test/test_imu_factor.cpp
+        src/test/test_logger.cpp
+        src/test/test_point_positioning.cpp
+        src/test/test_feat_factor.cpp
+        src/test/test_misc.cpp
+#        src/test/test_salsa_mocap_indexing.cpp
+#        src/test/test_pseudorange_factor.cpp
+#        src/test/test_salsa_gps_indexing.cpp
+     )
+     target_link_libraries(test_salsa
+         salsa
+         geometry
+         gtest
+         gtest_main
+         multirotor_sim
+         ${GTEST_LIBRARIES}
+         ${CERES_LIBRARIES}
+     )
+     cotire(test_salsa)
+     add_test(NAME test_salsa COMMAND test_salsa --gtest_color=yes)
 endif()
 

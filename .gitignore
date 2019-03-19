@@ -4,3 +4,5 @@ build/*
 *.pyc
 python/.idea/*
 .idea/*
+*.lyx#
+*.lyx~

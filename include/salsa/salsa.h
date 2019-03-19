@@ -21,6 +21,7 @@
 #include "factors/carrier_phase.h"
 #include "factors/clock_dynamics.h"
 #include "factors/anchor.h"
+#include "factors/feat.h"
 
 #include "salsa/logger.h"
 #include "salsa/state.h"
@@ -54,6 +55,14 @@ typedef std::vector<PseudorangeFunctor, aligned_allocator<PseudorangeFunctor>> P
 typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
 typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
 typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
+typedef std::deque<FeatFunctor, aligned_allocator<FeatFunctor>> FeatDeque;
+struct pi0
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    int id;
+    Vector3d pi;
+};
+typedef std::deque<pi0, aligned_allocator<pi0>> Pi0Deque;
 
 class MTLogger;
 class Logger;
@@ -118,6 +127,8 @@ public:
   MocapDeque mocap_;
   PseudorangeDeque prange_;
   ClockBiasDeque clk_;
+  FeatDeque feat_;
+  Pi0Deque pi0_;
 
   ceres::Solver::Options options_;
   ceres::Solver::Summary summary_;
@@ -133,6 +144,7 @@ public:
   Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
   double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
   double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
+  Camera<double> cam_;
   GTime start_time_;
   Matrix2d clk_bias_Xi_;
 

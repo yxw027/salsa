@@ -148,6 +148,28 @@ inline std::string imu_mocap()
   return filename;
 }
 
+inline std::string imu_feat(bool noise=false)
+{
+    std::string filename = "/tmp/Salsa.imu_only.yaml";
+    std::ofstream tmp(filename);
+    YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+    node["imu_enabled"] =  true;
+    node["alt_enabled"] =  false;
+    node["baro_enabled"] =  false;
+    node["mocap_enabled"] =  false;
+    node["vo_enabled"] =  false;
+    node["camera_enabled"] =  true;
+    node["gnss_enabled"] =  false;
+    node["raw_gnss_enabled"] =  false;
+
+    node["use_camera_truth"] = !noise;
+    node["use_depth_truth"] = !noise;
+
+    tmp << node;
+    tmp.close();
+    return filename;
+}
+
 inline std::string imu_raw_gnss()
 {
     std::string filename = "/tmp/Salsa.imu_raw_gnss.yaml";
