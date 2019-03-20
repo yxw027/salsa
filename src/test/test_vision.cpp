@@ -12,9 +12,9 @@ TEST (Vision, isTrackedFeature)
 {
     Salsa salsa;
 
-    salsa.xfeat_.insert({0, Feat(0, 0, 0, Vector3d(1, 0, 0), 1.0)});
-    salsa.xfeat_.insert({1, Feat(0, 0, 0, Vector3d(1, 0, 0), 1.0)});
-    salsa.xfeat_.insert({2, Feat(0, 0, 0, Vector3d(1, 0, 0), 1.0)});
+    salsa.xfeat_.insert({0, Feat(0, 0, Vector3d(1, 0, 0), 1.0)});
+    salsa.xfeat_.insert({1, Feat(0, 0, Vector3d(1, 0, 0), 1.0)});
+    salsa.xfeat_.insert({2, Feat(0, 0, Vector3d(1, 0, 0), 1.0)});
 
     EXPECT_TRUE(salsa.isTrackedFeature(0));
     EXPECT_TRUE(salsa.isTrackedFeature(1));
@@ -139,7 +139,6 @@ TEST (Vision, SlideAnchor)
     Feat* feat = nullptr;
     int kf = 0;
     int idx = 0;
-    int node = 0;
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
     salsa.x_u2c_.q() = sim.q_b2c_;
@@ -150,14 +149,14 @@ TEST (Vision, SlideAnchor)
     double rho[10];
 
     EstimatorWrapper est;
-    auto img_cb = [&rho, &feat, &kf, &idx, &node, &cam, &salsa, &sim, &xbuf]
+    auto img_cb = [&rho, &feat, &kf, &idx, &cam, &salsa, &sim, &xbuf]
             (const double& t, const ImageFeat& z, const Matrix2d& R_pix, const Matrix1d& R_depth)
     {
         Vector3d zeta = cam.invProj(z.pixs[0], 1.0);
         if (!feat)
-            feat = new Feat(idx, kf, node, zeta, 1.0/z.depths[0]);
+            feat = new Feat(idx, kf, zeta, 1.0/z.depths[0]);
         else
-            feat->addMeas(idx, node, salsa.x_u2c_, R_pix, zeta);
+            feat->addMeas(idx, salsa.x_u2c_, R_pix, zeta);
         xbuf[idx].x = sim.state().X;
         xbuf[idx].v = sim.state().v;
         xbuf[idx].t = sim.t_;
@@ -166,7 +165,6 @@ TEST (Vision, SlideAnchor)
         rho[idx] = 1.0/z.depths[0];
         kf += 1;
         idx += 1;
-        node += 1;
     };
     est.register_feat_cb(img_cb);
     sim.register_estimator(&est);
@@ -178,9 +176,33 @@ TEST (Vision, SlideAnchor)
 
     for (int i = 1; i < 9; i++)
     {
-        EXPECT_TRUE(feat->slideAnchor(i, i, i, xbuf, salsa.x_u2c_));
+        EXPECT_TRUE(feat->slideAnchor(i, i, xbuf, salsa.x_u2c_));
         EXPECT_NEAR(feat->rho, rho[i], 1e-3);
     }
-    EXPECT_FALSE(feat->slideAnchor(9, 9, 9, xbuf, salsa.x_u2c_));
+    EXPECT_FALSE(feat->slideAnchor(9, 9, xbuf, salsa.x_u2c_));
+}
+
+TEST (Vision, KeyframeCleanup)
+{
+    Simulator sim(false);
+    sim.load(imu_feat(false, 10.0));
+
+    Salsa salsa;
+    salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
+    salsa.x_u2c_.q() = sim.q_b2c_;
+    salsa.x_u2c_.t() = sim.p_b2c_;
+
+    sim.register_estimator(&salsa);
+
+    while (salsa.current_kf_ <= salsa.N_)
+    {
+        sim.run();
+    }
+
+    for (auto ft : salsa.xfeat_)
+    {
+        EXPECT_NE(ft.second.kf0, 0);
+    }
+
 }
 

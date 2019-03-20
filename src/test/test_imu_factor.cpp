@@ -156,7 +156,7 @@ TEST(ImuFactor, DynamicsJacobians)
 
         ImuFunctor f(0, b0, 0, 0);
         f.dynamics(y0, u0, ydot, A, B);
-        Vector9d dy0;
+        Vector9d dy0 = Vector9d::Zero();
 
         auto yfun = [&y0, &cov, &b0, &u0, &eta0](const Vector9d& dy)
         {
@@ -173,7 +173,9 @@ TEST(ImuFactor, DynamicsJacobians)
             return dydot;
         };
 
-        Matrix9d AFD = calc_jac(yfun, dy0);
+        Matrix9d AFD;
+        AFD.setZero();
+        AFD = calc_jac(yfun, dy0);
         Eigen::Matrix<double, 9, 6> BFD = calc_jac(etafun, u0);
 
 //        cout << "A\n" << A << "\nAFD\n" << AFD << "\n\n";

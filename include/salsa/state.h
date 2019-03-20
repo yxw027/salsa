@@ -66,28 +66,25 @@ struct Feat
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     int kf0;
     int idx0;
-    int node0;
     double rho;
     Vector3d z0;
     FeatDeque funcs;
 
-    Feat(int _idx, int _kf0, int _node0, const Vector3d& _z0, double _rho) :
-         kf0(_kf0), idx0(_idx), node0(_node0), z0(_z0), rho(_rho) {}
+    Feat(int _idx, int _kf0, const Vector3d& _z0, double _rho) :
+         kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho) {}
 
-    void addMeas(int to_idx, int to_node,
-                 const Xformd& x_b2c, const Matrix2d& cov, const Vector3d& zj)
+    void addMeas(int to_idx, const Xformd& x_b2c, const Matrix2d& cov, const Vector3d& zj)
     {
         funcs.emplace_back(x_b2c, cov, z0, zj, to_idx);
     }
 
-    void moveMeas(int to_idx, int to_node, const Vector3d& zj)
+    void moveMeas(int to_idx, const Vector3d& zj)
     {
         funcs.back().to_idx_ = to_idx;
-        funcs.back().to_idx_ = to_node;
         funcs.back().zetaj_ = zj;
     }
 
-    bool slideAnchor(int new_from_idx, int new_from_kf, int new_from_node,
+    bool slideAnchor(int new_from_idx, int new_from_kf,
                      const State* xbuf, const Xformd& x_b2c)
     {
         if (new_from_kf <= kf0)
@@ -105,8 +102,8 @@ struct Feat
         z0 = funcs.front().zetai_;
         idx0 = new_from_idx;
         kf0 = new_from_kf;
-        node0 = new_from_node;
         funcs.pop_front();
+        return true;
     }
 };
 

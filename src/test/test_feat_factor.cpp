@@ -79,7 +79,7 @@ TEST (FeatFactor, Withc2bTransformAndNoise)
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
     cout << res << endl;
-    EXPECT_MAT_NEAR(res, Vector2d(-0.0150401, -0.013848), 1e-4);
+    EXPECT_MAT_NEAR(res, Vector2d(-0.014743, -0.0186242), 1e-4);
 }
 
 TEST (FeatFactor, SimulatedFeatures)

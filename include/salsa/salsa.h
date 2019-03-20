@@ -70,7 +70,7 @@ public:
     void cleanUpSlidingWindow();
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);
-    void cleanUpFeatureTracking(int oldest_node, int oldest_desired_kf);
+    void cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf);
 
     void solve();
     void addParameterBlocks(ceres::Problem& problem);
