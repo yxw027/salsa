@@ -268,7 +268,7 @@ void Salsa::finishNode(const double& t, bool new_keyframe)
     }
 
     xbuf_head_ = to_idx;
-    SALSA_ASSERT(xbuf_head_ != xbuf_tail_, "Ran out of xbuf_");
+        SALSA_ASSERT(xbuf_head_ != xbuf_tail_, "Ran out of xbuf_");
 }
 
 void Salsa::cleanUpSlidingWindow()
@@ -295,6 +295,8 @@ void Salsa::cleanUpSlidingWindow()
 
     while (clk_.front().from_node_ < oldest_node_)
         clk_.pop_front();
+
+    cleanUpFeatureTracking(oldest_node_, oldest_desired_kf);
 }
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)

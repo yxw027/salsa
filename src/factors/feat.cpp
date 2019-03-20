@@ -1,14 +1,11 @@
 #include "factors/feat.h"
 
 FeatFunctor::FeatFunctor(const Xformd& x_b2c, const Matrix2d& cov,
-                         const Vector3d &zetai, const Vector3d &zetaj,
-                         int from_node, int from_idx, int from_kf, int to_idx) :
-  zetai_(zetai), zetaj_(zetaj),
-  x_b2c_(x_b2c),
-  from_node_(from_node),
-  from_idx_(from_idx),
-  from_kf_(from_kf),
-  to_idx_(to_idx)
+                         const Vector3d &zetai, const Vector3d &zetaj, int to_idx) :
+  to_idx_(to_idx),
+  zetai_(zetai),
+  zetaj_(zetaj),
+  x_b2c_(x_b2c)
 {
   Xi_ = cov.inverse().llt().matrixL().transpose();
   Pz_.block<1,3>(0,0) = zetai_.cross(e_x).transpose();

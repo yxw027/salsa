@@ -35,6 +35,7 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
 void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_pix,
                           const Matrix1d& R_depth)
 {
+    int prev_keyframe = xbuf_[xbuf_head_].kf;
     bool new_keyframe = calcNewKeyframeCondition(z);
     if (current_node_ == -1)
     {
@@ -50,14 +51,16 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
         if (isTrackedFeature(z.feat_ids[i]))
         {
             Feat& ft(xfeat_.at(z.feat_ids[i]));
-            feat_.emplace_back(FeatFunctor(x_u2c_, R_pix, ft.z, z.zetas[i],
-                                           ft.node0, ft.idx0, ft.kf0, xbuf_head_));
+            if (prev_keyframe != -1)
+                ft.addMeas(xbuf_head_, current_node_, x_u2c_, R_pix, z.zetas[i]);
+            else
+                ft.moveMeas(xbuf_head_, current_node_, z.zetas[i]);
         }
         else if (new_keyframe)
         {
             double rho0 = 1.0/2.0; /// TODO Better depth initialization
             xfeat_.insert(xfeat_.end(), {z.feat_ids[i],
-                                         Feat(xbuf_head_, current_node_, current_kf_, z.zetas[i], rho0)});
+                                         Feat(xbuf_head_, current_kf_, current_node_, z.zetas[i], rho0)});
         }
     }
 }
@@ -110,6 +113,11 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
     }
     else
         return false;
+}
+
+void Salsa::cleanUpFeatureTracking(int oldest_node, int oldest_desired_kf)
+{
+
 }
 
 

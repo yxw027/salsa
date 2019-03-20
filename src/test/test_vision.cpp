@@ -44,7 +44,7 @@ TEST (Vision, AddsNewFeatures)
         Xformd x = sim.state().X;
         double d = (sim.p_I2c_ - sim.env_.get_points()[i]).norm();
 
-        Vector3d pt_hat = x.t() + x.q().rota(sim.q_b2c_.rota(salsa.xfeat_.at(i).z * d) + sim.p_b2c_);
+        Vector3d pt_hat = x.t() + x.q().rota(sim.q_b2c_.rota(salsa.xfeat_.at(i).z0 * d) + sim.p_b2c_);
         EXPECT_MAT_NEAR(pt_hat, sim.env_.get_points()[i], 1e-8);
     }
 }
@@ -62,17 +62,26 @@ TEST (Vision, NewKFRotate)
 
     sim.register_estimator(&salsa);
 
+    salsa.imu_[0].cov_= sim.imu_R_;
     sim.t_ = 1.0;
     sim.update_camera_meas();
     EXPECT_GT(salsa.kf_feat_.zetas.size(), 50);
 
     int rot = 0;
-    while (salsa.current_kf_ == 0)
+    double t = 1.0;
+    while (salsa.current_kf_== 0)
     {
-        sim.state().X.q_ += Vector3d(0, -DEG2RAD * 5.0, 0);
-        salsa.current_state_.x = sim.state().X;
-        sim.t_ += 2;
+        Vector3d w = Vector3d(0, -DEG2RAD * 5.0, 0);
+        for (int i = 0; i < 5; i++)
+        {
+            sim.t_ += 0.02;
+            sim.state().X.q_ += w * 0.02;
+            Vector6d imu;
+            imu << sim.state().X.q_.rotp(gravity_), w;
+            salsa.imuCallback(sim.t_, imu, sim.imu_R_);
+        }
         sim.update_camera_meas();
+        salsa.current_state_.x = sim.state().X;
         EXPECT_LE(salsa.kf_parallax_, 1e-3);
         rot++;
     }
@@ -94,6 +103,7 @@ TEST (Vision, NewKFTranslate)
     salsa.x_u2c_.t() = sim.p_b2c_;
 
     sim.register_estimator(&salsa);
+    salsa.imu_[0].cov_ = sim.imu_R_;
 
     sim.t_ = 1.0;
     sim.update_camera_meas();
@@ -102,9 +112,15 @@ TEST (Vision, NewKFTranslate)
     int step = 0;
     while (salsa.current_kf_ == 0)
     {
-        sim.state().X.t_ += Vector3d(0.1, 0, 0);
+        for (int i = 0; i < 5; i++)
+        {
+            sim.t_ += 0.02;
+            sim.state().X.t_ += Vector3d(0.02, 0, 0);
+            Vector6d imu;
+            imu << gravity_, Vector3d(0,0,0);
+            salsa.imuCallback(sim.t_, imu, sim.imu_R_);
+        }
         salsa.current_state_.x = sim.state().X;
-        sim.t_ += 2;
         sim.update_camera_meas();
         step++;
     }

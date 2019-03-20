@@ -33,7 +33,7 @@ using multirotor_sim::VecMat3;
 using multirotor_sim::VecVec3;
 using multirotor_sim::ImageFeat;
 
-#define STATE_BUF_SIZE 50
+#define STATE_BUF_SIZE 250
 
 namespace salsa
 {
@@ -44,20 +44,6 @@ typedef std::vector<PseudorangeFunctor, aligned_allocator<PseudorangeFunctor>> P
 typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
 typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
 typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
-typedef std::deque<FeatFunctor, aligned_allocator<FeatFunctor>> FeatDeque;
-struct Feat
-{
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    int idx0;
-    int node0;
-    int kf0;
-    Vector3d z;
-    double rho;
-    Feat(int _idx, int _node, int _kf0, const Vector3d& _z, const double& _rho) :
-        idx0(_idx), node0(_node), kf0(_kf0), z(_z), rho(_rho){}
-};
-typedef std::map<int, Feat, std::less<int>,
-                 aligned_allocator<std::pair<const int, Feat>>> FeatMap;
 
 class MTLogger;
 class Logger;
@@ -83,6 +69,7 @@ public:
   void cleanUpSlidingWindow();
   const State& lastKfState();
   bool calcNewKeyframeCondition(const Features& z);
+  void cleanUpFeatureTracking(int oldest_node, int oldest_desired_kf);
 
   void solve();
   void addParameterBlocks(ceres::Problem& problem);
@@ -127,7 +114,6 @@ public:
   MocapDeque mocap_;
   PseudorangeDeque prange_;
   ClockBiasDeque clk_;
-  FeatDeque feat_;
   FeatMap xfeat_;
 
   ceres::Solver::Options options_;
