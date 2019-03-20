@@ -120,5 +120,4 @@ void Salsa::cleanUpFeatureTracking(int oldest_node, int oldest_desired_kf)
 
 }
 
-
 }

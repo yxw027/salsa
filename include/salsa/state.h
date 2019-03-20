@@ -37,26 +37,26 @@ public:
 class Features
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  int id; // image label
-  double t; // time stamp of this image
-  std::vector<Vector3d, aligned_allocator<Vector3d>> zetas; // unit vectors to features
-  std::vector<double> depths; // feature distances corresponding to feature measurements
-  std::vector<int> feat_ids; // feature ids corresonding to pixel measurements
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    int id; // image label
+    double t; // time stamp of this image
+    std::vector<Vector3d, aligned_allocator<Vector3d>> zetas; // unit vectors to features
+    std::vector<double> depths; // feature distances corresponding to feature measurements
+    std::vector<int> feat_ids; // feature ids corresonding to pixel measurements
 
-  void reserve(const int& N)
-  {
-    zetas.reserve(N);
-    depths.reserve(N);
-    feat_ids.reserve(N);
-  }
+    void reserve(const int& N)
+    {
+        zetas.reserve(N);
+        depths.reserve(N);
+        feat_ids.reserve(N);
+    }
 
-  void clear()
-  {
-    zetas.clear();
-    depths.clear();
-    feat_ids.clear();
-  }
+    void clear()
+    {
+        zetas.clear();
+        depths.clear();
+        feat_ids.clear();
+    }
 };
 
 typedef std::deque<FeatFunctor, aligned_allocator<FeatFunctor>> FeatDeque;
@@ -72,7 +72,7 @@ struct Feat
     FeatDeque funcs;
 
     Feat(int _idx, int _kf0, int _node0, const Vector3d& _z0, double _rho) :
-        kf0(_kf0), idx0(_idx), node0(_node0), z0(_z0), rho(_rho) {}
+         kf0(_kf0), idx0(_idx), node0(_node0), z0(_z0), rho(_rho) {}
 
     void addMeas(int to_idx, int to_node,
                  const Xformd& x_b2c, const Matrix2d& cov, const Vector3d& zj)
@@ -86,8 +86,28 @@ struct Feat
         funcs.back().to_idx_ = to_node;
         funcs.back().zetaj_ = zj;
     }
+
+    bool slideAnchor(int new_from_idx, int new_from_kf, int new_from_node,
+                     const State* xbuf, const Xformd& x_b2c)
+    {
+        if (new_from_kf <= kf0)
+            return true; // Don't need to slide, this one is anchored ahead of the slide
+        if (funcs.size() == 1)
+            return false; // can't slide, no future measurements
+
+        Xformd x_I2i(xbuf[idx0].x);
+        Xformd x_I2j(xbuf[new_from_idx].x);
+
+
+        Vector3d p_I2l_i = x_I2i.t() + x_I2i.q().rota(x_b2c.q().rota(1.0/rho * z0) + x_b2c.t());
+        Vector3d zi_j = x_b2c.q().rotp(x_I2j.q().rotp(p_I2l_i - x_I2j.t()) - x_b2c.t());
+        rho = 1.0/zi_j.norm();
+        z0 = funcs.front().zetai_;
+        idx0 = new_from_idx;
+        kf0 = new_from_kf;
+        node0 = new_from_node;
+        funcs.pop_front();
+    }
 };
-typedef std::map<int, Feat, std::less<int>,
-                 aligned_allocator<std::pair<const int, Feat>>> FeatMap;
 
 }

@@ -4,6 +4,7 @@
 #include "salsa/test_common.h"
 
 #include "multirotor_sim/simulator.h"
+#include "multirotor_sim/estimator_wrapper.h"
 
 using namespace salsa;
 
@@ -128,5 +129,58 @@ TEST (Vision, NewKFTranslate)
     EXPECT_GE(step, 3);
     EXPECT_GE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_);
     EXPECT_GE(salsa.kf_parallax_, salsa.kf_parallax_thresh_);
+}
+
+TEST (Vision, SlideAnchor)
+{
+    Simulator sim(false);
+    sim.load(imu_feat(false, 10.0));
+
+    Feat* feat = nullptr;
+    int kf = 0;
+    int idx = 0;
+    int node = 0;
+    Salsa salsa;
+    salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
+    salsa.x_u2c_.q() = sim.q_b2c_;
+    salsa.x_u2c_.t() = sim.p_b2c_;
+    Camera<double> cam = salsa.cam_;
+
+    salsa::State xbuf[10];
+    double rho[10];
+
+    EstimatorWrapper est;
+    auto img_cb = [&rho, &feat, &kf, &idx, &node, &cam, &salsa, &sim, &xbuf]
+            (const double& t, const ImageFeat& z, const Matrix2d& R_pix, const Matrix1d& R_depth)
+    {
+        Vector3d zeta = cam.invProj(z.pixs[0], 1.0);
+        if (!feat)
+            feat = new Feat(idx, kf, node, zeta, 1.0/z.depths[0]);
+        else
+            feat->addMeas(idx, node, salsa.x_u2c_, R_pix, zeta);
+        xbuf[idx].x = sim.state().X;
+        xbuf[idx].v = sim.state().v;
+        xbuf[idx].t = sim.t_;
+        xbuf[idx].kf = kf;
+        xbuf[idx].tau.setZero();
+        rho[idx] = 1.0/z.depths[0];
+        kf += 1;
+        idx += 1;
+        node += 1;
+    };
+    est.register_feat_cb(img_cb);
+    sim.register_estimator(&est);
+
+    while (kf < 10)
+    {
+        sim.run();
+    }
+
+    for (int i = 1; i < 9; i++)
+    {
+        EXPECT_TRUE(feat->slideAnchor(i, i, i, xbuf, salsa.x_u2c_));
+        EXPECT_NEAR(feat->rho, rho[i], 1e-3);
+    }
+    EXPECT_FALSE(feat->slideAnchor(9, 9, 9, xbuf, salsa.x_u2c_));
 }
 
