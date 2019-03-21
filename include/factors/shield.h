@@ -9,7 +9,7 @@
 template<typename Functor>
 struct FunctorShield
 {
-    FunctorShield(Functor* functor) :
+    FunctorShield(const Functor* functor) :
         ptr(functor)
     {}
 
@@ -18,5 +18,5 @@ struct FunctorShield
     {
         return ptr->operator ()(args...);
     }
-    Functor* ptr;
+    const Functor* ptr;
 };

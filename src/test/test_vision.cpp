@@ -174,12 +174,16 @@ TEST (Vision, SlideAnchor)
         sim.run();
     }
 
+    Vector3d pt = sim.env_.get_points()[0];
+    EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
     for (int i = 1; i < 9; i++)
     {
         EXPECT_TRUE(feat->slideAnchor(i, i, xbuf, salsa.x_u2c_));
-        EXPECT_NEAR(feat->rho, rho[i], 1e-3);
+        EXPECT_NEAR(feat->rho, rho[i], 1e-5);
+        EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
     }
     EXPECT_FALSE(feat->slideAnchor(9, 9, xbuf, salsa.x_u2c_));
+    delete feat;
 }
 
 TEST (Vision, KeyframeCleanup)

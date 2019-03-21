@@ -1,12 +1,12 @@
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAction, QTabWidget,QVBoxLayout
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 import sys
-
 
 class plotWindow():
     def __init__(self, parent=None):
@@ -24,13 +24,14 @@ class plotWindow():
         self.MainWindow.resize(1280, 900)
         self.MainWindow.show()
 
-    def addPlot(self, title, figure):
+    def addPlot(self, title, figure, threeD=False):
         new_tab = QWidget()
         layout = QVBoxLayout()
         new_tab.setLayout(layout)
 
         figure.subplots_adjust(left=0.05, right=0.99, bottom=0.05, top=0.91, wspace=0.2, hspace=0.2)
         new_canvas = FigureCanvas(figure)
+
         new_toolbar = NavigationToolbar(new_canvas, new_tab)
 
         layout.addWidget(new_canvas)
@@ -40,6 +41,8 @@ class plotWindow():
         self.toolbar_handles.append(new_toolbar)
         self.canvases.append(new_canvas)
         self.figure_handles.append(figure)
+        if threeD:
+            figure.axes[0].mouse_init()
         self.tab_handles.append(new_tab)
 
     def show(self):

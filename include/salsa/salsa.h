@@ -52,6 +52,7 @@ public:
     typedef std::map<int,Feat,std::less<int>,aligned_allocator<std::pair<const int,Feat>>> FeatMap;
 
     Salsa();
+    ~Salsa();
 
     void init(const std::string& filename);
 
@@ -63,7 +64,10 @@ public:
 
     void initLog();
     void logRawGNSSRes();
+    void logFeatRes();
+    void logFeatures();
     void logOptimizedWindow();
+    void logState();
     void renderGraph(const std::string& filename);
 
     void finishNode(const double& t, bool new_keyframe);
@@ -78,6 +82,7 @@ public:
     void addMocapFactors(ceres::Problem& problem);
     void addOriginConstraint(ceres::Problem& problem);
     void addRawGnssFactors(ceres::Problem& problem);
+    void addFeatFactors(ceres::Problem& problem);
 
 
     void pointPositioning(const GTime& t, const VecVec3& z,
@@ -120,9 +125,12 @@ public:
     ceres::Solver::Options options_;
     ceres::Solver::Summary summary_;
 
-    Logger* state_log_ = nullptr;
+    Logger* current_state_log_ = nullptr;
     Logger* opt_log_ = nullptr;
     Logger* raw_gnss_res_log_ = nullptr;
+    Logger* feat_res_log_ = nullptr;
+    Logger* feat_log_ = nullptr;
+    Logger* state_log_ = nullptr;
 
     std::string log_prefix_;
     Camera<double> cam_;

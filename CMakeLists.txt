@@ -44,6 +44,7 @@ target_link_libraries(factors
     ${CERES_LIBRARIES})
 
 add_library(salsa
+    src/state.cpp
     src/salsa.cpp
     src/salsa_mocap.cpp
     src/salsa_gnss.cpp

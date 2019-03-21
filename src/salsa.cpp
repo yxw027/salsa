@@ -11,6 +11,19 @@ namespace salsa
 Salsa::Salsa()
 {}
 
+Salsa::~Salsa()
+{
+    delete bias_;
+    delete anchor_;
+
+    if(current_state_log_) delete current_state_log_;
+    if(opt_log_) delete opt_log_;
+    if(raw_gnss_res_log_) delete raw_gnss_res_log_;
+    if(feat_res_log_) delete feat_res_log_;
+    if(feat_log_) delete feat_log_;
+    if(state_log_) delete state_log_;
+}
+
 void Salsa::init(const string& filename)
 {
     load(filename);
@@ -81,9 +94,12 @@ void Salsa::initLog()
     if (!fs::exists(fs::path(log_prefix_).parent_path()))
         fs::create_directories(fs::path(log_prefix_).parent_path());
 
-    state_log_ = new Logger(log_prefix_ + "State.log");
+    current_state_log_ = new Logger(log_prefix_ + "CurrentState.log");
     opt_log_ = new Logger(log_prefix_ + "Opt.log");
     raw_gnss_res_log_ = new Logger(log_prefix_+ "RawRes.log");
+    feat_res_log_ = new Logger(log_prefix_ + "FeatRes.log");
+    feat_log_ = new Logger(log_prefix_ + "Feat.log");
+    state_log_ = new Logger(log_prefix_ + "State.log");
 }
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
@@ -180,6 +196,26 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
 
 }
 
+void Salsa::addFeatFactors(ceres::Problem &problem)
+{
+    FeatMap::iterator ft = xfeat_.begin();
+    while (ft != xfeat_.end())
+    {
+        FeatDeque::iterator func = ft->second.funcs.begin();
+        while (func != ft->second.funcs.end())
+        {
+            FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
+            problem.AddResidualBlock(new FeatFactorAD(ptr),
+                                     NULL,
+                                     xbuf_[ft->second.idx0].x.data(),
+                                     xbuf_[func->to_idx_].x.data(),
+                                     &ft->second.rho);
+            func++;
+        }
+        ft++;
+    }
+}
+
 void Salsa::initSolverOptions()
 {
     options_.max_num_iterations = 100;
@@ -195,13 +231,17 @@ void Salsa::solve()
     addParameterBlocks(problem);
     addOriginConstraint(problem);
     addImuFactors(problem);
+    addFeatFactors(problem);
     addMocapFactors(problem);
     addRawGnssFactors(problem);
 
     ceres::Solve(options_, &problem, &summary_);
 
+    logState();
     logOptimizedWindow();
     logRawGNSSRes();
+    logFeatRes();
+    logFeatures();
 }
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
@@ -223,10 +263,10 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
                  || (current_state_.v.array() == current_state_.v.array()).all(),
                  "NaN Detected in propagation");
 
-    if (state_log_)
+    if (current_state_log_)
     {
-        state_log_->log(current_state_.t);
-        state_log_->logVectors(current_state_.x.arr(), current_state_.v, imu_bias_, current_state_.tau);
+        current_state_log_->log(current_state_.t);
+        current_state_log_->logVectors(current_state_.x.arr(), current_state_.v, imu_bias_, current_state_.tau);
     }
 }
 
@@ -340,6 +380,19 @@ void Salsa::logOptimizedWindow()
             opt_log_->log(s_[i]);
 
         opt_log_->logVectors(imu_bias_);
+    }
+}
+
+void Salsa::logState()
+{
+    if (state_log_)
+    {
+        state_log_->log(xbuf_[xbuf_head_].t);
+        state_log_->logVectors(xbuf_[xbuf_head_].x.arr());
+        state_log_->logVectors(xbuf_[xbuf_head_].v);
+        state_log_->logVectors(xbuf_[xbuf_head_].tau);
+        state_log_->log(xbuf_[xbuf_head_].kf);
+        state_log_->log(xbuf_[xbuf_head_].node);
     }
 }
 
