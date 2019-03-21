@@ -978,9 +978,10 @@ If the feature was originally seen in the last keyframe of the sliding window,
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\p_{l/I}^{I}=R_{j}^{I}\p_{l/j}^{i}+\p_{j/I}^{I} & =R_{i}^{I}\p_{l/i}^{i}+\p_{i/I}^{I}\\
+\p_{l/I}^{I}=R_{j}^{I}\p_{l/j}^{j}+\p_{j/I}^{I} & =R_{i}^{I}\p_{l/i}^{i}+\p_{i/I}^{I}\\
 R_{j}^{I}\left(R_{c_{j}}^{j}\left(\rho_{j}\zt_{l/c_{j}}^{c_{j}}\right)+\p_{c_{j}/j}^{j}\right)+\p_{j/I}^{I} & =R_{i}^{I}\left(R_{c_{i}}^{i}\left(\rho_{i}\zt_{l/c_{i}}^{c_{i}}\right)+\p_{c_{i}/i}^{i}\right)+\p_{i/I}^{I}\\
-\rho_{j}\zt_{l/c_{j}}^{c_{j}} & =R_{j}^{c_{j}}\left(R_{I}^{j}\left(R_{i}^{I}\left(R_{c_{i}}^{i}\left(\rho_{i}\zt_{l/c_{i}}^{c_{i}}\right)+\p_{c_{i}/i}^{i}\right)+\p_{i/I}^{I}-\p_{j/I}^{I}\right)-\p_{c_{j}/j}^{j}\right)
+\rho_{j}\zt_{l/c_{j}}^{c_{j}} & =R_{j}^{c_{j}}\left(R_{I}^{j}\left(R_{i}^{I}\left(R_{c_{i}}^{i}\left(\rho_{i}\zt_{l/c_{i}}^{c_{i}}\right)+\p_{c_{i}/i}^{i}\right)+\p_{i/I}^{I}-\p_{j/I}^{I}\right)-\p_{c_{j}/j}^{j}\right)\\
+\rho_{j} & =\norm{R_{j}^{c_{j}}\left(R_{I}^{j}\left(R_{i}^{I}\left(R_{c_{i}}^{i}\left(\rho_{i}\zt_{l/c_{i}}^{c_{i}}\right)+\p_{c_{i}/i}^{i}\right)+\p_{i/I}^{I}-\p_{j/I}^{I}\right)-\p_{c_{j}/j}^{j}\right)}
 \end{align*}
 
 \end_inset
