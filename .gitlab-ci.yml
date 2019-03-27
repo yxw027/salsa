@@ -1,0 +1,25 @@
+before_script:
+  - apt update --qq
+  - apt install cmake build_essential git libceres-dev
+  - git clone https://github.com/google/googletest
+  - cd googletest
+  - mkdir build
+  - cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=Release
+  - make
+  - make install
+  - cd ../..
+  - git submodule update --init --recursive
+
+build:
+  script:
+    - mkdir build
+    - cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - make
+
+run_tests:
+  script:
+    - cd build
+    - ./test_salsa
+    

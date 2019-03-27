@@ -36,8 +36,8 @@ void Features::clear()
     feat_ids.clear();
 }
 
-Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho) :
-    kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho)
+Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_true) :
+    kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho), rho_true(_rho_true)
 {}
 
 void Feat::addMeas(int to_idx, const Xformd &x_b2c, const Matrix2d &cov, const Vector3d &zj)

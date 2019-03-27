@@ -44,14 +44,14 @@ OptType = np.dtype([
 FtType = np.dtype([
     ('id', np.int32),
     ('p', (np.float64, 3)),
-    ('rho', np.float64)
+    ('rho', np.float64),
+    ('rho_true', np.float64)
 ])
 
-nf = 10
 FeatType = np.dtype([
     ('t', np.float64),
     ('size', np.uint64),
-    ('ft', (FtType, nf))
+    ('ft', (FtType, params["num_feat"]))
 ])
 
 ResType2 = np.dtype([
@@ -59,7 +59,6 @@ ResType2 = np.dtype([
     ('t', np.float64),
     ('res', (np.float64, 2))
 ])
-nw = 3
 ResType1 = np.dtype([
     ('id', np.int32),
     ('size', np.int32),

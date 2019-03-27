@@ -115,7 +115,7 @@ TEST(ImuFactor, ErrorStateDynamics)
     log.logVectors(y.y_, yhat.y_, dy, y_check, u);
     for (int i = 0; i < Tmax/dt; i++)
     {
-        u += dt * randomNormal<double,6,1>(normal, gen);
+        u += dt * randomNormal<Vector6d>(normal, gen);
         t += dt;
         y.errorStateDynamics(y.y_, dy, u, eta, dydot);
         dy += dydot * dt;

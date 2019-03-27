@@ -79,7 +79,7 @@ void Salsa::logFeatRes()
                 else
                 {
                     res.setConstant(NAN);
-                    feat_res_log_->log((int)-1, (double)NAN);
+                    feat_res_log_->log((int)(-1), (double)NAN);
                     feat_res_log_->logVectors(res);
                 }
             }
@@ -87,7 +87,7 @@ void Salsa::logFeatRes()
         }
         else
         {
-            feat_res_log_->log((int)-1, ((uint64_t)0), (int)-1);
+            feat_res_log_->log((int)-1, ((int)0), (int)-1);
             for (int j = 0; j < N_; j++)
             {
                 Vector2d res;
@@ -112,7 +112,7 @@ void Salsa::logFeatures()
             Xformd x_I2i(xbuf_[ft->second.idx0].x);
             Vector3d p_I2l = x_I2i.t() + x_I2i.q().rota(x_u2c_.q().rota(1.0/ft->second.rho * ft->second.z0) + x_u2c_.t());
             feat_log_->logVectors(p_I2l);
-            feat_log_->log(ft->second.rho);
+            feat_log_->log(ft->second.rho, ft->second.rho_true);
             ft++;
         }
         else
@@ -120,7 +120,7 @@ void Salsa::logFeatures()
             feat_log_->log(-1);
             Vector3d p_I2l = Vector3d::Constant(NAN);
             feat_log_->logVectors(p_I2l);
-            feat_log_->log((double)NAN);
+            feat_log_->log((double)NAN, (double)NAN);
         }
     }
 }

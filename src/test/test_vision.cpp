@@ -379,9 +379,9 @@ TEST (Vision, HandleWindowSlide)
     Matrix1d R_depth = Matrix1d::Identity();
     std::vector<Vector6d, aligned_allocator<Vector6d>> imu;
     imu.resize(3);
-    imu[0] = (Vector6d() << 0.1, 0.0, -9.80665, Vector3d::Zero()).finished();
-    imu[1] = (Vector6d() << -0.1, 0.1, -9.80665, Vector3d::Zero()).finished();
-    imu[2] = (Vector6d() << 0.0, -0.1, -9.80665, Vector3d::Zero()).finished();
+    imu[0] = (Vector6d() << 0.1, 0.0, -9.80665, 0.1, 0, 0).finished();
+    imu[1] = (Vector6d() << -0.1, 0.1, -9.80665, -0.1, 0.1, 0).finished();
+    imu[2] = (Vector6d() << 0.0, -0.1, -9.80665, 0.0, -0.1, 0).finished();
     Matrix6d R_imu = Matrix6d::Identity();
 
     double t = 0.0;

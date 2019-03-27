@@ -61,6 +61,9 @@ TEST (Salsa, FeatSimulation)
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
     salsa.x_u2c_.q() = sim.q_b2c_;
     salsa.x_u2c_.t() = sim.p_b2c_;
+    salsa.cam_.cam_center_ = sim.cam_center_;
+    salsa.cam_.focal_len_ << sim.cam_F_(0,0), sim.cam_F_(1,1);
+    salsa.cam_.image_size_ = sim.image_size_;
 
     sim.register_estimator(&salsa);
 

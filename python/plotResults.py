@@ -16,7 +16,7 @@ def plotRawRes(rawGPSRes):
         pass
     return f
 
-def plotClockBias(state, truth, opt):
+def plotClockBias():
     f = plt.figure()
     plt.suptitle('Clock Bias')
     tautitles = [r'$\tau$', r'$\dot{\tau}$']
@@ -28,9 +28,9 @@ def plotClockBias(state, truth, opt):
         # plt.plot(state[:,0], state[:,i], label=r'\hat{x}')
         if i == 0:
             plt.legend()
-    return f
+    pw.addPlot("Clock Bias", f)
 
-def plotImuBias(state, truth, opt):
+def plotImuBias():
     f = plt.figure()
     plt.suptitle('Bias')
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
@@ -43,7 +43,7 @@ def plotImuBias(state, truth, opt):
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
             plt.legend()
-    return f
+    pw.addPlot("IMU Bias", f)
 
 def plot3DMap():
     f = plt.figure()
@@ -66,35 +66,37 @@ def plot3DMap():
     ax.set_zlim(-2, 4)
     return f
 
-def plotFeatRes():
-    f = plt.figure()
-    plt.suptitle('Feat Res')
-    ncols = 4
-    nrows = 3
-    for i in range(ncols):
-        for j in range(nrows):
-            id = offset+i+nrows*j
-            if id not in featRes['f']['id']: continue
-            plt.subplot(nrows, ncols, i+nrows*j+1)
-            t = featRes['f'][featRes['f']['id'] == 27]['to']['t']
-            res = featRes['f'][featRes['f']['id'] == 27]['to']['res']
-            plt.title((str(id)))
-            plt.plot(t, res[:,:,0], label=str(featRes['f'][featRes['f']['id'] == 27]['to']['to_node'][-1][0]))
-            # plt.plot(t, res[:,:,1])
-            plt.legend()
-    return f
+def plotFeatRes(allFeat=False):
+    ncols = 8
+    nrows = 6
+    id = -1
+    page = -1
+    while id <= np.max(featRes['f']['id']):
+        page += 1
+        f = plt.figure()
+        plt.suptitle('Feat Res')
+        for c in range(ncols):
+            for r in range(nrows):
+                id += 1
+                while id not in featRes['f']['id'] or np.sum([featRes['f']['id'] == id]) < 20:
+                    id += 1
+                    if id > np.max(featRes['f']['id']):
+                        break
+                plt.subplot(nrows, ncols, c*nrows+r+1)
+                # t = featRes['f'][featRes['f']['id'] == 27]['to']['t']
+                res = featRes['f'][featRes['f']['id'] == id]['to']['res']
+                plt.title((str(id)))
+                plt.plot(res[:,:,0], res[:,:,1])
+        pw.addPlot("Feat Res" + str(page), f)
+        if not allFeat:
+            break
 
 def plotFeatDepths():
     f = plt.figure()
     plt.suptitle("Feat Pos")
-    min_time = 0
-    max_time = 0
-    # for id, arr in featPos.iteritems():
-    #     if id == 't': continue
-    #     plt.plot(arr[:,0], arr[:,4])
-    #     max_time =  arr[-1,0] if arr[-1,-0] > max_time else max_time
-    #     plt.plot([0,max_time], [0, 0], 'k--' )
-    # return f
+    plt.plot(featPos['t'], featPos['ft']['rho'], 'b', alpha=0.7)
+    plt.plot(featPos['t'], featPos['ft']['rho_true'], '--k', alpha=0.5)
+    pw.addPlot("Depth", f)
 
 def plotPosition():
     f = plt.figure()
@@ -104,10 +106,9 @@ def plotPosition():
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x'][:,i], label='x')
         plt.plot(state['t'], state['x'][:,i], label=r'$\hat{x}$')
-        # plt.plot(state[:,0], state[:,i], label=r'\hat{x}')
         if i == 0:
             plt.legend()
-    return f
+    pw.addPlot("Position", f)
 
 def plotAttitude():
     f = plt.figure()
@@ -120,7 +121,7 @@ def plotAttitude():
         # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
         if i == 0:
             plt.legend()
-    return f
+    pw.addPlot("Attitude", f)
 
 def fixState(x):
     x['x'][:,3:] *= np.sign(x['x'][:,3,None])
@@ -140,14 +141,14 @@ def plotVelocity():
     plt.subplot(4,1,4)
     plt.plot(state['t'], norm(state['v'], axis=1), label=r'\hat{x}')
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
-    return f
+    pw.addPlot("Velocity", f)
 
 def plotResults(prefix):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global x, state, truth, opt, rawGPSRes, featRes, featPos, trueFeatPos, cb, xtitles, vtitles
-    global offset
+    global offset, pw
 
     offset = 10
     x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
@@ -165,40 +166,17 @@ def plotResults(prefix):
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     pw = plotWindow()
-    
+
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
 
-    # pw.addPlot("3D Map",plot3DMap(x, truth, featPos, trueFeatPos), threeD=True)
-
-
-
-    pw.addPlot("Position", plotPosition())
-    pw.addPlot("Attitude", plotAttitude())
-    pw.addPlot("Velocity", plotVelocity())
-    pw.addPlot("IMU Bias", plotImuBias(state, truth, opt))
-    pw.addPlot("Clock Bias", plotClockBias(state, truth, opt))
-    pw.addPlot("Feat Res", plotFeatRes())
-    # pw.addPlot("Feat Depths", plotFeatDepths())
-
-    # f = plotRawRes(rawGPSRes)
-
-    # f = plt.figure()
-    # plt.suptitle('Acc')
-    # for i in range(3):
-    #     plt.subplot(3, 1, i+1)
-    #     plt.title(imu_titles[i])
-    #     plt.plot(imu[:,0], imu[:,i+1])
-    # pw.addPlot("Acc", f)
-
-
-    # f = plt.figure()
-    # plt.suptitle('Omega')
-    # for i in range(3):
-    #     plt.subplot(3, 1, i+1)
-    #     plt.title(imu_titles[i+3])
-    #     plt.plot(imu[:,0], imu[:,i+4])
-    # pw.addPlot("Omega", f)
+    plotPosition()
+    plotAttitude()
+    plotVelocity()
+    plotImuBias()
+    plotClockBias()
+    plotFeatRes()
+    plotFeatDepths()
 
 
 

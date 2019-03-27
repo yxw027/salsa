@@ -131,15 +131,29 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
         problem.AddParameterBlock(s_.data() + s, 1);
         problem.SetParameterBlockConstant(s_.data() + s);
     }
+    for (auto& feat : xfeat_)
+    {
+        Feat& ft(feat.second);
+        if (ft.funcs.size() > 0)
+        {
+            problem.AddParameterBlock(&ft.rho, 1);
+            problem.SetParameterLowerBound(&ft.rho, 0, 0.01);
+        }
+    }
     problem.AddParameterBlock(imu_bias_.data(), 6);
 }
 
 void Salsa::addOriginConstraint(ceres::Problem &problem)
 {
-    anchor_->set(&xbuf_[xbuf_tail_]);
-    FunctorShield<AnchorFunctor>* ptr = new FunctorShield<AnchorFunctor>(anchor_);
-    problem.AddResidualBlock(new AnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
-                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
+    if (xbuf_tail_ == xbuf_head_)
+        return;
+    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].x.data());
+    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].v.data());
+    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].tau.data());
+//    anchor_->set(&xbuf_[xbuf_tail_]);
+//    FunctorShield<AnchorFunctor>* ptr = new FunctorShield<AnchorFunctor>(anchor_);
+//    problem.AddResidualBlock(new AnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
+//                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)
@@ -213,7 +227,7 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
     FeatMap::iterator ft = xfeat_.begin();
     while (ft != xfeat_.end())
     {
-        if (ft->first > 3)
+        if (ft->second.funcs.size() < 2)
         {
             ft++;
             continue;
@@ -221,9 +235,12 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
         FeatDeque::iterator func = ft->second.funcs.begin();
         while (func != ft->second.funcs.end())
         {
+            Vector2d res;
+            (*func)(xbuf_[ft->second.idx0].x.data(), xbuf_[func->to_idx_].x.data(),&ft->second.rho,
+                    res.data());
             FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
             problem.AddResidualBlock(new FeatFactorAD(ptr),
-                                     NULL,
+                                     new ceres::HuberLoss(3.0),
                                      xbuf_[ft->second.idx0].x.data(),
                                      xbuf_[func->to_idx_].x.data(),
                                      &ft->second.rho);

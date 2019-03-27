@@ -49,11 +49,12 @@ struct Feat
     int kf0;
     int idx0;
     double rho;
+    double rho_true;
     Vector3d z0;
     FeatDeque funcs;
     bool updated_in_last_image_;
 
-    Feat(int _idx, int _kf0, const Vector3d& _z0, double _rho);
+    Feat(int _idx, int _kf0, const Vector3d& _z0, double _rho, double _rho_true=NAN);
 
     void addMeas(int to_idx, const Xformd& x_b2c, const Matrix2d& cov, const Vector3d& zj);
     void moveMeas(int to_idx, const Vector3d& zj);
