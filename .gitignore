@@ -6,3 +6,4 @@ python/.idea/*
 .idea/*
 *.lyx#
 *.lyx~
+node_modules/
