@@ -1,13 +1,17 @@
 #include "factors/clock_dynamics.h"
 
-ClockBiasFunctor::ClockBiasFunctor(const Matrix2d& Xi, double dt,
-                                   int from_idx, int from_node, int to_idx)
+ClockBiasFunctor::ClockBiasFunctor(const Matrix2d& Xi, int from_idx, int from_node)
 {
     Xi_ = Xi;
     from_idx_ = from_idx;
+    from_node_ = from_node;
+    to_idx_ = -1;
+}
+
+bool ClockBiasFunctor::finished(double dt, int to_idx)
+{
     dt_ = dt;
     to_idx_ = to_idx;
-    from_node_ = from_node;
 }
 
 

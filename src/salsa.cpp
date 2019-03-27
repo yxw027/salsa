@@ -16,12 +16,13 @@ Salsa::~Salsa()
     delete bias_;
     delete anchor_;
 
-    if(current_state_log_) delete current_state_log_;
-    if(opt_log_) delete opt_log_;
-    if(raw_gnss_res_log_) delete raw_gnss_res_log_;
-    if(feat_res_log_) delete feat_res_log_;
-    if(feat_log_) delete feat_log_;
-    if(state_log_) delete state_log_;
+    if (current_state_log_) delete current_state_log_;
+    if (opt_log_) delete opt_log_;
+    if (raw_gnss_res_log_) delete raw_gnss_res_log_;
+    if (feat_res_log_) delete feat_res_log_;
+    if (feat_log_) delete feat_log_;
+    if (state_log_) delete state_log_;
+    if (cb_log_) delete cb_log_;
 }
 
 void Salsa::init(const string& filename)
@@ -41,8 +42,14 @@ void Salsa::load(const string& filename)
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
     get_yaml_node("N", filename, N_);
+    get_yaml_node("num_sat", filename, ns_);
+    get_yaml_node("num_feat", filename, nf_);
     get_yaml_node("log_prefix", filename, log_prefix_);
     get_yaml_node("switch_weight", filename, switch_weight_);
+    get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
+
+    xbuf_.resize(STATE_BUF_SIZE);
+    s_.reserve(ns_);
 
     Vector11d anchor_cov;
     get_yaml_eigen("anchor_cov", filename, anchor_cov);
@@ -63,12 +70,14 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
     clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
+    double kf_thresh_percent;
     get_yaml_eigen("focal_len", filename, cam_.focal_len_);
     get_yaml_eigen("distortion", filename, cam_.distortion_);
     get_yaml_eigen("cam_center", filename, cam_.cam_center_);
     get_yaml_node("cam_skew", filename, cam_.s_);
     get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
-    get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
+    get_yaml_node("kf_feature_thresh", filename, kf_thresh_percent);
+    kf_feature_thresh_ = std::round(kf_thresh_percent * nf_);
 }
 
 void Salsa::initState()
@@ -79,8 +88,8 @@ void Salsa::initState()
     current_node_ = -1;
     current_kf_ = -1;
     current_state_.t = NAN;
-    current_state_.x.arr().setConstant(NAN);
-    current_state_.v.setConstant(NAN);
+    current_state_.x = Xformd::Identity();
+    current_state_.v.setZero();
 }
 
 void Salsa::initFactors()
@@ -100,6 +109,7 @@ void Salsa::initLog()
     feat_res_log_ = new Logger(log_prefix_ + "FeatRes.log");
     feat_log_ = new Logger(log_prefix_ + "Feat.log");
     state_log_ = new Logger(log_prefix_ + "State.log");
+    cb_log_ = new Logger(log_prefix_ + "CB.log");
 }
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
@@ -187,6 +197,8 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
     }
     for (auto it = clk_.begin(); it != clk_.end(); it++)
     {
+        if (it->to_idx_ < 0)
+            continue;
         FunctorShield<ClockBiasFunctor>* ptr = new FunctorShield<ClockBiasFunctor>(&*it);
         problem.AddResidualBlock(new ClockBiasFactorAD(ptr),
                                  NULL,
@@ -201,6 +213,11 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
     FeatMap::iterator ft = xfeat_.begin();
     while (ft != xfeat_.end())
     {
+        if (ft->first > 3)
+        {
+            ft++;
+            continue;
+        }
         FeatDeque::iterator func = ft->second.funcs.begin();
         while (func != ft->second.funcs.end())
         {
@@ -235,7 +252,9 @@ void Salsa::solve()
     addMocapFactors(problem);
     addRawGnssFactors(problem);
 
+
     ceres::Solve(options_, &problem, &summary_);
+//    std::cout << summary_.FullReport() << std::endl;
 
     logState();
     logOptimizedWindow();
@@ -263,25 +282,27 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
                  || (current_state_.v.array() == current_state_.v.array()).all(),
                  "NaN Detected in propagation");
 
-    if (current_state_log_)
-    {
-        current_state_log_->log(current_state_.t);
-        current_state_log_->logVectors(current_state_.x.arr(), current_state_.v, imu_bias_, current_state_.tau);
-    }
+    logCurrentState();
 }
 
 
-void Salsa::finishNode(const double& t, bool new_keyframe)
+void Salsa::finishNode(const double& t, bool new_node, bool new_keyframe)
 {
-    int to_idx = (xbuf_head_+1) % STATE_BUF_SIZE;
+    int to_idx = xbuf_head_;
+    if (new_node)
+    {
+        to_idx = (xbuf_head_+1) % STATE_BUF_SIZE;
+        ++current_node_;
+    }
 
     ImuFunctor& imu(imu_.back());
+    ClockBiasFunctor& clk(clk_.back());
     int from = imu.from_idx_;
 
     // Finish the transition factors
     imu.integrate(t, imu.u_, imu.cov_);
     imu.finished(to_idx);
-    clk_.emplace_back(clk_bias_Xi_, imu.delta_t_, imu.from_idx_, current_node_, to_idx);
+    clk.finished(imu.delta_t_, to_idx);
 
     // Set up the next node
     xbuf_[to_idx].t = t;
@@ -289,18 +310,17 @@ void Salsa::finishNode(const double& t, bool new_keyframe)
                    xbuf_[to_idx].x.data(), xbuf_[to_idx].v.data());
     xbuf_[to_idx].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
     xbuf_[to_idx].tau(1) = xbuf_[from].tau(1);
-
-    ++current_node_;
-
-    // Prepare the next imu factor
-    imu_.emplace_back(t, imu_bias_, to_idx, current_node_);
-
-    // increment the keyframe counter if we are supposed to
     xbuf_[to_idx].node = current_node_;
+
     if (new_keyframe)
     {
+        imu_.emplace_back(t, imu_bias_, to_idx, current_node_);
+        clk_.emplace_back(clk_bias_Xi_, imu.from_idx_, current_node_);
         xbuf_[to_idx].kf = ++current_kf_;
+
         cleanUpSlidingWindow();
+        if (new_kf_cb_)
+            new_kf_cb_(current_kf_, kf_condition_);
     }
     else
     {
@@ -327,74 +347,39 @@ void Salsa::cleanUpSlidingWindow()
     while (imu_.begin()->from_node_ < oldest_node_)
         imu_.pop_front();
 
-    while (mocap_.begin()->node_ < oldest_node_)
-        mocap_.pop_front();
-
-    while (prange_.front().front().node_ < oldest_node_)
-        prange_.pop_front();
-
     while (clk_.front().from_node_ < oldest_node_)
         clk_.pop_front();
+
+    while (mocap_.size() > 0 && mocap_.begin()->node_ < oldest_node_)
+        mocap_.pop_front();
+
+    while (prange_.size() > 0 && prange_.front().front().node_ < oldest_node_)
+        prange_.pop_front();
+
 
     cleanUpFeatureTracking(xbuf_tail_, oldest_desired_kf);
 }
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
-    current_state_.t = t;
-    current_state_.x = x0;
-    current_state_.v = v0;
-
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
-    xbuf_[0].t = t;
+    xbuf_[0].t = current_state_.t = t;
     xbuf_[0].x = x0;
-    xbuf_[0].v = v0;
-    xbuf_[0].tau = tau0;
-    xbuf_[0].kf = current_kf_ = 0;
-    xbuf_[0].node = current_node_ = 0;
+    current_state_.x = x0;
+    xbuf_[0].v = current_state_.v = v0;
+    xbuf_[0].tau = current_state_.tau =tau0;
+    xbuf_[0].kf = current_state_.kf = current_kf_ = 0;
+    xbuf_[0].node = current_state_.node = current_node_ = 0;
     oldest_node_ = 0;
 
     imu_.emplace_back(t, imu_bias_, 0, current_node_);
+    clk_.emplace_back(clk_bias_Xi_, 0, current_node_);
+    kf_condition_ = FIRST_KEYFRAME;
+    if (new_kf_cb_)
+        new_kf_cb_(current_kf_, kf_condition_);
 }
 
-
-void Salsa::logOptimizedWindow()
-{
-    if (opt_log_)
-    {
-        opt_log_->log((xbuf_head_ + STATE_BUF_SIZE - xbuf_tail_) % STATE_BUF_SIZE);
-
-        int i = xbuf_tail_;
-        while (i != xbuf_head_)
-        {
-            i = (i+1) % STATE_BUF_SIZE;
-            opt_log_->log(xbuf_[i].t);
-            opt_log_->logVectors(xbuf_[i].x.arr());
-            opt_log_->logVectors(xbuf_[i].v);
-            opt_log_->logVectors(xbuf_[i].tau);
-        }
-
-        opt_log_->log(s_.size());
-        for (int i = 0; i < s_.size(); i++)
-            opt_log_->log(s_[i]);
-
-        opt_log_->logVectors(imu_bias_);
-    }
-}
-
-void Salsa::logState()
-{
-    if (state_log_)
-    {
-        state_log_->log(xbuf_[xbuf_head_].t);
-        state_log_->logVectors(xbuf_[xbuf_head_].x.arr());
-        state_log_->logVectors(xbuf_[xbuf_head_].v);
-        state_log_->logVectors(xbuf_[xbuf_head_].tau);
-        state_log_->log(xbuf_[xbuf_head_].kf);
-        state_log_->log(xbuf_[xbuf_head_].node);
-    }
-}
 
 const State& Salsa::lastKfState()
 {

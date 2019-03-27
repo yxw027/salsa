@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <deque>
+#include <functional>
 #include <experimental/filesystem>
 
 #include <Eigen/Core>
@@ -33,8 +34,6 @@ using multirotor_sim::VecMat3;
 using multirotor_sim::VecVec3;
 using multirotor_sim::ImageFeat;
 
-#define STATE_BUF_SIZE 250
-
 namespace salsa
 {
 
@@ -50,6 +49,7 @@ public:
     typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
     typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
     typedef std::map<int,Feat,std::less<int>,aligned_allocator<std::pair<const int,Feat>>> FeatMap;
+
 
     Salsa();
     ~Salsa();
@@ -68,13 +68,15 @@ public:
     void logFeatures();
     void logOptimizedWindow();
     void logState();
+    void logCurrentState();
     void renderGraph(const std::string& filename);
 
-    void finishNode(const double& t, bool new_keyframe);
+    void finishNode(const double& t, bool new_node, bool new_keyframe);
     void cleanUpSlidingWindow();
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);
     void cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf);
+    void rmLostFeatFromKf();
 
     void solve();
     void addParameterBlocks(ceres::Problem& problem);
@@ -98,15 +100,27 @@ public:
 
     bool isTrackedFeature(int id) const;
 
+    enum {
+        FIRST_KEYFRAME,
+        TOO_MUCH_PARALLAX,
+        INSUFFICIENT_MATCHES
+    };
+    int kf_condition_;
+    std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
+
     State current_state_;
 
     int xbuf_head_, xbuf_tail_;
-    salsa::State xbuf_[STATE_BUF_SIZE];
-    vector<double> s_;
+
+    StateVec xbuf_;
+    vector<double> s_; int ns_;
     Vector6d imu_bias_;
     int current_node_;
     int oldest_node_;
     int current_kf_;
+
+
+    int STATE_BUF_SIZE;
 
     double switch_weight_;
     double acc_wander_weight_;
@@ -120,17 +134,25 @@ public:
     MocapDeque mocap_;
     PseudorangeDeque prange_;
     ClockBiasDeque clk_;
-    FeatMap xfeat_;
+    FeatMap xfeat_; int nf_;
 
     ceres::Solver::Options options_;
     ceres::Solver::Summary summary_;
 
+    enum{
+        NONE,
+        IMG,
+        GNSS,
+        MOCAP
+    };
+    int last_callback_;
     Logger* current_state_log_ = nullptr;
     Logger* opt_log_ = nullptr;
     Logger* raw_gnss_res_log_ = nullptr;
     Logger* feat_res_log_ = nullptr;
     Logger* feat_log_ = nullptr;
     Logger* state_log_ = nullptr;
+    Logger* cb_log_ = nullptr;
 
     std::string log_prefix_;
     Camera<double> cam_;

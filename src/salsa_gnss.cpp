@@ -11,6 +11,7 @@ namespace salsa
 void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
                             std::vector<Satellite> &sats, const std::vector<bool>& slip)
 {
+    last_callback_ = GNSS;
     if (current_node_ == -1)
     {
         if (sats.size() < 8)
@@ -40,7 +41,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
     }
     else
     {
-        finishNode((t-start_time_).toSec(), true);
+        finishNode((t-start_time_).toSec(), true, true);
 
         if (sats.size() > 8)
         {

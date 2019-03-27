@@ -45,7 +45,7 @@ def plotImuBias(state, truth, opt):
             plt.legend()
     return f
 
-def plot3DMap(x, true, featPos, trueFeat):
+def plot3DMap():
     f = plt.figure()
     ax = f.add_subplot(111, projection='3d')
     plt.suptitle("Feature Positions")
@@ -58,45 +58,45 @@ def plot3DMap(x, true, featPos, trueFeat):
 
     for id, arr in featPos.iteritems():
         if id == 't': continue
-        ax.plot(arr[:,1], arr[:,0], -arr[:,2], linewidth=0.5, alpha=0.5)
+        ax.scatter(arr[0,2], arr[0,1], -arr[0,3], 'o')
+        ax.plot(arr[:,2], arr[:,1], -arr[:,3], linewidth=0.5, alpha=0.5)
     ax.plot(trueFeat[:,1], trueFeat[:,0], -trueFeat[:,2], 'x')
     ax.set_xlim(-10, 10)
     ax.set_ylim(-10, 10)
     ax.set_zlim(-2, 4)
     return f
 
+def plotFeatRes():
+    f = plt.figure()
+    plt.suptitle('Feat Res')
+    ncols = 4
+    nrows = 3
+    for i in range(ncols):
+        for j in range(nrows):
+            id = offset+i+nrows*j
+            if id not in featRes['f']['id']: continue
+            plt.subplot(nrows, ncols, i+nrows*j+1)
+            t = featRes['f'][featRes['f']['id'] == 27]['to']['t']
+            res = featRes['f'][featRes['f']['id'] == 27]['to']['res']
+            plt.title((str(id)))
+            plt.plot(t, res[:,:,0], label=str(featRes['f'][featRes['f']['id'] == 27]['to']['to_node'][-1][0]))
+            # plt.plot(t, res[:,:,1])
+            plt.legend()
+    return f
 
+def plotFeatDepths():
+    f = plt.figure()
+    plt.suptitle("Feat Pos")
+    min_time = 0
+    max_time = 0
+    # for id, arr in featPos.iteritems():
+    #     if id == 't': continue
+    #     plt.plot(arr[:,0], arr[:,4])
+    #     max_time =  arr[-1,0] if arr[-1,-0] > max_time else max_time
+    #     plt.plot([0,max_time], [0, 0], 'k--' )
+    # return f
 
-def fixState(x):
-    x['x'][:,3:] *= np.sign(x['x'][:,3,None])
-    return x
-
-
-
-def plotResults(prefix):
-    np.set_printoptions(linewidth=150)
-    plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
-
-    x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
-    state = fixState(np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType))
-    truth = fixState(np.fromfile(os.path.join(prefix,"Truth.log"), dtype=CurrentStateType))
-    opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
-    rawGPSRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=RawGNSSResType)
-    featRes = ReadFeatRes(os.path.join(prefix, "FeatRes.log"))
-    featPos = ReadFeat(os.path.join(prefix, "Feat.log"))
-    trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3)) - truth['x'][0,0:3]
-    truth['x'][:,:3] -= truth['x'][0,0:3]
-
-    imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
-                  r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
-    pw = plotWindow()
-    
-    xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
-    vtitles = ['$v_x$', '$v_y$', '$v_z$']
-
-    pw.addPlot("3D Map",plot3DMap(x, truth, featPos, trueFeatPos), threeD=True)
-
+def plotPosition():
     f = plt.figure()
     plt.suptitle('Position')
     for i in range(3):
@@ -107,8 +107,9 @@ def plotResults(prefix):
         # plt.plot(state[:,0], state[:,i], label=r'\hat{x}')
         if i == 0:
             plt.legend()
-    pw.addPlot("Position", f)
+    return f
 
+def plotAttitude():
     f = plt.figure()
     plt.suptitle('Attitude')
     for i in range(4):
@@ -119,8 +120,13 @@ def plotResults(prefix):
         # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
         if i == 0:
             plt.legend()
-    pw.addPlot("Attitude", f)
+    return f
 
+def fixState(x):
+    x['x'][:,3:] *= np.sign(x['x'][:,3,None])
+    return x
+
+def plotVelocity():
     f = plt.figure()
     plt.suptitle('Velocity')
     for i in range(3):
@@ -134,16 +140,48 @@ def plotResults(prefix):
     plt.subplot(4,1,4)
     plt.plot(state['t'], norm(state['v'], axis=1), label=r'\hat{x}')
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
-    pw.addPlot("Velocity", f)
+    return f
+
+def plotResults(prefix):
+    np.set_printoptions(linewidth=150)
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+    global x, state, truth, opt, rawGPSRes, featRes, featPos, trueFeatPos, cb, xtitles, vtitles
+    global offset
+
+    offset = 10
+    x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
+    state = fixState(np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType))
+    truth = fixState(np.fromfile(os.path.join(prefix,"Truth.log"), dtype=CurrentStateType))
+    opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
+    # rawGPSRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=RawGNSSResType)
+    featRes = np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType)
+    featPos = np.fromfile(os.path.join(prefix, "Feat.log"), dtype=FeatType)
+    # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
+    cb = np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)])
+    # trueFeatPos -= truth['x'][0,0:3]
+    # truth['x'][:,:3] -= truth['x'][0,0:3]
+
+    imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
+                  r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+    pw = plotWindow()
+    
+    xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
+    vtitles = ['$v_x$', '$v_y$', '$v_z$']
+
+    # pw.addPlot("3D Map",plot3DMap(x, truth, featPos, trueFeatPos), threeD=True)
 
 
 
+    pw.addPlot("Position", plotPosition())
+    pw.addPlot("Attitude", plotAttitude())
+    pw.addPlot("Velocity", plotVelocity())
     pw.addPlot("IMU Bias", plotImuBias(state, truth, opt))
     pw.addPlot("Clock Bias", plotClockBias(state, truth, opt))
+    pw.addPlot("Feat Res", plotFeatRes())
+    # pw.addPlot("Feat Depths", plotFeatDepths())
 
-
-
-    f = plotRawRes(rawGPSRes)
+    # f = plotRawRes(rawGPSRes)
 
     # f = plt.figure()
     # plt.suptitle('Acc')

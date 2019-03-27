@@ -68,7 +68,7 @@ public:
     Matrix6d cov_;
 
     Matrix96 J_;
-    Vector3d gravity_ = (Vector3d() << 0, 0, 9.80665).finished();
+    static Vector3d gravity_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;

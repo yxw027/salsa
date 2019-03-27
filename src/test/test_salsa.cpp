@@ -55,7 +55,7 @@ TEST (Salsa, RawGNSSSimulation)
 TEST (Salsa, FeatSimulation)
 {
     Simulator sim(true);
-    sim.load(imu_feat(false, 100.0));
+    sim.load(imu_feat(false));
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
@@ -68,7 +68,11 @@ TEST (Salsa, FeatSimulation)
 
     while (sim.run())
     {
-        salsa.x_e2n_ = sim.X_e2n_;
+        if (salsa.current_node_ < 0)
+        {
+            salsa.current_state_.x = sim.state().X;
+            salsa.current_state_.v = sim.state().v;
+        }
         true_state_log.log(sim.t_);
         true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,
                                   sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_});

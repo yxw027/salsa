@@ -1,16 +1,7 @@
 import numpy as np
+import yaml
 
-N = 10
-NSAT = 20
-
-OptType = np.dtype([
-	('t', (np.float64, N)),
-    ('x', (np.float64, (N, 7))),
-    ('v', (np.float64, (N, 3))),
-    ('tau', (np.float64, (N, 2))),
-    ('imu_bias', (np.float64, 6)),
-    ('s', (np.float64, 20)),
-])
+params = yaml.load(open("../params/salsa.yaml"))
 
 CurrentStateType = np.dtype([
 	('t', np.float64),
@@ -29,65 +20,57 @@ StateType = np.dtype([
     ('node', np.int32)
 ])
 
-RawGNSSResType = np.dtype([
-	('t', (np.float64, N)),
-    ('res', (np.float64, (N, NSAT, 2))),
-	('id', (np.int32, (N, NSAT))),
+
+OptStateType = np.dtype([
+    ('node', np.int32),
+    ('kf', np.int32),
+    ('t', np.float64),
+    ('p', (np.float64, 3)),
+    ('q', (np.float64, 4)),
+    ('v', (np.float64, 3)),
+    ('tau', (np.float64, 2))
 ])
 
-def ReadFeatRes(filename):
-    f = open(filename)
-    featRes = dict()
+OptType = np.dtype([
+    ('BUF_SIZE', np.int32),
+    ('head', np.int32),
+    ('tail', np.int32),
+    ('x', (OptStateType, params["state_buf_size"])),
+    # ('s', (np.float64, 0)),
+    ('imu', (np.float64, 6))
+])
 
-    while True:
-        ti = np.fromfile(f, dtype=np.float64, count=1)
 
-        # EOF
-        if len(ti) == 0:
-            break
+FtType = np.dtype([
+    ('id', np.int32),
+    ('p', (np.float64, 3)),
+    ('rho', np.float64)
+])
 
-        N = np.fromfile(f, dtype=np.int64, count=1)
-        for n in range(N):
-            feat_id = np.fromfile(f, dtype=np.int32, count=1)[0]
-            n_res = np.fromfile(f, dtype=np.int64, count=1)[0]
-            from_idx = np.fromfile(f, dtype=np.int32, count=1)[0]
-            if n_res == 0:
-                continue
-            feat_res = np.fromfile(f, dtype=(np.float64, 4), count=n_res)
+nf = 10
+FeatType = np.dtype([
+    ('t', np.float64),
+    ('size', np.uint64),
+    ('ft', (FtType, nf))
+])
 
-            if feat_id not in featRes:
-                featRes[feat_id] = {'t' :[], 'res': []}
-
-            featRes[feat_id]['t'].append(ti)
-            featRes[feat_id]['res'].append(np.hstack((np.tile(from_idx, (len(feat_res), 1)), feat_res)))
-    for key, value in featRes.iteritems():
-        featRes[key]['t'] = np.array(value['t'])
-
-    return featRes
-
-def ReadFeat(filename):
-    f = open(filename)
-    featPos = {'t': []}
-    while True:
-        t = np.fromfile(f, dtype=np.float64, count=1)
-        if len(t) == 0: break # EOF
-        N = np.fromfile(f, dtype=np.int64, count=1)
-        featPos['t'].append(t)
-
-        for n in range(N):
-            feat_id = np.fromfile(f, dtype=np.int32, count=1)[0]
-            pos = np.fromfile(f, dtype=(np.float64, 3), count = 1)
-
-            if feat_id not in featPos:
-                featPos[feat_id] = []
-            featPos[feat_id].append(pos)
-    for key, value in featPos.iteritems():
-        if key == 't':
-            featPos[key] = np.array(value)[:,0]
-        else:
-            featPos[key] = np.atleast_2d(np.array(value)[:,0,:])
-    return featPos
-
+ResType2 = np.dtype([
+    ('to_node', np.int32),
+    ('t', np.float64),
+    ('res', (np.float64, 2))
+])
+nw = 3
+ResType1 = np.dtype([
+    ('id', np.int32),
+    ('size', np.int32),
+    ('from_node', np.int32),
+    ('to', (ResType2, params["N"]))
+])
+FeatResType = np.dtype([
+    ('t', np.float64),
+    ('size', np.int32),
+    ('f', (ResType1, params["num_feat"]))
+])
 
 
 

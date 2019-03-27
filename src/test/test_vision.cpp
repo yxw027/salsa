@@ -145,7 +145,7 @@ TEST (Vision, SlideAnchor)
     salsa.x_u2c_.t() = sim.p_b2c_;
     Camera<double> cam = salsa.cam_;
 
-    salsa::State xbuf[10];
+    StateVec xbuf(10);
     double rho[10];
 
     EstimatorWrapper est;
@@ -176,9 +176,13 @@ TEST (Vision, SlideAnchor)
 
     Vector3d pt = sim.env_.get_points()[0];
     EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
+    Vector2d res;
+    feat->funcs.front()(xbuf[feat->idx0].x.data(), xbuf[feat->funcs.front().to_idx_].x.data(), &feat->rho, res.data());
     for (int i = 1; i < 9; i++)
     {
         EXPECT_TRUE(feat->slideAnchor(i, i, xbuf, salsa.x_u2c_));
+        feat->funcs.front()(xbuf[feat->idx0].x.data(), xbuf[feat->funcs.front().to_idx_].x.data(), &feat->rho, res.data());
+        EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-5);
         EXPECT_NEAR(feat->rho, rho[i], 1e-5);
         EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
     }
@@ -207,6 +211,255 @@ TEST (Vision, KeyframeCleanup)
     {
         EXPECT_NE(ft.second.kf0, 0);
     }
+}
 
+TEST (Vision, HandleFeatureHandoff)
+{
+    Salsa salsa;
+    salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
+    salsa.x_u2c_.q() = quat::Quatd::Identity();
+    salsa.x_u2c_.t() = Vector3d::Zero();
+
+    MatrixXd l;
+    l.resize(4,3);
+    l << 1,  0, 1,
+         0,  1, 1,
+         0, -1, 1,
+        -1,  0, 1;
+
+
+    Features feat;
+    feat.resize(4);
+    for (int k = 0; k < 4; k++)
+    {
+        feat.zetas[k] = l.row(k).transpose().normalized();
+        feat.depths[k] = l.row(k).transpose().norm();
+        feat.feat_ids[k] = k;
+    }
+    feat.id = 0;
+    feat.t = 0.0;
+
+    Matrix2d R_pix = Matrix2d::Identity();
+    Matrix1d R_depth = Matrix1d::Identity();
+    Vector6d imu = (Vector6d() << 0.1, 0, -9.80665, Vector3d::Zero()).finished();
+    Matrix6d R_imu = Matrix6d::Identity();
+
+    double t = 0.0;
+    double dt = 0.02;
+
+    salsa.imageCallback(t, feat, R_pix, R_depth);
+    EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
+
+    EXPECT_EQ(salsa.xbuf_head_, 0);
+    EXPECT_EQ(salsa.xbuf_tail_, 0);
+    EXPECT_MAT_NEAR(salsa.xbuf_[salsa.xbuf_head_].x.arr(), xform::Xformd::Identity().arr(), 1e-8);
+    EXPECT_MAT_NEAR(salsa.xbuf_[salsa.xbuf_head_].v, Vector3d::Zero(), 1e-8);
+    EXPECT_MAT_NEAR(salsa.xbuf_[salsa.xbuf_head_].tau, Vector2d::Zero(), 1e-8);
+    EXPECT_FLOAT_EQ(salsa.xbuf_[salsa.xbuf_head_].t, 0.0);
+    EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 0);
+    EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, 0);
+    for (auto& f : salsa.xfeat_)
+    {
+        EXPECT_EQ(f.second.funcs.size(), 0);
+        EXPECT_EQ(f.second.kf0, 0);
+        EXPECT_EQ(f.second.idx0, 0);
+    }
+
+    for (int j = 0; j < 10; j++)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            t += dt;
+            salsa.imuCallback(t, imu, R_imu);
+        }
+
+        feat.id += 1;
+        feat.t = t;
+        for (int k = 0; k < 4; k++)
+        {
+            feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
+            feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
+        }
+        salsa.imageCallback(t, feat, R_pix, R_depth);
+        EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
+
+        EXPECT_EQ(salsa.xbuf_head_, 1);
+        EXPECT_EQ(salsa.xbuf_tail_, 0);
+        EXPECT_MAT_NEAR(salsa.xbuf_[salsa.xbuf_head_].tau, Vector2d::Zero(), 1e-8);
+        EXPECT_FLOAT_EQ(salsa.xbuf_[salsa.xbuf_head_].t, t);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
+        for (auto& f : salsa.xfeat_)
+        {
+            EXPECT_EQ(f.second.funcs.size(), 1);
+            EXPECT_EQ(f.second.kf0, 0);
+            EXPECT_EQ(f.second.idx0, 0);
+            for (auto& func : f.second.funcs)
+            {
+                EXPECT_EQ(func.to_idx_, 1);
+                EXPECT_MAT_NEAR(func.zetai_, f.second.z0, 1e-16);
+            }
+        }
+    }
+
+    // Deliberately cause a new keyframe
+    feat.feat_ids[0] = 4;
+    feat.feat_ids[1] = 5;
+    feat.feat_ids[2] = 2;
+    feat.feat_ids[3] = 3;
+    for (int i = 0; i < 3; i++)
+    {
+        t += dt;
+        salsa.imuCallback(t, imu, R_imu);
+    }
+
+    feat.id += 1;
+    feat.t = t;
+    for (int k = 0; k < 4; k++)
+    {
+        feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
+        feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
+    }
+    salsa.imageCallback(t, feat, R_pix, R_depth);
+    EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
+
+    EXPECT_EQ(salsa.xbuf_head_, 1);
+    EXPECT_EQ(salsa.xbuf_tail_, 0);
+    EXPECT_MAT_NEAR(salsa.xbuf_[salsa.xbuf_head_].tau, Vector2d::Zero(), 1e-8);
+    EXPECT_FLOAT_EQ(salsa.xbuf_[salsa.xbuf_head_].t, t);
+    EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 1);
+    EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, 1);
+    EXPECT_EQ(salsa.xfeat_.size(), 4);
+    for (int i = 2; i < 6; i++)
+    {
+        if (i < 4)
+        {
+            EXPECT_EQ(salsa.xfeat_.at(i).funcs.size(), 1);
+            EXPECT_EQ(salsa.xfeat_.at(i).kf0, 0);
+            EXPECT_EQ(salsa.xfeat_.at(i).idx0, 0);
+            EXPECT_NEAR(salsa.xfeat_.at(i).rho, sqrt(2)/2, 1e-3);
+        }
+        else
+        {
+            EXPECT_EQ(salsa.xfeat_.at(i).funcs.size(), 0);
+            EXPECT_EQ(salsa.xfeat_.at(i).kf0, 1);
+            EXPECT_EQ(salsa.xfeat_.at(i).idx0, 1);
+        }
+
+    }
+}
+
+TEST (Vision, HandleWindowSlide)
+{
+    Salsa salsa;
+    salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
+    salsa.x_u2c_.q() = quat::Quatd::Identity();
+    salsa.x_u2c_.t() = Vector3d::Zero();
+
+    MatrixXd l;
+    l.resize(4,3);
+    l << 1,  0, 1,
+         0,  1, 1,
+         0, -1, 1,
+        -1,  0, 1;
+
+
+    Features feat;
+    feat.resize(4);
+    for (int j = 0; j < 4; j++)
+    {
+        feat.zetas[j] = l.row(j).transpose().normalized();
+        feat.depths[j] = l.row(j).transpose().norm();
+        feat.feat_ids[j] = j;
+    }
+    feat.id = 0;
+    feat.t = 0.0;
+
+    Matrix2d R_pix = Matrix2d::Identity();
+    Matrix1d R_depth = Matrix1d::Identity();
+    std::vector<Vector6d, aligned_allocator<Vector6d>> imu;
+    imu.resize(3);
+    imu[0] = (Vector6d() << 0.1, 0.0, -9.80665, Vector3d::Zero()).finished();
+    imu[1] = (Vector6d() << -0.1, 0.1, -9.80665, Vector3d::Zero()).finished();
+    imu[2] = (Vector6d() << 0.0, -0.1, -9.80665, Vector3d::Zero()).finished();
+    Matrix6d R_imu = Matrix6d::Identity();
+
+    double t = 0.0;
+    double dt = 0.02;
+
+    auto imuit = imu.begin();
+
+    int kf_cb_id, kf_cb_cond;
+    salsa.new_kf_cb_ = [&kf_cb_id, &kf_cb_cond] (int kf_id, int kf_cond)
+    {
+        kf_cb_id = kf_id;
+        kf_cb_cond = kf_cond;
+    };
+
+    for (int k = 0; k < salsa.N_*2; k++)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            salsa.imageCallback(t, feat, R_pix, R_depth);
+            EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
+            EXPECT_EQ(salsa.xbuf_tail_, k <= salsa.N_ ? 0 : k - salsa.N_);
+            if (i == 0)
+            {
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k);
+                EXPECT_EQ(salsa.current_node_, k);
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, k);
+                EXPECT_EQ(salsa.current_kf_, k);
+                EXPECT_EQ(salsa.xbuf_head_, k);
+            }
+            else
+            {
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k+1);
+                EXPECT_EQ(salsa.current_node_, k+1);
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
+                EXPECT_EQ(salsa.current_kf_, k);
+                EXPECT_EQ(salsa.xbuf_head_, k+1);
+            }
+
+            for (int ii = 0; ii < 3; ii++)
+            {
+                t += dt;
+                salsa.imuCallback(t, *imuit, R_imu);
+            }
+
+            feat.id += 1;
+            feat.t = t;
+            for (int j = 0; j < 4; j++)
+            {
+                feat.zetas[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).normalized();
+                feat.depths[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).norm();
+            }
+        }
+
+        EXPECT_EQ(kf_cb_id, k);
+        if (k == 0)
+            EXPECT_EQ(kf_cb_cond, Salsa::FIRST_KEYFRAME);
+        else
+            EXPECT_EQ(kf_cb_cond, Salsa::INSUFFICIENT_MATCHES);
+
+        if (k > salsa.N_)
+        {
+            for (auto feat : salsa.xfeat_)
+            {
+                Feat& ft(feat.second);
+                if (feat.first < 2*(k - salsa.N_))
+                {
+                    EXPECT_EQ(ft.kf0, k - salsa.N_);
+                }
+            }
+        }
+
+
+        imuit++;
+        if (imuit == imu.end())
+            imuit = imu.begin();
+
+        feat.feat_ids[(2*k) % feat.feat_ids.size()] += feat.feat_ids.size();
+        feat.feat_ids[(2*k+1) % feat.feat_ids.size()] += feat.feat_ids.size();
+    }
 }
 

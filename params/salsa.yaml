@@ -11,9 +11,12 @@ log_prefix: "/tmp/Salsa/"
 
 # dt_m: 0
 # dt_c: 0
-N: 10
+N: 4
+num_sat: 0
+num_feat: 10
 R_clock_bias: [0.01, 0.01] # nsec
 switch_weight: 1000.0
+state_buf_size: 25
 
 accel_noise_stdev:  0.2
 gyro_noise_stdev: 0.3
@@ -21,13 +24,14 @@ position_noise_stdev: 0.001
 attitude_noise_stdev: 0.001
 acc_wander_weight: 0.005
 gyro_wander_weight: 0.002
+min_depth: 0.5
 
 focal_len: [250.0, 250.0]
 cam_center: [320, 240]
 cam_skew: 0.0
 distortion: [0, 0, 0, 0, 0]
 kf_parallax_thresh: 40
-kf_feature_thresh: 30
+kf_feature_thresh: 0.75
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]

@@ -7,6 +7,7 @@ using namespace salsa;
 
 void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 {
+    last_callback_ = MOCAP;
     if (current_node_ == -1)
     {
         SD("Initialized Mocap\n");
@@ -20,7 +21,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
     {
         int prev_x_idx = xbuf_head_;
 
-        finishNode(t, true);
+        finishNode(t, true, true);
 
         xbuf_[xbuf_head_].kf = current_node_;
         xbuf_[xbuf_head_].x = z.elements();

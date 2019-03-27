@@ -24,6 +24,7 @@ public:
 
     State();
 };
+typedef std::vector<salsa::State, aligned_allocator<salsa::State>> StateVec;
 
 class Features
 {
@@ -36,6 +37,7 @@ public:
     std::vector<int> feat_ids; // feature ids corresonding to pixel measurements
 
     void reserve(const int& N);
+    void resize(const int& N);
     void clear();
 };
 
@@ -49,13 +51,14 @@ struct Feat
     double rho;
     Vector3d z0;
     FeatDeque funcs;
+    bool updated_in_last_image_;
 
     Feat(int _idx, int _kf0, const Vector3d& _z0, double _rho);
 
     void addMeas(int to_idx, const Xformd& x_b2c, const Matrix2d& cov, const Vector3d& zj);
     void moveMeas(int to_idx, const Vector3d& zj);
-    bool slideAnchor(int new_from_idx, int new_from_kf, const State* xbuf, const Xformd& x_b2c);
-    Vector3d pos(const State* xbuf, const Xformd& x_b2c);
+    bool slideAnchor(int new_from_idx, int new_from_kf, const StateVec& xbuf, const Xformd& x_b2c);
+    Vector3d pos(const StateVec& xbuf, const Xformd& x_b2c);
 };
 
 }

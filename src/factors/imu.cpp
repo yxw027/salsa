@@ -3,6 +3,8 @@
 using namespace Eigen;
 using namespace xform;
 
+Vector3d ImuFunctor::gravity_{0, 0, 9.80665};
+
 ImuFunctor::ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node)
 {
     delta_t_ = 0.0;

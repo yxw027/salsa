@@ -35,16 +35,24 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
 void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_pix,
                           const Matrix1d& R_depth)
 {
+    last_callback_ = IMG;
+//    FeatMap::iterator fit = xfeat_.begin();
+//    while (fit != xfeat_.end())
+//    {
+//        if (fit->second.rho < 0.1)
+//            fit = xfeat_.erase(fit);
+//        else
+//            fit++;
+//    }
     int prev_keyframe = xbuf_[xbuf_head_].kf;
     bool new_keyframe = calcNewKeyframeCondition(z);
     if (current_node_ == -1)
-    {
-        initialize(t, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
-    }
+        initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
     else
-    {
-        finishNode(t, new_keyframe);
-    }
+        finishNode(t, prev_keyframe != -1, new_keyframe);
+
+    for (auto& ft : xfeat_)
+        ft.second.updated_in_last_image_ = false;
 
     for (int i = 0; i < z.zetas.size(); i++)
     {
@@ -55,14 +63,15 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
                 ft.addMeas(xbuf_head_, x_u2c_, R_pix, z.zetas[i]);
             else
                 ft.moveMeas(xbuf_head_, z.zetas[i]);
+            ft.updated_in_last_image_ = true;
         }
         else if (new_keyframe)
         {
             double rho0 = 1.0/z.depths[i]; /// TODO Better depth initialization
-            xfeat_.insert(xfeat_.end(),
-                          {z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0)});
+            xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0)});
         }
     }
+    rmLostFeatFromKf();
     solve();
 }
 
@@ -107,8 +116,15 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
     }
     kf_parallax_ /= kf_Nmatch_feat_;
 
-    if (kf_parallax_ > kf_parallax_thresh_ || kf_Nmatch_feat_ < kf_feature_thresh_)
+    if (kf_parallax_ > kf_parallax_thresh_)
     {
+        kf_condition_ = TOO_MUCH_PARALLAX;
+        kf_feat_ = z;
+        return true;
+    }
+    else if(kf_Nmatch_feat_ < kf_feature_thresh_)
+    {
+        kf_condition_ = INSUFFICIENT_MATCHES;
         kf_feat_ = z;
         return true;
     }
@@ -128,41 +144,29 @@ void Salsa::cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf)
     }
 }
 
-void Salsa::logFeatRes()
+void Salsa::rmLostFeatFromKf()
 {
-    feat_res_log_->log(current_state_.t);
-    FeatMap::iterator ft = xfeat_.begin();
-    feat_res_log_->log(xfeat_.size());
-    while (ft != xfeat_.end())
+    FeatMap::iterator ftpair = xfeat_.begin();
+    while (ftpair != xfeat_.end())
     {
-        feat_res_log_->log(ft->first, ft->second.funcs.size(), xbuf_[ft->second.idx0].node);
-        FeatDeque::iterator func = ft->second.funcs.begin();
-        while (func != ft->second.funcs.end())
+        Feat& ft(ftpair->second);
+        if (ft.funcs.size() == 0)
         {
-            Vector2d res;
-            (*func)(xbuf_[ft->second.idx0].x.data(), xbuf_[func->to_idx_].x.data(),
-                    &ft->second.rho, res.data());
-            feat_res_log_->log((double)xbuf_[func->to_idx_].node, (double)xbuf_[func->to_idx_].t);
-            feat_res_log_->logVectors(res);
-            func++;
+            ftpair++;
+            continue;
         }
-        ft++;
+        else if (ft.funcs.back().to_idx_ == xbuf_head_ && !ft.updated_in_last_image_)
+        {
+            ft.funcs.pop_back();
+            if (ft.funcs.size() == 0)
+            {
+                ftpair = xfeat_.erase(ftpair);
+                continue;
+            }
+        }
+        ftpair++;
     }
-}
 
-void Salsa::logFeatures()
-{
-    feat_log_->log(current_state_.t);
-    FeatMap::iterator ft = xfeat_.begin();
-    feat_log_->log(xfeat_.size());
-    while (ft != xfeat_.end())
-    {
-        feat_log_->log(ft->first);
-        Xformd x_I2i(xbuf_[ft->second.idx0].x);
-        Vector3d p_I2l = x_I2i.t() + x_I2i.q().rota(x_u2c_.q().rota(1.0/ft->second.rho * ft->second.z0) + x_u2c_.t());
-        feat_log_->logVectors(p_I2l);
-        ft++;
-    }
 }
 
 }

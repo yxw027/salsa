@@ -8,10 +8,8 @@ FeatFunctor::FeatFunctor(const Xformd& x_b2c, const Matrix2d& cov,
   x_b2c_(x_b2c)
 {
   Xi_ = cov.inverse().llt().matrixL().transpose();
-  Pz_.block<1,3>(0,0) = zetaj_.cross(e_x).transpose();
-  Pz_.block<1,3>(1,0) = zetaj_.cross(zetaj_.cross(e_x)).transpose();
-  Pz_.block<1,3>(0,0).normalize();
-  Pz_.block<1,3>(1,0).normalize();
+  Pz_.block<1,3>(0,0) = zetaj_.cross(e_x).transpose().normalized();
+  Pz_.block<1,3>(1,0) = zetaj_.cross(Pz_.block<1,3>(0,0).transpose()).transpose().normalized();
   R_b2c = x_b2c_.q().R();
 }
 

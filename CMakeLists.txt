@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(salsa)
 
-set(CMAKE_CXX_STANDARD 14)
-set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_CXX_STANDARD 17)
 
 if(${SALSA_WINDOW_SIZE})
     add_definitions(-DSALSA_WINDOW_SIZE=${SALSA_WINDOW_SIZE})
     message("Defining Custom Window Size: ${SALSA_WINDOW_SIZE}")
 endif()
 
-include(cotire)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GTest)
@@ -42,6 +40,9 @@ target_link_libraries(factors
     geometry
     multirotor_sim
     ${CERES_LIBRARIES})
+target_include_directories(factors PUBLIC
+     ${EIGEN3_INCLUDE_DIRS}
+     ${CERES_INCLUDE_DIRS})
 
 add_library(salsa
     src/state.cpp
@@ -49,6 +50,7 @@ add_library(salsa
     src/salsa_mocap.cpp
     src/salsa_gnss.cpp
     src/salsa_vision.cpp
+    src/salsa_log.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry
@@ -58,25 +60,21 @@ target_link_libraries(salsa
     stdc++fs
     ${YAML_CPP_LIBRARIES}
     ${CERES_LIBRARIES})
-cotire(salsa)
 
 
 if (${catkin_FOUND})
     message(STATUS "catkin_FOUND - Building salsa ROS library")
 	add_library(salsa_ros src/salsa_ros.cpp)
-    target_include_directories(salsa_ros PUBLIC ${catkin_INCLUDE_DIRS})
+    target_include_directories(salsa_ros PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
     target_link_libraries(salsa_ros salsa ${catkin_LIBRARIES})
-    cotire(salsa_ros)
 
-	add_executable(salsa_rosbag src/salsa_rosbag.cpp)
-    target_include_directories(salsa_rosbag PUBLIC ${catkin_INCLUDE_DIRS})
+    add_executable(salsa_rosbag src/salsa_rosbag.cpp)
+    target_include_directories(salsa_rosbag PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
     target_link_libraries(salsa_rosbag salsa_ros ${catkin_LIBRARIES})
-    cotire(salsa_rosbag)
 
-	add_executable(salsa_node src/salsa_node.cpp)
-	target_link_libraries(salsa_node salsa_ros ${catkin_LIBRARIES})
-    target_include_directories(salsa_node PUBLIC ${catkin_INCLUDE_DIRS})
-    cotire(salsa_node)
+    add_executable(salsa_node src/salsa_node.cpp)
+    target_link_libraries(salsa_node salsa_ros ${catkin_LIBRARIES})
+    target_include_directories(salsa_node PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 endif()
 
 
@@ -106,7 +104,6 @@ if (${GTEST_FOUND})
          ${GTEST_LIBRARIES}
          ${CERES_LIBRARIES}
      )
-     cotire(test_salsa)
      add_test(NAME test_salsa COMMAND test_salsa --gtest_color=yes)
 endif()
 
