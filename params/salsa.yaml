@@ -11,7 +11,7 @@ log_prefix: "/tmp/Salsa/"
 
 # dt_m: 0
 # dt_c: 0
-N: 50
+N: 10
 num_sat: 0
 num_feat: 25
 R_clock_bias: [0.01, 0.01] # nsec

@@ -870,7 +870,7 @@ name "fig:vision_factor_geometry"
 \begin{align*}
 \hat{\zt}_{l/c_{j}}^{c_{j}} & =R_{I}^{c_{j}}\left(\p_{l/I}^{I}-\p_{c_{j}/I}^{I}\right)\\
  & =R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+\p_{l/i}^{I}-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)\\
- & =R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+\left(R_{i}^{I}\left(R_{c_{i}}^{i}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)
+ & =R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+R_{i}^{I}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)
 \end{align*}
 
 \end_inset

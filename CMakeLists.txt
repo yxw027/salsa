@@ -83,7 +83,7 @@ if (${GTEST_FOUND})
     add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
     add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
     add_executable(test_salsa
-        src/test/test_salsa.cpp
+#        src/test/test_salsa.cpp
         src/test/test_mocap_factor.cpp
         src/test/test_imu_factor.cpp
         src/test/test_logger.cpp
@@ -106,4 +106,11 @@ if (${GTEST_FOUND})
      )
      add_test(NAME test_salsa COMMAND test_salsa --gtest_color=yes)
 endif()
+
+add_executable(featSim src/examples/feat_sim.cpp)
+target_link_libraries(featSim salsa geometry multirotor_sim ${CERES_LIBRARIES})
+add_executable(gnssSim src/examples/gnss_sim.cpp)
+target_link_libraries(gnssSim salsa geometry multirotor_sim ${CERES_LIBRARIES})
+add_executable(mocapSim src/examples/mocap_sim.cpp)
+target_link_libraries(mocapSim salsa geometry multirotor_sim ${CERES_LIBRARIES})
 
