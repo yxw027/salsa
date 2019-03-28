@@ -9,12 +9,15 @@ namespace salsa
 {
 
 Salsa::Salsa()
-{}
+{
+    bias_ = nullptr;
+    anchor_ = nullptr;
+}
 
 Salsa::~Salsa()
 {
-    delete bias_;
-    delete anchor_;
+    if (bias_) delete bias_;
+    if (anchor_) delete anchor_;
 
     if (current_state_log_) delete current_state_log_;
     if (opt_log_) delete opt_log_;

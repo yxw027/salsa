@@ -25,7 +25,7 @@
     ASSERT_EQ((v1).cols(), (v2).cols()); \
     for (int row = 0; row < (v1).rows(); row++) {\
         for (int col = 0; col < (v2).cols(); col++) {\
-            if (std::abs((v1)(row, col) - (v2)(row,col)) > tol) \
+            if (std::abs((v1)(row, col) - (v2)(row,col)) > (tol)) \
                 cout << "[ " << row << ", " << col << " ] ";\
             ASSERT_NEAR((v1)(row, col), (v2)(row,col), (tol));\
         }\

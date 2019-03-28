@@ -165,8 +165,8 @@ public:
     GTime start_time_;
     Matrix2d clk_bias_Xi_;
 
-    double kf_parallax_thresh_ = 20.0;
-    double kf_feature_thresh_ = 40;
+    double kf_parallax_thresh_;
+    double kf_feature_thresh_;
     Features kf_feat_;
     int kf_Nmatch_feat_;
     double kf_parallax_;

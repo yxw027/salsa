@@ -66,7 +66,14 @@ TEST (Vision, NewKFRotate)
     salsa.imu_[0].cov_= sim.imu_R_;
     sim.t_ = 1.0;
     sim.update_camera_meas();
-    EXPECT_GT(salsa.kf_feat_.zetas.size(), 50);
+    EXPECT_EQ(salsa.kf_feat_.zetas.size(), sim.num_features_);
+
+    int kf_condition;
+    auto kf_cb = [&kf_condition](int kf, int condition)
+    {
+        kf_condition = condition;
+    };
+    salsa.new_kf_cb_ = kf_cb;
 
     int rot = 0;
     double t = 1.0;
@@ -87,7 +94,7 @@ TEST (Vision, NewKFRotate)
         rot++;
     }
 
-    EXPECT_GE (rot, 10);
+    EXPECT_EQ(kf_condition, Salsa::INSUFFICIENT_MATCHES);
     EXPECT_LE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_);
     EXPECT_LE(salsa.kf_parallax_, 1e-3);
 }
@@ -108,7 +115,14 @@ TEST (Vision, NewKFTranslate)
 
     sim.t_ = 1.0;
     sim.update_camera_meas();
-    EXPECT_GT(salsa.kf_feat_.zetas.size(), 50);
+    EXPECT_EQ(salsa.kf_feat_.zetas.size(), sim.num_features_);
+
+    int kf_condition;
+    auto kf_cb = [&kf_condition](int kf, int condition)
+    {
+        kf_condition = condition;
+    };
+    salsa.new_kf_cb_ = kf_cb;
 
     int step = 0;
     while (salsa.current_kf_ == 0)
@@ -126,7 +140,7 @@ TEST (Vision, NewKFTranslate)
         step++;
     }
 
-    EXPECT_GE(step, 3);
+    EXPECT_EQ(kf_condition, Salsa::TOO_MUCH_PARALLAX);
     EXPECT_GE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_);
     EXPECT_GE(salsa.kf_parallax_, salsa.kf_parallax_thresh_);
 }
@@ -356,8 +370,7 @@ TEST (Vision, HandleWindowSlide)
     salsa.x_u2c_.q() = quat::Quatd::Identity();
     salsa.x_u2c_.t() = Vector3d::Zero();
 
-    MatrixXd l;
-    l.resize(4,3);
+    Matrix<double, 4, 3> l;
     l << 1,  0, 1,
          0,  1, 1,
          0, -1, 1,
@@ -379,13 +392,13 @@ TEST (Vision, HandleWindowSlide)
     Matrix1d R_depth = Matrix1d::Identity();
     std::vector<Vector6d, aligned_allocator<Vector6d>> imu;
     imu.resize(3);
-    imu[0] = (Vector6d() << 0.1, 0.0, -9.80665, 0.1, 0, 0).finished();
-    imu[1] = (Vector6d() << -0.1, 0.1, -9.80665, -0.1, 0.1, 0).finished();
-    imu[2] = (Vector6d() << 0.0, -0.1, -9.80665, 0.0, -0.1, 0).finished();
+    imu[0] = (Vector6d() << 0.05, 0.0, -9.80665, 0.1, 0, 0).finished();
+    imu[1] = (Vector6d() << -0.05, 0.05, -9.80665, -0.1, 0.1, 0).finished();
+    imu[2] = (Vector6d() << 0.0, -0.05, -9.80665, 0.0, -0.1, 0).finished();
     Matrix6d R_imu = Matrix6d::Identity();
 
     double t = 0.0;
-    double dt = 0.02;
+    double dt = 0.01;
 
     auto imuit = imu.begin();
 
@@ -430,7 +443,7 @@ TEST (Vision, HandleWindowSlide)
             feat.t = t;
             for (int j = 0; j < 4; j++)
             {
-                feat.zetas[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).normalized();
+                feat.zetas[j] = salsa.current_state_.x.transformp(l.row(j).transpose()).normalized();
                 feat.depths[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).norm();
             }
         }

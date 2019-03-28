@@ -23,11 +23,8 @@ bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho, T* _res
     Xform<T> xj(_xj);
     const T& rho(*_rho);
     Vec3 zi = 1.0/rho * zetai_;
-    Vector3d p_b2c = x_b2c_.t();
-
-    Vec3 p_I2cj = (xj.q().rota(p_b2c) + xj.t());
-    Vec3 p_I2l = xi.t() + (xi.q().rota(R_b2c.transpose() * zi + p_b2c));
-    Vec3 zj_hat = R_b2c * xj.q().rotp(p_I2l - p_I2cj);
+//    Vec3 zj_hat = x_b2c_.rotp<T>(xj.rotp(xi.t_ + xi.rota(x_b2c_.rota<T>(zi) + x_b2c_.t_) - (xj.rota(x_b2c_.t_) + xj.t_)));
+    Vec3 zj_hat = x_b2c_.rotp<T>(xj.rotp(xi.transforma(x_b2c_.transforma<T>(zi)) - xj.transforma(x_b2c_.t_)));
     zj_hat.normalize();
 
 

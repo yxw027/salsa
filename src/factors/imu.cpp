@@ -38,7 +38,7 @@ void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, cons
     auto eta_w = eta.segment<3>(OMEGA);
 
     dydot.segment<3>(ALPHA) = dbeta;
-    dydot.segment<3>(BETA) = -gamma.rota(skew(a - ba)*dgamma + eta_a);
+    dydot.segment<3>(BETA) = -gamma.rota((a - ba).cross(dgamma) + eta_a);
     dydot.segment<3>(GAMMA) = -skew(w - bw)*dgamma - eta_w;
 }
 

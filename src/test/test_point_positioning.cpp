@@ -8,7 +8,7 @@
 #include "salsa/test_common.h"
 #include "salsa/salsa.h"
 
-TEST (Salsa, PointPositioningInit)
+TEST (DISABLED_Salsa, PointPositioningInit)
 {
   Simulator sim;
   salsa::Salsa salsa;
