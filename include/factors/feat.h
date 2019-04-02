@@ -29,6 +29,8 @@ public:
     Matrix2d Xi_;
     Matrix<double, 2, 3> Pz_;
 
+    double rho_true_;
+
     Matrix3d R_b2c;
 };
 

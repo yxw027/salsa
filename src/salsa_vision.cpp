@@ -64,14 +64,15 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
             else
                 ft.moveMeas(xbuf_head_, z.zetas[i]);
             ft.updated_in_last_image_ = true;
+            ft.funcs.back().rho_true_ = 1.0/z.depths[i];
         }
         else if (new_keyframe)
         {
-            double rho0 = 1.0/z.depths[i]; /// TODO Better depth initialization
-//            double rho0 = 0.1;
+//            double rho0 = 1.0/z.depths[i]; /// TODO Better depth initialization
+            double rho0 = 0.1;
             xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0, 1.0/z.depths[i])});
         }
-    }
+    }       
     rmLostFeatFromKf();
     solve();
 }
@@ -81,6 +82,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
     if (current_node_ == -1)
     {
         kf_feat_ = z;
+        kf_num_feat_ = z.feat_ids.size();
         return true;
     }
 
@@ -121,12 +123,14 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
     {
         kf_condition_ = TOO_MUCH_PARALLAX;
         kf_feat_ = z;
+        kf_num_feat_ = z.feat_ids.size();
         return true;
     }
-    else if(kf_Nmatch_feat_ < kf_feature_thresh_)
+    else if(kf_Nmatch_feat_ < std::round(kf_feature_thresh_ * kf_num_feat_))
     {
         kf_condition_ = INSUFFICIENT_MATCHES;
         kf_feat_ = z;
+        kf_num_feat_ = z.feat_ids.size();
         return true;
     }
     else

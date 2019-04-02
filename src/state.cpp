@@ -37,7 +37,7 @@ void Features::clear()
 }
 
 Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_true) :
-    kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho), rho_true(_rho_true)
+    kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho), rho_true(_rho_true), slide_count(0)
 {}
 
 void Feat::addMeas(int to_idx, const Xformd &x_b2c, const Matrix2d &cov, const Vector3d &zj)
@@ -58,6 +58,7 @@ bool Feat::slideAnchor(int new_from_idx, int new_from_kf, const StateVec &xbuf, 
     if (funcs.size() <= 1)
         return false; // can't slide, no future measurements
 
+
     Xformd x_I2i(xbuf[idx0].x);
     Xformd x_I2j(xbuf[new_from_idx].x);
 
@@ -68,9 +69,11 @@ bool Feat::slideAnchor(int new_from_idx, int new_from_kf, const StateVec &xbuf, 
     rho = 1.0/zi_j.norm();
     zi_j.normalize();
     z0 = funcs.front().zetaj_;
+    rho_true = funcs.front().rho_true_;
     idx0 = new_from_idx;
     kf0 = new_from_kf;
     funcs.pop_front();
+    slide_count++;
     return true;
 }
 

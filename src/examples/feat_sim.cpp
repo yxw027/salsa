@@ -9,7 +9,7 @@ using namespace std;
 int main()
 {
     Simulator sim(true);
-    sim.load(imu_feat(false, 15));
+    sim.load(imu_feat(false));
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));

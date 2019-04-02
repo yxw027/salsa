@@ -170,6 +170,7 @@ public:
     Features kf_feat_;
     int kf_Nmatch_feat_;
     double kf_parallax_;
+    int kf_num_feat_;
 
     int N_;
 

@@ -12,7 +12,9 @@
     do { \
         if (! (condition)) { \
             std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
-                      << " line " << __LINE__ << ": " << printf(__VA_ARGS__) << std::endl; \
+                      << " line " << __LINE__ << ": "; \
+            fprintf(stderr, __VA_ARGS__);\
+            std::cerr << std::endl; \
             assert(condition); \
         } \
     } while (false)

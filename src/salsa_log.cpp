@@ -112,7 +112,7 @@ void Salsa::logFeatures()
             Xformd x_I2i(xbuf_[ft->second.idx0].x);
             Vector3d p_I2l = x_I2i.t() + x_I2i.q().rota(x_u2c_.q().rota(1.0/ft->second.rho * ft->second.z0) + x_u2c_.t());
             feat_log_->logVectors(p_I2l);
-            feat_log_->log(ft->second.rho, ft->second.rho_true);
+            feat_log_->log(ft->second.rho, ft->second.rho_true, ft->second.slide_count);
             ft++;
         }
         else
@@ -120,7 +120,7 @@ void Salsa::logFeatures()
             feat_log_->log(-1);
             Vector3d p_I2l = Vector3d::Constant(NAN);
             feat_log_->logVectors(p_I2l);
-            feat_log_->log((double)NAN, (double)NAN);
+            feat_log_->log((double)NAN, (double)NAN, (int)-1);
         }
     }
 }

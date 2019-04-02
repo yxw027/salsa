@@ -50,6 +50,7 @@ struct Feat
     int idx0;
     double rho;
     double rho_true;
+    int slide_count;
     Vector3d z0;
     FeatDeque funcs;
     bool updated_in_last_image_;

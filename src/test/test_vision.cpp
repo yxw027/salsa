@@ -95,7 +95,7 @@ TEST (Vision, NewKFRotate)
     }
 
     EXPECT_EQ(kf_condition, Salsa::INSUFFICIENT_MATCHES);
-    EXPECT_LE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_);
+    EXPECT_LE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_ * salsa.kf_num_feat_);
     EXPECT_LE(salsa.kf_parallax_, 1e-3);
 }
 
@@ -141,7 +141,7 @@ TEST (Vision, NewKFTranslate)
     }
 
     EXPECT_EQ(kf_condition, Salsa::TOO_MUCH_PARALLAX);
-    EXPECT_GE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_);
+    EXPECT_GE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_ * salsa.kf_num_feat_);
     EXPECT_GE(salsa.kf_parallax_, salsa.kf_parallax_thresh_);
 }
 

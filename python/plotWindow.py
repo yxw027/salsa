@@ -7,9 +7,11 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAc
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 import sys
+import signal
 
 class plotWindow():
     def __init__(self, parent=None):
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
         self.app = QApplication(sys.argv)
         self.MainWindow = QMainWindow()
         self.MainWindow.__init__()

@@ -94,8 +94,12 @@ def plotFeatRes(allFeat=False):
 def plotFeatDepths():
     f = plt.figure()
     plt.suptitle("Feat Pos")
-    plt.plot(featPos['t'], featPos['ft']['rho'], 'b', alpha=0.7)
-    plt.plot(featPos['t'], featPos['ft']['rho_true'], '--k', alpha=0.5)
+    p = plt.plot(featPos['t'], featPos['ft']['rho'], alpha=0.7)
+    for i in range(len(p)):
+        plt.plot(featPos['t'], featPos['ft']['rho_true'][:,i], linestyle='--', color=p[i].get_color(), alpha=0.5)
+        slide_idx = np.hstack((np.diff(featPos['ft']['slide_count'][:,i]) > 0, False))
+        plt.plot(featPos['t'][slide_idx], featPos['ft']['rho_true'][slide_idx, i], marker='x', linestyle=' ', color=p[i].get_color(), alpha=0.5)
+    plt.ylim([0, 2])
     pw.addPlot("Depth", f)
 
 def plotPosition():

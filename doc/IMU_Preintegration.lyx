@@ -604,7 +604,7 @@ Finally, we must also consider the attitude portion
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\dot{\tilde{\gm}}_{b}^{\hat{b}} & =R\left(\exp_{\q}\left(\tilde{\gm}_{\hat{b}}^{b}\right)\right)\w_{b/i}^{b}-\hat{x\w}_{\hat{b}/i}^{\hat{b}}\\
+\dot{\tilde{\gm}}_{b}^{\hat{b}} & =R\left(\exp_{\q}\left(\tilde{\gm}_{\hat{b}}^{b}\right)\right)\w_{b/i}^{b}-\hat{\w}_{\hat{b}/i}^{\hat{b}}\\
  & \approx\left(I-\skew{\tilde{\gm}_{\hat{b}}^{b}}\right)^{\top}\left(\hat{\w}_{\hat{b}/i}^{\hat{b}}+\tilde{\w}_{\hat{b}/b}^{\hat{b}}\right)-\hat{\w}_{\hat{b}/i}^{\hat{b}}\\
  & =\left(\hat{\w}_{\hat{b}/i}^{\hat{b}}+\tilde{\w}_{\hat{b}/b}^{\hat{b}}\right)+\skew{\tilde{\gm}_{b}^{\hat{b}}}\left(\hat{\w}_{\hat{b}/i}^{\hat{b}}+\tilde{\w}_{\hat{b}/b}^{\hat{b}}\right)-\hat{\w}_{\hat{b}/i}^{\hat{b}}\\
  & =\tilde{\w}_{\hat{b}/b}^{\hat{b}}+\skew{\tilde{\gm}_{\hat{b}}^{b}}\left(\hat{\w}_{\hat{b}/i}^{\hat{b}}+\tilde{\w}_{\hat{b}/b}^{\hat{b}}\right)\\

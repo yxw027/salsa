@@ -73,14 +73,12 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
     clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
-    double kf_thresh_percent;
     get_yaml_eigen("focal_len", filename, cam_.focal_len_);
     get_yaml_eigen("distortion", filename, cam_.distortion_);
     get_yaml_eigen("cam_center", filename, cam_.cam_center_);
     get_yaml_node("cam_skew", filename, cam_.s_);
     get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
-    get_yaml_node("kf_feature_thresh", filename, kf_thresh_percent);
-    kf_feature_thresh_ = std::round(kf_thresh_percent * nf_);
+    get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
 }
 
 void Salsa::initState()
@@ -150,13 +148,13 @@ void Salsa::addOriginConstraint(ceres::Problem &problem)
 {
     if (xbuf_tail_ == xbuf_head_)
         return;
-    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].x.data());
-    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].v.data());
-    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].tau.data());
-//    anchor_->set(&xbuf_[xbuf_tail_]);
-//    FunctorShield<AnchorFunctor>* ptr = new FunctorShield<AnchorFunctor>(anchor_);
-//    problem.AddResidualBlock(new AnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
-//                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
+//    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].x.data());
+//    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].v.data());
+//    problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].tau.data());
+    anchor_->set(&xbuf_[xbuf_tail_]);
+    FunctorShield<AnchorFunctor>* ptr = new FunctorShield<AnchorFunctor>(anchor_);
+    problem.AddResidualBlock(new AnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
+                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)

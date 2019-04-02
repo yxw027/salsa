@@ -45,7 +45,8 @@ FtType = np.dtype([
     ('id', np.int32),
     ('p', (np.float64, 3)),
     ('rho', np.float64),
-    ('rho_true', np.float64)
+    ('rho_true', np.float64),
+    ('slide_count', np.int32)
 ])
 
 FeatType = np.dtype([
