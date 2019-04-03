@@ -48,23 +48,28 @@ def plotImuBias():
 def plot3DMap():
     f = plt.figure()
     ax = f.add_subplot(111, projection='3d')
-    plt.suptitle("Feature Positions")
 
     k = [x['kf'] != -1][0]
-    ax.plot(x['x'][:,1],x['x'][:,0], -x['x'][:,2], label=r'$\hat{x}$')
-    ax.plot(x['x'][k,1],x['x'][k,0], -x['x'][k,2], '*')
-    ax.plot(true['x'][:,1],true['x'][:,0], -true['x'][:,2], label=r'$x$')
+    ax.plot(state['x'][:,1],state['x'][:,0], -state['x'][:,2], label=r'$\hat{x}$')
+    ax.plot(state['x'][k,1],state['x'][k,0], -state['x'][k,2], '*')
+    ax.plot(truth['x'][:,1],truth['x'][:,0], -truth['x'][:,2], label=r'$x$')
     ax.legend()
 
-    for id, arr in featPos.iteritems():
-        if id == 't': continue
-        ax.scatter(arr[0,2], arr[0,1], -arr[0,3], 'o')
-        ax.plot(arr[:,2], arr[:,1], -arr[:,3], linewidth=0.5, alpha=0.5)
-    ax.plot(trueFeat[:,1], trueFeat[:,0], -trueFeat[:,2], 'x')
-    ax.set_xlim(-10, 10)
-    ax.set_ylim(-10, 10)
-    ax.set_zlim(-2, 4)
-    return f
+    # for id, arr in featPos.iteritems():
+    #     if id == 't': continue
+    #     ax.scatter(arr[0,2], arr[0,1], -arr[0,3], 'o')
+    #     ax.plot(arr[:,2], arr[:,1], -arr[:,3], linewidth=0.5, alpha=0.5)
+    # ax.plot(trueFeat[:,1], trueFeat[:,0], -trueFeat[:,2], 'x')
+    # ax.set_xlim(-10, 10)
+    # ax.set_ylim(-10, 10)
+    # ax.set_zlim(-2, 4)
+    # return f
+
+def init3DMap():
+    pass
+
+def animate3DMap(frame):
+    pass
 
 def plotFeatRes(allFeat=False):
     ncols = 8

@@ -8,6 +8,7 @@ if(${SALSA_WINDOW_SIZE})
     message("Defining Custom Window Size: ${SALSA_WINDOW_SIZE}")
 endif()
 
+find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GTest)
@@ -26,6 +27,7 @@ include_directories(include
     lib/utils/include
     ${CERES_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
+    ${OPENCV_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIR})
 
 add_library(factors
@@ -51,6 +53,7 @@ add_library(salsa
     src/salsa_gnss.cpp
     src/salsa_vision.cpp
     src/salsa_log.cpp
+    src/klt.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry
@@ -59,6 +62,7 @@ target_link_libraries(salsa
     factors
     stdc++fs
     ${YAML_CPP_LIBRARIES}
+    ${OpenCV_LIBS}
     ${CERES_LIBRARIES})
 
 
@@ -91,6 +95,7 @@ if (${GTEST_FOUND})
         src/test/test_feat_factor.cpp
         src/test/test_misc.cpp
         src/test/test_vision.cpp
+        src/test/test_klt.cpp
 #        src/test/test_salsa_mocap_indexing.cpp
 #        src/test/test_pseudorange_factor.cpp
 #        src/test/test_salsa_gps_indexing.cpp

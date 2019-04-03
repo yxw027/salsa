@@ -31,7 +31,6 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
     imageCallback(t, zfeat, R_pix, R_depth);
 }
 
-
 void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_pix,
                           const Matrix1d& R_depth)
 {
@@ -171,7 +170,6 @@ void Salsa::rmLostFeatFromKf()
         }
         ftpair++;
     }
-
 }
 
 }

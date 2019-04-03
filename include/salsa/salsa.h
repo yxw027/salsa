@@ -27,6 +27,8 @@
 #include "salsa/logger.h"
 #include "salsa/state.h"
 
+#include "opencv2/opencv.hpp"
+
 using namespace std;
 using namespace Eigen;
 using namespace xform;
@@ -57,6 +59,7 @@ public:
     void init(const std::string& filename);
 
     void load(const std::string& filename);
+    void loadKLT(const std::string& filename);
     void initState();
     void initFactors();
     void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
@@ -97,6 +100,10 @@ public:
     void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
     void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, const Matrix1d& R_depth);
+
+    void imageCallback(const cv::Mat& img);
+    bool dropFeatureKLT(int feature_id);
+    void setFeatureMask(const std::string& filename);
 
     bool isTrackedFeature(int id) const;
 
@@ -173,6 +180,25 @@ public:
     int kf_num_feat_;
 
     int N_;
+
+    // KLT Tracker
+    int got_first_img_;
+    bool show_matches_;
+    int feature_nearby_radius_;
+    int next_feature_id_;
+    std::vector<cv::Point2f> prev_features_;
+    std::vector<cv::Point2f> new_features_;
+    std::vector<cv::Scalar> colors_;
+    std::vector<int> ids_;
+    std::deque<int> good_ids;
+    std::vector<uchar> status_;
+    std::vector<float> err_;
+    cv::Mat prev_img_;
+    cv::Mat gray_img_;
+    cv::Mat color_img_;
+    cv::Mat mask_;
+    cv::Mat point_mask_;
+
 
 };
 }
