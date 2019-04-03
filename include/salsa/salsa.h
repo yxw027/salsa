@@ -99,7 +99,7 @@ public:
                          std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
     void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
-    void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, const Matrix1d& R_depth);
+    void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, bool new_keyframe);
 
     void imageCallback(const double &t, const cv::Mat& img, const Matrix2d &R_pix);
     bool dropFeatureKLT(int feature_id);

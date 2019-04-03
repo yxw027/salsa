@@ -261,7 +261,7 @@ TEST (Vision, HandleFeatureHandoff)
     double t = 0.0;
     double dt = 0.02;
 
-    salsa.imageCallback(t, feat, R_pix, R_depth);
+    salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
     EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
     EXPECT_EQ(salsa.xbuf_head_, 0);
@@ -294,7 +294,7 @@ TEST (Vision, HandleFeatureHandoff)
             feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
             feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
         }
-        salsa.imageCallback(t, feat, R_pix, R_depth);
+        salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
         EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
         EXPECT_EQ(salsa.xbuf_head_, 1);
@@ -334,7 +334,7 @@ TEST (Vision, HandleFeatureHandoff)
         feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
         feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
     }
-    salsa.imageCallback(t, feat, R_pix, R_depth);
+    salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
     EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
     EXPECT_EQ(salsa.xbuf_head_, 1);
@@ -416,7 +416,7 @@ TEST (Vision, HandleWindowSlide)
     {
         for (int i = 0; i < 10; i++)
         {
-            salsa.imageCallback(t, feat, R_pix, R_depth);
+            salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
             EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
             EXPECT_EQ(salsa.xbuf_tail_, k <= salsa.N_ ? 0 : k - salsa.N_);
             if (i == 0)

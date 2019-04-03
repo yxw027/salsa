@@ -30,23 +30,16 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
         zfeat.zetas.emplace_back(cam_.invProj(pix, 1.0));
         zfeat.pix.emplace_back(pix.x(), pix.y());
     }
-    imageCallback(t, zfeat, R_pix, R_depth);
+    bool new_keyframe = calcNewKeyframeCondition(zfeat);
+    imageCallback(t, zfeat, R_pix, new_keyframe);
 }
 
 void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_pix,
-                          const Matrix1d& R_depth)
+                          bool new_keyframe)
 {
-    last_callback_ = IMG;
-//    FeatMap::iterator fit = xfeat_.begin();
-//    while (fit != xfeat_.end())
-//    {
-//        if (fit->second.rho < 0.1)
-//            fit = xfeat_.erase(fit);
-//        else
-//            fit++;
-//    }
     int prev_keyframe = xbuf_[xbuf_head_].kf;
-    bool new_keyframe = calcNewKeyframeCondition(z);
+    last_callback_ = IMG;
+
     if (current_node_ == -1)
         initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
     else
@@ -152,7 +145,7 @@ void Salsa::cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf)
 
 void Salsa::createNewKeyframe()
 {
-//    kf_features_
+//    kf_feat_.pix
 }
 
 void Salsa::rmLostFeatFromKf()
