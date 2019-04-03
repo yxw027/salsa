@@ -5,5 +5,7 @@ build/*
 python/.idea/*
 .idea/*
 *.lyx#
+*.emergency
 *.lyx~
 node_modules/
+vid/*

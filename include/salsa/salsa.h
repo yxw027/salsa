@@ -104,6 +104,10 @@ public:
     void imageCallback(const cv::Mat& img);
     bool dropFeatureKLT(int feature_id);
     void setFeatureMask(const std::string& filename);
+    void showImage();
+    void collectNewfeatures();
+    void trackFeatures();
+    void filterFeaturesRANSAC();
 
     bool isTrackedFeature(int id) const;
 
@@ -190,7 +194,6 @@ public:
     std::vector<cv::Point2f> new_features_;
     std::vector<cv::Scalar> colors_;
     std::vector<int> ids_;
-    std::deque<int> good_ids;
     std::vector<uchar> status_;
     std::vector<float> err_;
     cv::Mat prev_img_;
