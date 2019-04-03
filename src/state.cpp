@@ -20,6 +20,7 @@ void Features::reserve(const int &N)
     zetas.reserve(N);
     depths.reserve(N);
     feat_ids.reserve(N);
+    pix.reserve(N);
 }
 
 void Features::resize(const int &N)
@@ -27,6 +28,7 @@ void Features::resize(const int &N)
     zetas.resize(N);
     depths.resize(N);
     feat_ids.resize(N);
+    pix.resize(N);
 }
 
 void Features::clear()
@@ -34,6 +36,7 @@ void Features::clear()
     zetas.clear();
     depths.clear();
     feat_ids.clear();
+    pix.clear();
 }
 
 Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_true) :

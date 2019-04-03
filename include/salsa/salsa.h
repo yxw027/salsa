@@ -101,7 +101,7 @@ public:
                        const Matrix1d& R_depth) override;
     void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, const Matrix1d& R_depth);
 
-    void imageCallback(const cv::Mat& img);
+    void imageCallback(const double &t, const cv::Mat& img, const Matrix2d &R_pix);
     bool dropFeatureKLT(int feature_id);
     void setFeatureMask(const std::string& filename);
     void showImage();
@@ -199,7 +199,7 @@ public:
     std::vector<uchar> status_;
     std::vector<float> err_;
     cv::Mat prev_img_;
-    cv::Mat gray_img_;
+    cv::Mat current_img_;
     cv::Mat color_img_;
     cv::Mat mask_;
     cv::Mat point_mask_;

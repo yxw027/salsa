@@ -4,6 +4,7 @@
 
 #include "geometry/xform.h"
 #include "factors/feat.h"
+#include "opencv2/opencv.hpp"
 
 using namespace Eigen;
 using namespace xform;
@@ -35,6 +36,7 @@ public:
     std::vector<Vector3d, aligned_allocator<Vector3d>> zetas; // unit vectors to features
     std::vector<double> depths; // feature distances corresponding to feature measurements
     std::vector<int> feat_ids; // feature ids corresonding to pixel measurements
+    std::vector<cv::Point2f> pix; // pixel measurements
 
     void reserve(const int& N);
     void resize(const int& N);

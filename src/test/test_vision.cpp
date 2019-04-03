@@ -244,6 +244,9 @@ TEST (Vision, HandleFeatureHandoff)
     for (int k = 0; k < 4; k++)
     {
         feat.zetas[k] = l.row(k).transpose().normalized();
+        Vector2d pix = salsa.cam_.proj(feat.zetas[k]);
+        feat.pix[k].x = pix.x();
+        feat.pix[k].y = pix.y();
         feat.depths[k] = l.row(k).transpose().norm();
         feat.feat_ids[k] = k;
     }
@@ -379,6 +382,9 @@ TEST (Vision, HandleWindowSlide)
     for (int j = 0; j < 4; j++)
     {
         feat.zetas[j] = l.row(j).transpose().normalized();
+        Vector2d pix = salsa.cam_.proj(feat.zetas[j]);
+        feat.pix[j].x = pix.x();
+        feat.pix[j].y = pix.y();
         feat.depths[j] = l.row(j).transpose().norm();
         feat.feat_ids[j] = j;
     }

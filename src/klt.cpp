@@ -58,13 +58,12 @@ void Salsa::setFeatureMask(const std::string& filename)
     cv::threshold(cv::imread(filename, IMREAD_GRAYSCALE), mask_, 1, 255, CV_8UC1);
 }
 
-//void KLT_Tracker::load_image(const Mat& img, double t, std::vector<Point2f> &features, std::vector<int> &ids, OutputArray& output)
-void Salsa::imageCallback(const Mat& img)//, double t, std::vector<Point2f> &features, std::vector<int> &ids, OutputArray& output)
+void Salsa::imageCallback(const double& t, const Mat& img, const Matrix2d& R_pix)
 {
     if (img.channels() > 1)
-        cvtColor(img, gray_img_, COLOR_BGR2GRAY);
+        cvtColor(img, current_img_, COLOR_BGR2GRAY);
     else
-        gray_img_ = img;
+        current_img_ = img;
 
     if (got_first_img_)
     {
@@ -72,10 +71,13 @@ void Salsa::imageCallback(const Mat& img)//, double t, std::vector<Point2f> &fea
         filterFeaturesRANSAC();
     }
     else
+    {
+        createNewKeyframe();
         got_first_img_ = true;
+    }
 
     collectNewfeatures();
-    gray_img_.copyTo(prev_img_);
+    current_img_.copyTo(prev_img_);
     std::swap(new_features_, prev_features_);
     new_features_.resize(prev_features_.size());\
 
@@ -94,7 +96,7 @@ void Salsa::trackFeatures()
         return;
     }
 
-    calcOpticalFlowPyrLK(prev_img_, gray_img_, prev_features_, new_features_, status, err);
+    calcOpticalFlowPyrLK(prev_img_, current_img_, prev_features_, new_features_, status, err);
 
     vector<int> good_ids;
     for (int i = prev_features_.size()-1; i >= 0; i--)
@@ -104,7 +106,7 @@ void Salsa::trackFeatures()
         double new_y = new_features_[i].y;
         if (status[i] == 0
             || new_x <= 1.0 || new_y <= 1.0
-            || new_x >= gray_img_.cols-1.0 || new_y >= gray_img_.rows-1.0
+            || new_x >= current_img_.cols-1.0 || new_y >= current_img_.rows-1.0
             || mask_.at<uint8_t>(cv::Point(round(new_x), round(new_y))) != 255)
         {
             new_features_.erase(new_features_.begin() + i);
@@ -168,7 +170,7 @@ void Salsa::collectNewfeatures()
         // Now find a bunch of points, not in the mask
         int num_new_features = nf_ - new_features_.size();
         vector<Point2f> new_corners;
-        goodFeaturesToTrack(gray_img_, new_corners, num_new_features, 0.3,
+        goodFeaturesToTrack(current_img_, new_corners, num_new_features, 0.3,
                             feature_nearby_radius_, point_mask_, 7);
 
         for (int i = 0; i < new_corners.size(); i++)

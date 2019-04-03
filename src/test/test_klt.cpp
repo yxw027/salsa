@@ -22,7 +22,7 @@ TEST (KLT, TrackVideo)
         cap >> frame;
         if (frame.empty())
             break;
-        salsa.imageCallback(frame);
+        salsa.imageCallback(0, frame, Matrix2d::Identity());
 //        cv::imshow("vid", frame);
         cv::waitKey(500/cap.get(cv::CAP_PROP_FPS));
     }
@@ -45,7 +45,7 @@ TEST (DISABLED_KLT, TrackCamera)
         cap >> frame;
         if (frame.empty())
             break;
-        salsa.imageCallback(frame);
+        salsa.imageCallback(0, frame, Matrix2d::Identity());
         //        cv::imshow("vid", frame);
         char c = cv::waitKey(1);
         if (c == 'q')

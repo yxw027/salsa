@@ -24,9 +24,11 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
     zfeat.feat_ids = z.feat_ids;
     zfeat.depths = z.depths;
     zfeat.zetas.reserve(z.pixs.size());
+    zfeat.pix.reserve(z.pixs.size());
     for (auto pix : z.pixs)
     {
         zfeat.zetas.emplace_back(cam_.invProj(pix, 1.0));
+        zfeat.pix.emplace_back(pix.x(), pix.y());
     }
     imageCallback(t, zfeat, R_pix, R_depth);
 }
@@ -104,8 +106,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
             /// TODO - calculate parallax wrt zetas
             Vector3d zihat = R_cj2ci * z.zetas[nj];
             Vector2d lihat =  cam_.proj(zihat);
-            Vector3d zi = kf_feat_.zetas[ni];
-            Vector2d li = cam_.proj(zi);
+            Vector2d li(kf_feat_.pix[ni].x, kf_feat_.pix[ni].y);
             double err = (lihat - li).norm();
             kf_parallax_ += err;
             ni++;
@@ -149,6 +150,11 @@ void Salsa::cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf)
     }
 }
 
+void Salsa::createNewKeyframe()
+{
+//    kf_features_
+}
+
 void Salsa::rmLostFeatFromKf()
 {
     FeatMap::iterator ftpair = xfeat_.begin();
@@ -172,5 +178,7 @@ void Salsa::rmLostFeatFromKf()
         ftpair++;
     }
 }
+
+
 
 }
