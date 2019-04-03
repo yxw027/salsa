@@ -43,9 +43,9 @@ TEST (Vision, AddsNewFeatures)
     for (int i = 0; i < 3; i++)
     {
         Xformd x = sim.state().X;
-        double d = (sim.p_I2c_ - sim.env_.get_points()[i]).norm();
+        double d = (sim.x_I2c_.t() - sim.env_.get_points()[i]).norm();
 
-        Vector3d pt_hat = x.t() + x.q().rota(sim.q_b2c_.rota(salsa.xfeat_.at(i).z0 * d) + sim.p_b2c_);
+        Vector3d pt_hat = x.t() + x.q().rota(sim.x_b2c_.rota(salsa.xfeat_.at(i).z0 * d) + sim.x_b2c_.t());
         EXPECT_MAT_NEAR(pt_hat, sim.env_.get_points()[i], 1e-8);
     }
 }
@@ -54,12 +54,12 @@ TEST (Vision, NewKFRotate)
 {
     Simulator sim(false);
     sim.load(imu_feat(false, 10.0));
-    sim.p_b2c_.setZero();
+    sim.x_b2c_.t().setZero();
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_.q() = sim.q_b2c_;
-    salsa.x_u2c_.t() = sim.p_b2c_;
+    salsa.x_u2c_ = sim.x_b2c_;
+
 
     sim.register_estimator(&salsa);
 
@@ -107,8 +107,7 @@ TEST (Vision, NewKFTranslate)
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_.q() = sim.q_b2c_;
-    salsa.x_u2c_.t() = sim.p_b2c_;
+    salsa.x_u2c_ = sim.x_b2c_;
 
     sim.register_estimator(&salsa);
     salsa.imu_[0].cov_ = sim.imu_R_;
@@ -155,8 +154,7 @@ TEST (Vision, SlideAnchor)
     int idx = 0;
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_.q() = sim.q_b2c_;
-    salsa.x_u2c_.t() = sim.p_b2c_;
+    salsa.x_u2c_ = sim.x_b2c_;
     Camera<double> cam = salsa.cam_;
 
     StateVec xbuf(10);
@@ -211,8 +209,7 @@ TEST (Vision, KeyframeCleanup)
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_.q() = sim.q_b2c_;
-    salsa.x_u2c_.t() = sim.p_b2c_;
+    salsa.x_u2c_ = sim.x_b2c_;
 
     sim.register_estimator(&salsa);
 
@@ -351,7 +348,7 @@ TEST (Vision, HandleFeatureHandoff)
             EXPECT_EQ(salsa.xfeat_.at(i).funcs.size(), 1);
             EXPECT_EQ(salsa.xfeat_.at(i).kf0, 0);
             EXPECT_EQ(salsa.xfeat_.at(i).idx0, 0);
-            EXPECT_NEAR(salsa.xfeat_.at(i).rho, sqrt(2)/2, 1e-3);
+            EXPECT_EQ(salsa.xfeat_.at(i).slide_count, 0);
         }
         else
         {
@@ -414,7 +411,7 @@ TEST (Vision, HandleWindowSlide)
         for (int i = 0; i < 10; i++)
         {
             salsa.imageCallback(t, feat, R_pix, R_depth);
-            EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
+            EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
             EXPECT_EQ(salsa.xbuf_tail_, k <= salsa.N_ ? 0 : k - salsa.N_);
             if (i == 0)
             {

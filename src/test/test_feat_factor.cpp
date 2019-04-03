@@ -43,11 +43,12 @@ TEST (FeatFactor, Withc2bTransform)
     xj.q() = Quatd::Identity();
     Vector3d l(0, 0, 1);
     Xformd xb2c;
-    xb2c.t() = Vector3d(0.1, 0, 0);
-    xb2c.q() = Quatd::from_euler(DEG2RAD*5, 0, 0);
+    xb2c.t() = Vector3d(0.0, 0, 0);
+    xb2c.q() = Quatd::from_euler(DEG2RAD*10, 0, 0);
 
-    Vector3d zi = xb2c.transformp(l - xi.t());
-    Vector3d zj = xb2c.transformp(l - xj.t());
+    Vector3d zi = xb2c.rotp(xi.rotp(l - (xi.rota(xb2c.t()) + xi.t())));
+    Vector3d zj = xb2c.rotp(xj.rotp(l - (xj.rota(xb2c.t()) + xj.t())));
+
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
@@ -106,7 +107,9 @@ TEST (FeatFactor, SimulatedFeatures)
     sim.register_estimator(&est);
 
     Camera<double> cam = sim.cam_;
-    Xformd x_b2c(sim.p_b2c_, sim.q_b2c_);
+    sim.x_b2c_.t() = Vector3d(0.1, 0.2, -0.05);
+    sim.x_b2c_.q() = quat::Quatd::from_euler(DEG2RAD * 45, 0, 0);
+    Xformd x_b2c = sim.x_b2c_;
 
     while (feat_cb_called ==  0)
         sim.run();
@@ -119,12 +122,13 @@ TEST (FeatFactor, SimulatedFeatures)
 
     for (int i = 0; i < z_.pixs.size(); i++)
     {
-        Vector3d zeta0, zeta1;
-        cam.invProj(z0.pixs[i], 1.0, zeta0);
-        cam.invProj(z_.pixs[i], 1.0, zeta1);
+        Vector3d zeta0 = cam.invProj(z0.pixs[i], 1.0);
+        Vector3d zeta1 = cam.invProj(z_.pixs[i], 1.0);
 
-        Vector3d test0 = (sim.env_.get_points()[z0.feat_ids[i]] - x0.t()).normalized();
-        Vector3d test1 = (sim.env_.get_points()[z_.feat_ids[i]] - x_.t()).normalized();
+        Xformd xI2c0 = x0 * x_b2c;
+        Xformd xI2c1 = x_ * x_b2c;
+        Vector3d test0 = xI2c0.transformp(sim.env_.get_points()[z0.feat_ids[i]]).normalized();
+        Vector3d test1 = xI2c1.transformp(sim.env_.get_points()[z_.feat_ids[i]]).normalized();
 
         Vector2d pix0 = cam.proj(test0);
         Vector2d pix1 = cam.proj(test1);

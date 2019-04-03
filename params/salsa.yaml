@@ -25,6 +25,7 @@ attitude_noise_stdev: 0.001
 acc_wander_weight: 0.05
 gyro_wander_weight: 0.005
 min_depth: 0.5
+use_measured_depth: false
 
 focal_len: [250.0, 250.0]
 cam_center: [320, 240]

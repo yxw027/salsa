@@ -67,8 +67,9 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
         }
         else if (new_keyframe)
         {
-//            double rho0 = 1.0/z.depths[i]; /// TODO Better depth initialization
             double rho0 = 0.1;
+            if (use_measured_depth_)
+                rho0 = 1.0/z.depths[i];
             xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0, 1.0/z.depths[i])});
         }
     }       

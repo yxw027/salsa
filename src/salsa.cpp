@@ -50,6 +50,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("log_prefix", filename, log_prefix_);
     get_yaml_node("switch_weight", filename, switch_weight_);
     get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
+    get_yaml_node("use_measured_depth", filename, use_measured_depth_);
 
     xbuf_.resize(STATE_BUF_SIZE);
     s_.reserve(ns_);

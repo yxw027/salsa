@@ -52,7 +52,7 @@ inline std::string default_params(const std::string& prefix)
     return filename;
 }
 
-inline std::string small_feat_test(const std::string& prefix)
+inline std::string small_feat_test(const std::string& prefix, bool init_depth=true)
 {
     std::string filename = "/tmp/Salsa.smallfeat.yaml";
     std::ofstream tmp(filename);
@@ -67,6 +67,7 @@ inline std::string small_feat_test(const std::string& prefix)
     node["kf_feature_thresh"] = 0.75;
     node["kf_parallax_thresh"] = 500;
     node["num_feat"] = 4;
+    node["use_measured_depth"] = init_depth;
     tmp << node;
     tmp.close();
     return filename;

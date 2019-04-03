@@ -67,7 +67,10 @@ void Salsa::imageCallback(const Mat& img)//, double t, std::vector<Point2f> &fea
         gray_img_ = img;
 
     if (got_first_img_)
+    {
         trackFeatures();
+        filterFeaturesRANSAC();
+    }
     else
         got_first_img_ = true;
 
@@ -84,6 +87,13 @@ void Salsa::trackFeatures()
 {
     vector<uchar> status;
     vector<float> err;
+    if (prev_features_.size() < 3)
+    {
+        prev_features_.clear();
+        std::cerr << "KLT Fatal Failure!  Re-starting tracker" <<std::endl;
+        return;
+    }
+
     calcOpticalFlowPyrLK(prev_img_, gray_img_, prev_features_, new_features_, status, err);
 
     vector<int> good_ids;
@@ -119,19 +129,27 @@ void Salsa::trackFeatures()
             }
         }
         if (good_id)
-            good_ids.push_back(ids_[i]);
+            good_ids.push_back(i);
     }
 }
 
 void Salsa::filterFeaturesRANSAC()
 {
-    std::vector<int> mask;
-    cv::findFundamentalMat(prev_features_, new_features_, mask);
-    for (int i = 0; i < mask.size(); i++)
+    if (prev_features_.size() < 8 || new_features_.size() < 8)
+        return;
+
+    Mat mask;
+    cv::findFundamentalMat(prev_features_, new_features_, mask, cv::RANSAC, 0.1, 0.999);
+//    cv::findEssentialMat(prev_features_, new_features_, cam_.focal_len_(0),
+//                         cv::Point2d(cam_.cam_center_(0), cam_.cam_center_(1)),
+//                         RANSAC, 0.999, 1.0, mask);
+    for (int i = mask.rows-1; i >= mask.rows; --i)
     {
-        if (mask[i] == 0)
+        if (mask.at<float>(i,0) == 0)
         {
-            new_features_.erase(new_features_.begin() + i);
+            new_features_.erase(new_features_.begin()+i);
+            prev_features_.erase(prev_features_.begin()+i);
+            ids_.erase(ids_.begin()+i);
         }
     }
 }

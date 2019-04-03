@@ -108,6 +108,7 @@ public:
     void collectNewfeatures();
     void trackFeatures();
     void filterFeaturesRANSAC();
+    void createNewKeyframe();
 
     bool isTrackedFeature(int id) const;
 
@@ -182,6 +183,7 @@ public:
     int kf_Nmatch_feat_;
     double kf_parallax_;
     int kf_num_feat_;
+    bool use_measured_depth_;
 
     int N_;
 

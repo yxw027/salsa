@@ -110,6 +110,13 @@ if (${GTEST_FOUND})
          ${CERES_LIBRARIES}
      )
      add_test(NAME test_salsa COMMAND test_salsa --gtest_color=yes)
+#     add_custom_command(
+#          TARGET test_salsa
+#          COMMENT "Run tests"
+#          POST_BUILD
+#          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+#          COMMAND test_salsa
+#     )
 endif()
 
 add_executable(featSim src/examples/feat_sim.cpp)
