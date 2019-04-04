@@ -189,11 +189,15 @@ TEST (Vision, SlideAnchor)
     Vector3d pt = sim.env_.get_points()[0];
     EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
     Vector2d res;
-    feat->funcs.front()(xbuf[feat->idx0].x.data(), xbuf[feat->funcs.front().to_idx_].x.data(), &feat->rho, res.data());
+    feat->funcs.front()(xbuf[feat->idx0].x.data(),
+                        xbuf[feat->funcs.front().to_idx_].x.data(),
+                        &feat->rho, res.data());
     for (int i = 1; i < 9; i++)
     {
         EXPECT_TRUE(feat->slideAnchor(i, i, xbuf, salsa.x_u2c_));
-        feat->funcs.front()(xbuf[feat->idx0].x.data(), xbuf[feat->funcs.front().to_idx_].x.data(), &feat->rho, res.data());
+        feat->funcs.front()(xbuf[feat->idx0].x.data(),
+                            xbuf[feat->funcs.front().to_idx_].x.data(),
+                            &feat->rho, res.data());
         EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-5);
         EXPECT_NEAR(feat->rho, rho[i], 1e-5);
         EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);

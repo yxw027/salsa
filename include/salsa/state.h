@@ -40,7 +40,9 @@ public:
 
     void reserve(const int& N);
     void resize(const int& N);
+    void rm(const int& idx);
     void clear();
+    int size() const;
 };
 
 typedef std::deque<FeatFunctor, aligned_allocator<FeatFunctor>> FeatDeque;

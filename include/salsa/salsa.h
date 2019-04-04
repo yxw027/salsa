@@ -102,20 +102,25 @@ public:
     void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, bool new_keyframe);
 
     void imageCallback(const double &t, const cv::Mat& img, const Matrix2d &R_pix);
-    bool dropFeatureKLT(int feature_id);
+    bool dropFeature(int idx);
     void setFeatureMask(const std::string& filename);
     void showImage();
     void collectNewfeatures();
     void trackFeatures();
     void filterFeaturesRANSAC();
+    void filterFeaturesOutOfBounds();
+    void filterFeaturesTooClose();
     void createNewKeyframe();
+    int calcNewKeyframeConditionKLT();
+    void calcCurrentZetas();
 
     bool isTrackedFeature(int id) const;
 
     enum {
-        FIRST_KEYFRAME,
-        TOO_MUCH_PARALLAX,
-        INSUFFICIENT_MATCHES
+        NOT_NEW_KEYFRAME = 0,
+        FIRST_KEYFRAME = 1,
+        TOO_MUCH_PARALLAX = 2,
+        INSUFFICIENT_MATCHES = 3
     };
     int kf_condition_;
     std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
@@ -123,6 +128,8 @@ public:
     State current_state_;
 
     int xbuf_head_, xbuf_tail_;
+
+    bool disable_solver_;
 
     StateVec xbuf_;
     vector<double> s_; int ns_;
@@ -179,7 +186,7 @@ public:
 
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
-    Features kf_feat_;
+    Features kf_feat_, current_feat_;
     int kf_Nmatch_feat_;
     double kf_parallax_;
     int kf_num_feat_;
@@ -192,12 +199,14 @@ public:
     bool show_matches_;
     int feature_nearby_radius_;
     int next_feature_id_;
+    vector<uchar> match_status_;
     std::vector<cv::Point2f> prev_features_;
-    std::vector<cv::Point2f> new_features_;
+//    std::vector<cv::Point2f> new_features_;
     std::vector<cv::Scalar> colors_;
-    std::vector<int> ids_;
+//    std::vector<int> ids_;
     std::vector<uchar> status_;
     std::vector<float> err_;
+    cv::Mat kf_img_;
     cv::Mat prev_img_;
     cv::Mat current_img_;
     cv::Mat color_img_;

@@ -12,6 +12,7 @@ Salsa::Salsa()
 {
     bias_ = nullptr;
     anchor_ = nullptr;
+    disable_solver_ = false;
 }
 
 Salsa::~Salsa()
@@ -274,8 +275,8 @@ void Salsa::solve()
     addMocapFactors(problem);
     addRawGnssFactors(problem);
 
-
-    ceres::Solve(options_, &problem, &summary_);
+    if (!disable_solver_)
+        ceres::Solve(options_, &problem, &summary_);
 //    std::cout << summary_.FullReport() << std::endl;
 
     logState();

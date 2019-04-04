@@ -15,8 +15,8 @@ void Salsa::loadKLT(const std::string& filename)//, int _radius, cv::Size _size)
 
     next_feature_id_ = 0;
     prev_features_.clear();
-    new_features_.clear();
-    ids_.clear();
+    current_feat_.clear();
+    kf_feat_.clear();
 
     colors_.clear();
     for (int i = 0; i < nf_; i++)
@@ -37,20 +37,11 @@ void Salsa::loadKLT(const std::string& filename)//, int _radius, cv::Size _size)
     }
 }
 
-bool Salsa::dropFeatureKLT(int feature_id)
+bool Salsa::dropFeature(int idx)
 {
-    // get the local index of this feature_id
-    int local_id = std::distance(ids_.begin(), std::find(ids_.begin(), ids_.end(), feature_id));
-    if (local_id < ids_.size())
-    {
-        ids_.erase(ids_.begin() + local_id);
-        new_features_.erase(new_features_.begin() + local_id);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    kf_feat_.rm(idx);
+    current_feat_.rm(idx);
+    prev_features_.erase(prev_features_.begin() + idx);
 }
 
 void Salsa::setFeatureMask(const std::string& filename)
@@ -68,115 +59,166 @@ void Salsa::imageCallback(const double& t, const Mat& img, const Matrix2d& R_pix
     if (got_first_img_)
     {
         trackFeatures();
+        filterFeaturesOutOfBounds();
         filterFeaturesRANSAC();
+        calcCurrentZetas();
     }
     else
     {
-        createNewKeyframe();
         got_first_img_ = true;
     }
 
-    collectNewfeatures();
+    bool new_keyframe = false;
+    if (calcNewKeyframeConditionKLT() != NOT_NEW_KEYFRAME)
+    {
+        new_keyframe = true;
+        createNewKeyframe();
+    }
+
     current_img_.copyTo(prev_img_);
-    std::swap(new_features_, prev_features_);
-    new_features_.resize(prev_features_.size());\
+    std::swap(current_feat_.pix, prev_features_);
 
     if (show_matches_)
         showImage();
+    imageCallback(t, current_feat_, R_pix, new_keyframe);
 }
 
 void Salsa::trackFeatures()
 {
-    vector<uchar> status;
     vector<float> err;
-    if (prev_features_.size() < 3)
+    calcOpticalFlowPyrLK(prev_img_, current_img_, prev_features_, current_feat_.pix, match_status_, err);
+}
+
+void Salsa::calcCurrentZetas()
+{
+    for (int i = 0; i < current_feat_.size(); i++)
     {
-        prev_features_.clear();
-        std::cerr << "KLT Fatal Failure!  Re-starting tracker" <<std::endl;
-        return;
+        Vector2d pix(current_feat_.pix[i].x, current_feat_.pix[i].y);
+        current_feat_.zetas[i] = cam_.invProj(pix, 1.0);
     }
+}
 
-    calcOpticalFlowPyrLK(prev_img_, current_img_, prev_features_, new_features_, status, err);
-
-    vector<int> good_ids;
-    for (int i = prev_features_.size()-1; i >= 0; i--)
+void Salsa::filterFeaturesOutOfBounds()
+{
+    for (int i = current_feat_.size()-1; i >= 0; i--)
     {
-        // If we found a match and the match is in the image
-        double new_x = new_features_[i].x;
-        double new_y = new_features_[i].y;
-        if (status[i] == 0
-            || new_x <= 1.0 || new_y <= 1.0
-            || new_x >= current_img_.cols-1.0 || new_y >= current_img_.rows-1.0
-            || mask_.at<uint8_t>(cv::Point(round(new_x), round(new_y))) != 255)
+        // Drop Feature if the match is either not in the image or we didn't find a match
+        double new_x = current_feat_.pix[i].x;
+        double new_y = current_feat_.pix[i].y;
+        if (match_status_[i] == 0
+                || new_x <= 1.0 || new_y <= 1.0
+                || new_x >= current_img_.cols-1.0 || new_y >= current_img_.rows-1.0
+                || mask_.at<uint8_t>(cv::Point(round(new_x), round(new_y))) != 255)
         {
-            new_features_.erase(new_features_.begin() + i);
-            prev_features_.erase(prev_features_.begin()+i);
-            ids_.erase(ids_.begin() + i);
+            dropFeature(i);
             continue;
         }
+    }
+}
 
-        // Make sure that it's not too close to other points
-        bool good_id = true;
-        for (auto it = good_ids.begin(); it != good_ids.end(); it++)
+int Salsa::calcNewKeyframeConditionKLT()
+{
+    if (current_node_ == -1)
+    {
+        kf_condition_ = FIRST_KEYFRAME;
+        return FIRST_KEYFRAME;
+    }
+
+    if (current_feat_.size() < std::round(kf_feature_thresh_ * kf_num_feat_))
+    {
+        kf_condition_ = INSUFFICIENT_MATCHES;
+        return INSUFFICIENT_MATCHES;
+    }
+
+    if (current_kf_ < 0)
+        return NOT_NEW_KEYFRAME;
+
+    kf_parallax_ = 0;
+    Quatd q_I2i(lastKfState().x.q());
+    Quatd q_I2j(current_state_.x.q());
+    Quatd q_b2c(x_u2c_.q());
+    Quatd q_cj2ci = q_b2c.inverse() * q_I2j.inverse() * q_I2i * q_b2c;
+    Matrix3d R_cj2ci = q_cj2ci.R();
+
+    assert(kf_feat_.size() == current_feat_.size());
+    for (int i = 0; i < kf_feat_.size(); i++)
+    {
+        Vector3d zihat = R_cj2ci * current_feat_.zetas[i];
+        Vector2d lihat = cam_.proj(zihat);
+        Vector2d li(kf_feat_.pix[i].x, kf_feat_.pix[i].y);
+        double err = (lihat - li).norm();
+        kf_parallax_ += err;
+    }
+    kf_parallax_ /= current_feat_.size();
+
+    if (kf_parallax_ > kf_parallax_thresh_)
+    {
+        kf_condition_ = TOO_MUCH_PARALLAX;
+        return TOO_MUCH_PARALLAX;
+    }
+
+    return NOT_NEW_KEYFRAME;
+}
+
+void Salsa::filterFeaturesTooClose()
+{
+    for (int i = 0; i < current_feat_.size(); i++)
+    {
+        for (int j = current_feat_.size()-1; j > i; j--)
         {
-            double dx = new_features_[*it].x - new_x;
-            double dy = new_features_[*it].y - new_y;
+            double dx = current_feat_.pix[i].x - current_feat_.pix[j].x;
+            double dy = current_feat_.pix[i].y - current_feat_.pix[j].y;
             if (std::sqrt(dx*dx + dy*dy) < feature_nearby_radius_)
             {
-                new_features_.erase(new_features_.begin() + i);
-                prev_features_.erase(prev_features_.begin()+i);
-                ids_.erase(ids_.begin() + i);
-                good_id = false;
-                break;
+                dropFeature(j);
             }
         }
-        if (good_id)
-            good_ids.push_back(i);
     }
 }
 
 void Salsa::filterFeaturesRANSAC()
 {
-    if (prev_features_.size() < 8 || new_features_.size() < 8)
+    if (kf_feat_.size() < 8 || current_feat_.size() < 8)
         return;
 
     Mat mask;
-    cv::findFundamentalMat(prev_features_, new_features_, mask, cv::RANSAC, 0.1, 0.999);
-//    cv::findEssentialMat(prev_features_, new_features_, cam_.focal_len_(0),
-//                         cv::Point2d(cam_.cam_center_(0), cam_.cam_center_(1)),
-//                         RANSAC, 0.999, 1.0, mask);
+    cv::findFundamentalMat(kf_feat_.pix, current_feat_.pix, mask, cv::RANSAC, 0.1, 0.999);
+    //    cv::findEssentialMat(prev_features_, new_features_, cam_.focal_len_(0),
+    //                         cv::Point2d(cam_.cam_center_(0), cam_.cam_center_(1)),
+    //                         RANSAC, 0.999, 1.0, mask);
     for (int i = mask.rows-1; i >= mask.rows; --i)
     {
         if (mask.at<float>(i,0) == 0)
         {
-            new_features_.erase(new_features_.begin()+i);
-            prev_features_.erase(prev_features_.begin()+i);
-            ids_.erase(ids_.begin()+i);
+            dropFeature(i);
         }
     }
 }
 
 void Salsa::collectNewfeatures()
 {
-    if (new_features_.size() < nf_)
+    if (current_feat_.size() < nf_)
     {
         // create a mask around current points
         mask_.copyTo(point_mask_);
-        for (int i = 0; i < new_features_.size(); i++)
+        for (int i = 0; i < current_feat_.size(); i++)
         {
-            circle(point_mask_, new_features_[i], feature_nearby_radius_, 0, -1, 0);
+            circle(point_mask_, current_feat_.pix[i], feature_nearby_radius_, 0, -1, 0);
         }
 
         // Now find a bunch of points, not in the mask
-        int num_new_features = nf_ - new_features_.size();
+        int num_new_features = nf_ - current_feat_.size();
         vector<Point2f> new_corners;
         goodFeaturesToTrack(current_img_, new_corners, num_new_features, 0.3,
                             feature_nearby_radius_, point_mask_, 7);
 
         for (int i = 0; i < new_corners.size(); i++)
         {
-            new_features_.push_back(new_corners[i]);
-            ids_.push_back(next_feature_id_++);
+            Vector2d pix(new_corners[i].x, new_corners[i].y);
+            current_feat_.zetas.push_back(cam_.invProj(pix, 1.0));
+            current_feat_.pix.emplace_back(std::move(new_corners[i]));
+            current_feat_.feat_ids.push_back(next_feature_id_++);
+            current_feat_.depths.push_back(NAN);
         }
     }
 }
@@ -185,11 +227,11 @@ void Salsa::showImage()
 {
     cvtColor(prev_img_, color_img_, COLOR_GRAY2BGR);
     // draw features and ids
-    for (int i = 0; i < new_features_.size(); i++)
+    for (int i = 0; i < current_feat_.size(); i++)
     {
-        const Scalar& color(colors_[ids_[i] % nf_]);
+        const Scalar& color(colors_[current_feat_.feat_ids[i] % nf_]);
         circle(color_img_, prev_features_[i], 5, color, -1);
-        putText(color_img_, to_string(ids_[i]), prev_features_[i],
+        putText(color_img_, to_string(current_feat_.feat_ids[i]), prev_features_[i],
                 FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
     }
 

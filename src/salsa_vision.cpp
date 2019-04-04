@@ -96,7 +96,6 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
         int idj = z.feat_ids[nj];
         if (idi == idj)
         {
-            /// TODO - calculate parallax wrt zetas
             Vector3d zihat = R_cj2ci * z.zetas[nj];
             Vector2d lihat =  cam_.proj(zihat);
             Vector2d li(kf_feat_.pix[ni].x, kf_feat_.pix[ni].y);
@@ -145,7 +144,11 @@ void Salsa::cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf)
 
 void Salsa::createNewKeyframe()
 {
-//    kf_feat_.pix
+    filterFeaturesTooClose();
+    collectNewfeatures();
+    kf_feat_ = current_feat_;
+    kf_num_feat_ = kf_feat_.size();
+    current_img_.copyTo(kf_img_);
 }
 
 void Salsa::rmLostFeatFromKf()
@@ -170,6 +173,7 @@ void Salsa::rmLostFeatFromKf()
         }
         ftpair++;
     }
+
 }
 
 
