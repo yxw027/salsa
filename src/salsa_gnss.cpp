@@ -120,37 +120,4 @@ void Salsa::pointPositioning(const GTime &t, const VecVec3 &z,
     } while (dx.norm() > 1e-4);
 }
 
-
-void Salsa::logRawGNSSRes()
-{
-    //  for (int n = 0; n < N; n++)
-    //  {
-    //    raw_gnss_res_log_->log(t_[n]);
-    //  }
-    //  for (int n = 0; n < N; n++)
-    //  {
-    //    for (int s = 0; s < N_SAT; s++)
-    //    {
-    //      Vector2d res = Vector2d::Constant(NAN);
-    //      if (prange_[n][s].active_)
-    //      {
-    //        prange_[n][s](x_.data() + n*7, v_.data() + n*3, tau_.data() + n*2, x_e2n_.data(), res.data());
-    //      }
-    //      raw_gnss_res_log_->logVectors(res);
-    //    }
-    //  }
-    //  for (int n = 0; n < N; n++)
-    //  {
-    //    for (int s = 0; s < N_SAT; s++)
-    //    {
-    //      int id = -1;
-    //      if (prange_[n][s].active_)
-    //      {
-    //        id = s;
-    //      }
-    //      raw_gnss_res_log_->log(id);
-    //    }
-    //  }
-}
-
 }

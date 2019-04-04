@@ -27,6 +27,7 @@ Salsa::~Salsa()
     if (feat_log_) delete feat_log_;
     if (state_log_) delete state_log_;
     if (cb_log_) delete cb_log_;
+    if (mocap_res_log_) delete mocap_res_log_;
 }
 
 void Salsa::init(const string& filename)
@@ -52,6 +53,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("switch_weight", filename, switch_weight_);
     get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
     get_yaml_node("use_measured_depth", filename, use_measured_depth_);
+    get_yaml_node("disable_solver", filename, disable_solver_);
 
     xbuf_.resize(STATE_BUF_SIZE);
     s_.reserve(ns_);
@@ -116,6 +118,7 @@ void Salsa::initLog()
     feat_log_ = new Logger(log_prefix_ + "Feat.log");
     state_log_ = new Logger(log_prefix_ + "State.log");
     cb_log_ = new Logger(log_prefix_ + "CB.log");
+    mocap_res_log_ = new Logger(log_prefix_ + "MocapRes.log");
 }
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
@@ -194,9 +197,6 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
         problem.AddResidualBlock(new MocapFactorAD(ptr),
                                  NULL,
                                  xbuf_[it->idx_].x.data());
-
-        Vector6d residual;
-        (*it)(xbuf_[it->idx_].x.data(), residual.data());
     }
 }
 
@@ -213,9 +213,6 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
                                      xbuf_[it->idx_].v.data(),
                                      xbuf_[it->idx_].tau.data(),
                                      x_e2n_.data());
-            Vector2d res;
-            (*it)(xbuf_[it->idx_].x.data(), xbuf_[it->idx_].v.data(), xbuf_[it->idx_].tau.data(),
-                    x_e2n_.data(), res.data());
         }
     }
     for (auto it = clk_.begin(); it != clk_.end(); it++)
@@ -244,9 +241,6 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
         FeatDeque::iterator func = ft->second.funcs.begin();
         while (func != ft->second.funcs.end())
         {
-            Vector2d res;
-            (*func)(xbuf_[ft->second.idx0].x.data(), xbuf_[func->to_idx_].x.data(),&ft->second.rho,
-                    res.data());
             FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
             problem.AddResidualBlock(new FeatFactorAD(ptr),
                                      new ceres::HuberLoss(3.0),
@@ -286,6 +280,7 @@ void Salsa::solve()
     logOptimizedWindow();
     logRawGNSSRes();
     logFeatRes();
+    logMocapRes();
     logFeatures();
 }
 

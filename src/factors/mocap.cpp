@@ -20,8 +20,8 @@ bool MocapFunctor::operator()(const T* _xu, T* _res) const
     Map<Vec6> res(_res);
     Xform<T> xu(_xu);
 //    res = Xi_ * ((xm_ + (dt_m_ * xmdot_)) - (xu.template otimes<T,double>(x_u2m_)));
-//    res = Xi_ * (xm_ - xu);
-    res = xm_ - xu;
+    res = Xi_ * (xm_ - xu);
+//    res = xm_ - xu;
     return true;
 }
 

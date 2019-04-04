@@ -71,6 +71,15 @@ def init3DMap():
 def animate3DMap(frame):
     pass
 
+def plotMocapRes():
+    f = plt.figure()
+    for i in range(2):
+        for j in range(3):
+            plt.subplot(3,2, i*3+j+1)
+            plt.plot(mocapRes['r']['t'].T, mocapRes['r']['res'][:,:,i*3+j].T)
+    pw.addPlot("MocapRes", f)
+
+
 def plotFeatRes(allFeat=False):
     ncols = 8
     nrows = 6
@@ -148,27 +157,36 @@ def plotVelocity():
         if i == 0:
             plt.legend()
     plt.subplot(4,1,4)
+    plt.ylabel("Magnitude")
     plt.plot(state['t'], norm(state['v'], axis=1), label=r'\hat{x}')
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
     pw.addPlot("Velocity", f)
+
+def plotGnssRes():
+    pass
+    # f = plt.figure()
+    # for i in range(2):
+    #     plt.subplot(2,1,i+1)
+    #     plt.plot(GnssRes['r']['t'].T, GnssRes['r']['res'][:,:,i].T)
 
 def plotResults(prefix):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-    global x, state, truth, opt, rawGPSRes, featRes, featPos, trueFeatPos, cb, xtitles, vtitles
-    global offset, pw
+    global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles
+    global offset, pw, mocapRes
 
     offset = 10
     x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
     state = fixState(np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType))
     truth = fixState(np.fromfile(os.path.join(prefix,"Truth.log"), dtype=CurrentStateType))
     opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
-    # rawGPSRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=RawGNSSResType)
+    GnssRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=GnssResType)
     featRes = np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType)
     featPos = np.fromfile(os.path.join(prefix, "Feat.log"), dtype=FeatType)
     # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
     cb = np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)])
+    mocapRes = np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType)
     # trueFeatPos -= truth['x'][0,0:3]
     # truth['x'][:,:3] -= truth['x'][0,0:3]
 
@@ -183,9 +201,17 @@ def plotResults(prefix):
     plotAttitude()
     plotVelocity()
     plotImuBias()
-    plotClockBias()
-    plotFeatRes()
-    plotFeatDepths()
+
+    if max(GnssRes['size']) > 0:
+        plotClockBias()
+        plotGnssRes()
+
+    if max(featPos['size']) > 0:
+        plotFeatRes()
+        plotFeatDepths()
+
+    if max(mocapRes['size']) > 0:
+        plotMocapRes()
 
 
 

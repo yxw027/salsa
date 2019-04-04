@@ -68,6 +68,7 @@ public:
     void initLog();
     void logRawGNSSRes();
     void logFeatRes();
+    void logMocapRes();
     void logFeatures();
     void logOptimizedWindow();
     void logState();
@@ -172,6 +173,7 @@ public:
     Logger* feat_log_ = nullptr;
     Logger* state_log_ = nullptr;
     Logger* cb_log_ = nullptr;
+    Logger* mocap_res_log_ = nullptr;
 
     std::string log_prefix_;
     Camera<double> cam_;

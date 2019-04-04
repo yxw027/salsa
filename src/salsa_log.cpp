@@ -31,15 +31,6 @@ void Salsa::logOptimizedWindow()
             opt_log_->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
             opt_log_->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
         }
-
-//        opt_log_->log(s_.size());
-//        for (int i = 0; i < ns_; i++)
-//        {
-//            if (i < s_.size())
-//                opt_log_->log(s_[i]);
-//            else
-//                opt_log_->log(NAN);
-//        }
         opt_log_->logVectors(imu_bias_);
     }
 }
@@ -121,6 +112,78 @@ void Salsa::logFeatures()
             Vector3d p_I2l = Vector3d::Constant(NAN);
             feat_log_->logVectors(p_I2l);
             feat_log_->log((double)NAN, (double)NAN, (int)-1);
+        }
+    }
+}
+
+void Salsa::logMocapRes()
+{
+    if (mocap_res_log_)
+    {
+        mocap_res_log_->log(current_state_.t);
+        mocap_res_log_->log((int)mocap_.size());
+        for (int i = 0; i < N_; i++)
+        {
+            double t;
+            Vector6d residual;
+            if (i < mocap_.size())
+            {
+                mocap_[i](xbuf_[mocap_[i].idx_].x.data(), residual.data());
+                t = xbuf_[mocap_[i].idx_].t;
+            }
+            else
+            {
+                t = NAN;
+                residual.setConstant(NAN);
+            }
+            mocap_res_log_->log(t);
+            mocap_res_log_->logVectors(residual);
+        }
+    }
+}
+
+void Salsa::logRawGNSSRes()
+{
+    if (raw_gnss_res_log_)
+    {
+        raw_gnss_res_log_->log(current_state_.t);
+        raw_gnss_res_log_->log((int)prange_.size());
+        for (int i = 0; i < N_; i++)
+        {
+            if (i < prange_.size())
+            {
+                raw_gnss_res_log_->log((int)prange_[i].size());
+                for (int j = 0; j < ns_; j++)
+                {
+                    double t;
+                    Vector2d res;
+                    if (j < prange_[i].size())
+                    {
+                        int idx = prange_[i][j].idx_;
+                        prange_[i][j](xbuf_[idx].x.data(), xbuf_[idx].v.data(), xbuf_[idx].tau.data(),
+                                x_e2n_.data(), res.data());
+                        t = xbuf_[idx].t;
+                    }
+                    else
+                    {
+                        t = NAN;
+                        res.setConstant(NAN);
+                    }
+                    raw_gnss_res_log_->log(t);
+                    raw_gnss_res_log_->logVectors(res);
+                }
+            }
+            else
+            {
+                raw_gnss_res_log_->log((int)-1);
+                for (int j = 0; j < ns_; j++)
+                {
+                    double t = NAN;
+                    Vector2d res = Vector2d::Constant(NAN);
+                    raw_gnss_res_log_->log(t);
+                    raw_gnss_res_log_->logVectors(res);
+                }
+            }
         }
     }
 }

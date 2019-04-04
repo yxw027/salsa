@@ -72,6 +72,26 @@ FeatResType = np.dtype([
     ('f', (ResType1, params["num_feat"]))
 ])
 
+MocapResType = np.dtype([
+    ('t', np.float64),
+    ('size', np.int32),
+    ('r', (np.dtype([
+        ('t', np.float64),
+        ('res', (np.float64, 6))
+    ]), params["N"]))
+])
+
+GnssResType = np.dtype([
+    ('t', np.float64),
+    ('size', np.int32),
+    ('r', (np.dtype([
+        ('size', np.int32),
+        ('v', np.dtype([
+            ('t', np.float64),
+            ('res', (np.float64, 2))
+        ]), params["num_sat"])
+    ]), params["N"]))
+])
 
 
 

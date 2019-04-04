@@ -12,11 +12,12 @@ log_prefix: "/tmp/Salsa/"
 # dt_m: 0
 # dt_c: 0
 N: 10
-num_sat: 0
+num_sat: 15
 num_feat: 25
 R_clock_bias: [0.01, 0.01] # nsec
 switch_weight: 1000.0
 state_buf_size: 100
+disable_solver: false
 
 accel_noise_stdev:  0.2
 gyro_noise_stdev: 0.3
