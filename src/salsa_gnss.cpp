@@ -59,7 +59,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
             {
                 prange_.back()[s].init(t, z[s].topRows<2>(), sats[s], pp_sol.topRows<3>(),
                                        R[s].topLeftCorner<2,2>(),
-                                       current_node_, xbuf_head_, current_kf_);
+                                       current_node_, current_kf_, xbuf_head_);
             }
 
             solve();

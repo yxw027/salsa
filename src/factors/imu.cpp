@@ -25,17 +25,17 @@ ImuFunctor::ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int 
 void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, const Vector6d& u,
                                     const Vector6d& eta, Vector9d& dydot)
 {
-//    auto dalpha = dy.segment<3>(ALPHA);
-    auto dbeta = dy.segment<3>(BETA);
-    Quatd gamma(y.data()+GAMMA);
-    auto a = u.segment<3>(ACC);
-    auto w = u.segment<3>(OMEGA);
-    auto ba = b_.segment<3>(ACC);
-    auto bw = b_.segment<3>(OMEGA);
-    auto dgamma = dy.segment<3>(GAMMA);
+    VectorBlock<const Vector9d, 3> dbeta = dy.segment<3>(BETA);
+    VectorBlock<const Vector9d, 3> dgamma = dy.segment<3>(GAMMA);
 
-    auto eta_a = eta.segment<3>(ACC);
-    auto eta_w = eta.segment<3>(OMEGA);
+    Quatd gamma(y.data()+GAMMA);
+    VectorBlock<const Vector6d, 3> a = u.segment<3>(ACC);
+    VectorBlock<const Vector6d, 3> w = u.segment<3>(OMEGA);
+    VectorBlock<Vector6d, 3> ba = b_.segment<3>(ACC);
+    VectorBlock<Vector6d, 3> bw = b_.segment<3>(OMEGA);
+
+    VectorBlock<const Vector6d, 3> eta_a = eta.segment<3>(ACC);
+    VectorBlock<const Vector6d, 3> eta_w = eta.segment<3>(OMEGA);
 
     dydot.segment<3>(ALPHA) = dbeta;
     dydot.segment<3>(BETA) = -gamma.rota((a - ba).cross(dgamma) + eta_a);
@@ -50,22 +50,22 @@ void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, cons
 void ImuFunctor::dynamics(const Vector10d& y, const Vector6d& u,
                           Vector9d& ydot, Matrix9d& A, Matrix96&B)
 {
-    auto alpha = y.segment<3>(ALPHA);
-    auto beta = y.segment<3>(BETA);
+    VectorBlock<const Vector10d, 3> alpha = y.segment<3>(ALPHA);
+    VectorBlock<const Vector10d, 3> beta = y.segment<3>(BETA);
     Quatd gamma(y.data()+GAMMA);
-    auto a = u.segment<3>(ACC);
-    auto w = u.segment<3>(OMEGA);
-    auto ba = b_.segment<3>(ACC);
-    auto bw = b_.segment<3>(OMEGA);
+    VectorBlock<Vector6d, 3> ba = b_.segment<3>(ACC);
+    VectorBlock<Vector6d, 3> bw = b_.segment<3>(OMEGA);
+    Vector3d a = u.segment<3>(ACC) - ba;
+    Vector3d w = u.segment<3>(OMEGA)- bw;
 
     ydot.segment<3>(ALPHA) = beta;
-    ydot.segment<3>(BETA) = gamma.rota(a - ba);
-    ydot.segment<3>(GAMMA) = w - bw;
+    ydot.segment<3>(BETA) = gamma.rota(a);
+    ydot.segment<3>(GAMMA) = w;
 
     A.setZero();
     A.block<3,3>(ALPHA, BETA) = I_3x3;
-    A.block<3,3>(BETA, GAMMA) = -gamma.R().transpose() * skew(a - ba);
-    A.block<3,3>(GAMMA, GAMMA) = -skew(w-bw);
+    A.block<3,3>(BETA, GAMMA) = -gamma.R().transpose() * skew(a);
+    A.block<3,3>(GAMMA, GAMMA) = -skew(w);
 
     B.setZero();
     B.block<3,3>(BETA, ACC) = -gamma.R().transpose();
@@ -109,7 +109,7 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
     A = Matrix9d::Identity() + A*dt + 1/2.0 * A*A*dt*dt;
     B = B*dt;
 
-    auto P_prev = P_;
+    Matrix9d P_prev = P_;
     P_ = A*P_*A.transpose() + B*cov*B.transpose();
     J_ = A*J_ + B;
 
@@ -120,14 +120,15 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
 
 void ImuFunctor::estimateXj(const double* _xi, const double* _vi, double* _xj, double* _vj) const
 {
-    auto alpha = y_.segment<3>(ALPHA);
-    auto beta = y_.segment<3>(BETA);
+    VectorBlock<const Vector10d, 3> alpha = y_.segment<3>(ALPHA);
+    VectorBlock<const Vector10d, 3> beta = y_.segment<3>(BETA);
     Quatd gamma(y_.data()+GAMMA);
     Xformd xi(_xi);
     Xformd xj(_xj);
     Map<const Vector3d> vi(_vi);
     Map<Vector3d> vj(_vj);
 
+    xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
     xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
     vj = gamma.rotp(vi + xi.q_.rotp(gravity_)*delta_t_ + beta);
     xj.q_ = xi.q_ * gamma;

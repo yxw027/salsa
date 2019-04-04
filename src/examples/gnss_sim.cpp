@@ -10,7 +10,9 @@ int main()
 {
     Simulator sim(true);
     sim.load(imu_raw_gnss());
-    sim.tmax_ = 10;
+//#ifndef NDEBUG
+//    sim.tmax_ = 10;
+//#endif
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));

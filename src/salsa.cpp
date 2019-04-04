@@ -213,6 +213,9 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
                                      xbuf_[it->idx_].v.data(),
                                      xbuf_[it->idx_].tau.data(),
                                      x_e2n_.data());
+            Vector2d res;
+            (*it)(xbuf_[it->idx_].x.data(), xbuf_[it->idx_].v.data(), xbuf_[it->idx_].tau.data(),
+                    x_e2n_.data(), res.data());
         }
     }
     for (auto it = clk_.begin(); it != clk_.end(); it++)
