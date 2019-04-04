@@ -51,19 +51,11 @@ def plot3DMap():
 
     k = [x['kf'] != -1][0]
     ax.plot(state['x'][:,1],state['x'][:,0], -state['x'][:,2], label=r'$\hat{x}$')
-    ax.plot(state['x'][k,1],state['x'][k,0], -state['x'][k,2], '*')
+    ax.plot(x['x'][k,1],x['x'][k,0], -x['x'][k,2], '*')
     ax.plot(truth['x'][:,1],truth['x'][:,0], -truth['x'][:,2], label=r'$x$')
     ax.legend()
 
-    # for id, arr in featPos.iteritems():
-    #     if id == 't': continue
-    #     ax.scatter(arr[0,2], arr[0,1], -arr[0,3], 'o')
-    #     ax.plot(arr[:,2], arr[:,1], -arr[:,3], linewidth=0.5, alpha=0.5)
-    # ax.plot(trueFeat[:,1], trueFeat[:,0], -trueFeat[:,2], 'x')
-    # ax.set_xlim(-10, 10)
-    # ax.set_ylim(-10, 10)
-    # ax.set_zlim(-2, 4)
-    # return f
+    pw.addPlot("3D", f, True)
 
 def init3DMap():
     pass
@@ -173,7 +165,7 @@ def plotResults(prefix):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-    global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles
+    global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles, trueFeatPos
     global offset, pw, mocapRes
 
     offset = 10
@@ -184,7 +176,7 @@ def plotResults(prefix):
     GnssRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=GnssResType)
     featRes = np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType)
     featPos = np.fromfile(os.path.join(prefix, "Feat.log"), dtype=FeatType)
-    # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
+    trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
     cb = np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)])
     mocapRes = np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType)
     # trueFeatPos -= truth['x'][0,0:3]
@@ -197,6 +189,7 @@ def plotResults(prefix):
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
 
+    plot3DMap()
     plotPosition()
     plotAttitude()
     plotVelocity()
