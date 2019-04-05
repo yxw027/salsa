@@ -229,3 +229,38 @@ TEST (FeatFactor, OptOnePointOneViewC2B)
 
     EXPECT_NEAR(rhohat, rho, 1e-8);
 }
+
+TEST (FeatFactor, Jacobian)
+{
+    Xformd xi;
+    xi.t() = Vector3d(0, 0, 0);
+    xi.q() = Quatd::Identity();
+    Xformd xj;
+    xj.t() = Vector3d(1, 0, 0);
+    xj.q() = Quatd::Identity();
+    Vector3d l(0, 0, 1);
+    Xformd xb2c = Xformd::Identity();
+
+    Vector3d zi = l - xi.t();
+    Vector3d zj = l - xj.t();
+    double rho = zi.norm();
+    zi.normalize();
+    zj.normalize();
+
+    Vector2d res;
+    Matrix<double, 2, 6, RowMajor> dres_dxiAD, dres_dxi;
+    Matrix<double, 2, 6, RowMajor> dres_dxjAD, dres_dxj;
+    Matrix<double, 2, 1, RowMajor> dres_drhoAD, dres_drho;
+
+    double* param[3] = {xi.data(), xj.data(), &rho};
+    double* r = res.data();
+    double* jacAD[3] = {dres_dxiAD.data(), dres_dxjAD.data(), dres_drhoAD.data()};
+    double* jac[3] = {dres_dxi.data(), dres_dxj.data(), dres_drho.data()};
+
+    FeatFunctor func(xb2c, Matrix2d::Identity(), zi, zj, 0);
+    FeatFactorAD fAD(FunctorShield<FeatFunctor>(&func));
+    fAD.Evaluate(param, r, jacAD);
+
+    FeatFactor f(xb2c, Matrix2d::Identity(), zi, zj, 0);
+    f.Evaluate(param, r, jac);
+}

@@ -81,7 +81,6 @@ bool Feat::slideAnchor(int new_from_idx, int new_from_kf, const StateVec &xbuf, 
 
     Vector3d p_I2l_i = x_I2i.transforma(x_b2c.transforma(1.0/rho*z0));
     Vector3d zi_j = x_b2c.transformp(x_I2j.transformp(p_I2l_i));
-//        Vector3d zi_j = x_b2c.q().rotp(x_I2j.q().rotp(p_I2l_i - x_I2j.t()) - x_b2c.t());
     rho = 1.0/zi_j.norm();
     zi_j.normalize();
     z0 = funcs.front().zetaj_;
@@ -97,7 +96,15 @@ Vector3d Feat::pos(const StateVec& xbuf, const Xformd& x_b2c)
 {
     Xformd x_I2i(xbuf[idx0].x);
     return x_I2i.transforma(x_b2c.transforma(1.0/rho*z0));
-//        return x_I2i.t() + x_I2i.q().rota(x_b2c.q().rota(1.0/rho * z0) + x_b2c.t());
+}
+
+Obs::Obs()
+{
+    sat_idx = -1;
+}
+bool Obs::operator <(const Obs& other)
+{
+    return sat_idx < other.sat_idx;
 }
 
 

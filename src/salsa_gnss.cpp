@@ -8,6 +8,58 @@ namespace fs = std::experimental::filesystem;
 namespace salsa
 {
 
+void Salsa::ephCallback(const eph_t &eph)
+{
+    auto s = sats_.begin();
+    while (s != sats_.end())
+    {
+        if (s->id_ == eph.sat)
+            break;
+        s++;
+    }
+    bool new_sat = (s == sats_.end());
+
+    if (new_sat)
+    {
+        sats_.emplace_back(eph, sats_.size());
+    }
+    else
+    {
+        s->addEphemeris(eph);
+    }
+}
+
+void Salsa::filterObs(const ObsVec &obs)
+{
+    filtered_obs_.clear();
+    GTime time;
+    time.tow_sec = 0.0;
+
+    // Only add observations we have the satellite for
+    for (auto o : obs)
+    {
+        assert(time.tow_sec == 0.0 || time.tow_sec == o.t.tow_sec);
+        time = o.t;
+        int idx = getSatIdx(o.sat);
+        if (idx >= 0)
+        {
+            filtered_obs_.push_back(o);
+        }
+    }
+}
+
+int Salsa::getSatIdx(int sat_id) const
+{
+    for (auto s : sats_)
+    {
+        if (s.id_ == sat_id)
+            return s.idx_;
+    }
+    return -1;
+}
+
+
+
 void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
                             std::vector<Satellite> &sats, const std::vector<bool>& slip)
 {
@@ -112,6 +164,7 @@ void Salsa::pointPositioning(const GTime &t, const VecVec3 &z,
 
             i++;
         }
+
 
         solver.compute(A);
         dx = solver.solve(b);

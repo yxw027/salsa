@@ -5,6 +5,7 @@
 #include "geometry/xform.h"
 #include "factors/feat.h"
 #include "opencv2/opencv.hpp"
+#include "multirotor_sim/gtime.h"
 
 using namespace Eigen;
 using namespace xform;
@@ -66,5 +67,26 @@ struct Feat
     bool slideAnchor(int new_from_idx, int new_from_kf, const StateVec& xbuf, const Xformd& x_b2c);
     Vector3d pos(const StateVec& xbuf, const Xformd& x_b2c);
 };
+
+struct Obs
+{
+    GTime t;
+    uint8_t sat_idx; // index in sats_ SatVec
+    uint8_t sat;
+    uint8_t rcv;
+    uint8_t SNR;
+    uint8_t LLI; // loss-of-lock indicator
+    uint8_t code;
+    uint8_t qualL; // carrier phase cov
+    uint8_t qualP; // psuedorange cov
+    double L; // carrier phase
+    double P; // pseudorange
+    double D; // doppler
+
+    Obs();
+
+    bool operator < (const Obs& other);
+};
+typedef std::vector<Obs> ObsVec;
 
 }

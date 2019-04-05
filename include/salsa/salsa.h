@@ -50,6 +50,7 @@ public:
     typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
     typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
     typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
+    typedef std::vector<Satellite, aligned_allocator<Satellite>> SatVec;
     typedef std::map<int,Feat,std::less<int>,aligned_allocator<std::pair<const int,Feat>>> FeatMap;
 
 
@@ -114,8 +115,12 @@ public:
     void createNewKeyframe();
     int calcNewKeyframeConditionKLT();
     void calcCurrentZetas();
-
     bool isTrackedFeature(int id) const;
+
+    int getSatIdx(int sat_id) const;
+    void ephCallback(const eph_t& eph);
+    void filterObs(const ObsVec& obs);
+    void rawGnssCallback();
 
     enum {
         NOT_NEW_KEYFRAME = 0,
@@ -203,17 +208,19 @@ public:
     int next_feature_id_;
     vector<uchar> match_status_;
     std::vector<cv::Point2f> prev_features_;
-//    std::vector<cv::Point2f> new_features_;
     std::vector<cv::Scalar> colors_;
-//    std::vector<int> ids_;
     std::vector<uchar> status_;
-    std::vector<float> err_;
     cv::Mat kf_img_;
     cv::Mat prev_img_;
     cv::Mat current_img_;
     cv::Mat color_img_;
     cv::Mat mask_;
     cv::Mat point_mask_;
+
+    // Satellite Manager
+    SatVec sats_;
+    ObsVec filtered_obs_;
+    int n_obs_;
 
 
 };
