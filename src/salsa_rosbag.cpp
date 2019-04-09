@@ -148,7 +148,27 @@ void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
 void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
 {
   inertial_sense::GNSSObsVecConstPtr obsvec = m.instantiate<inertial_sense::GNSSObsVec>();
+  salsa::ObsVec z;
+  z.reserve(obsvec->obs.size());
+  for (const auto& o : obsvec->obs)
+  {
+      salsa::Obs new_obs;
+      new_obs.t = GTime::fromUTC(o.time.time, o.time.sec);
+      new_obs.sat = o.sat;
+      new_obs.rcv = o.rcv;
+      new_obs.SNR = o.SNR;
+      new_obs.LLI = o.LLI;
+      new_obs.code = o.code;
+      new_obs.z << o.P, o.D, o.L;
+      z.push_back(new_obs);
+  }
+  salsa_.obsCallback(z);
+}
 
+void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
+{
+    inertial_sense::GNSSEphemerisConstPtr eph = m.instantiate<inertial_sense::GNSSEphemeris>();
+    /// TODO
 }
 
 void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)

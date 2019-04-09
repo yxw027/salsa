@@ -139,7 +139,7 @@ void Salsa::obsCallback(const ObsVec &obs)
     }
     else
     {
-        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, true);
+        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, false);
 
         if (obs.size() > 8)
         {

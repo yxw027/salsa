@@ -7,6 +7,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <inertial_sense/GNSSObsVec.h>
+#include <inertial_sense/GNSSEphemeris.h>
 
 #include "salsa/salsa.h"
 #include "multirotor_sim/utils.h"
