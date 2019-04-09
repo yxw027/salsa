@@ -201,6 +201,8 @@ public:
 
     int N_;
 
+    bool sim_KLT_;
+
     // KLT Tracker
     int got_first_img_;
     bool show_matches_;

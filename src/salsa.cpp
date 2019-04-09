@@ -84,6 +84,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("cam_skew", filename, cam_.s_);
     get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
     get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
+    get_yaml_node("simulate_klt", filename, sim_KLT_);
 
     loadKLT(filename);
 }

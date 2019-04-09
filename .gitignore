@@ -10,3 +10,5 @@ python/.idea/*
 *.lyx~
 node_modules/
 vid/*
+
+*.8-pre1

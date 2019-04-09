@@ -39,6 +39,7 @@ kf_feature_thresh: 0.80
 show_matches: true
 feature_nearby_radius: 30
 feature_mask: ""
+simulate_klt: true
 
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
