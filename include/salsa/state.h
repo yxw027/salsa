@@ -79,9 +79,7 @@ struct Obs
     uint8_t code;
     uint8_t qualL; // carrier phase cov
     uint8_t qualP; // psuedorange cov
-    double L; // carrier phase
-    double P; // pseudorange
-    double D; // doppler
+    Vector3d z; // [prange, doppler, cphase]
 
     Obs();
 

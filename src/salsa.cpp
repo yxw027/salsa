@@ -85,6 +85,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
     get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
     get_yaml_node("simulate_klt", filename, sim_KLT_);
+    get_yaml_node("doppler_cov", filename, doppler_cov_);
 
     loadKLT(filename);
 }
@@ -350,6 +351,7 @@ void Salsa::finishNode(const double& t, bool new_node, bool new_keyframe)
     }
 
     xbuf_head_ = to_idx;
+    SALSA_ASSERT(xbuf_head_ < xbuf_.size(), "Not wrapping xbuf_ properly");
     SALSA_ASSERT(xbuf_head_ != xbuf_tail_, "Ran out of xbuf_");
 }
 

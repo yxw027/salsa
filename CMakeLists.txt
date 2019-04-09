@@ -13,10 +13,11 @@ find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GTest)
 find_package(yaml-cpp REQUIRED)
-find_package(catkin COMPONENTS
+find_package(catkin REQUIRED COMPONENTS
 	rosbag
 	roscpp
 	sensor_msgs
+    inertial_sense
 	nav_msgs)
 
 add_subdirectory(lib/geometry)

@@ -176,7 +176,7 @@ def plotResults(prefix):
     GnssRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=GnssResType)
     featRes = np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType)
     featPos = np.fromfile(os.path.join(prefix, "Feat.log"), dtype=FeatType)
-    trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
+    # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
     cb = np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)])
     mocapRes = np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType)
     # trueFeatPos -= truth['x'][0,0:3]

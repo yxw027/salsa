@@ -112,6 +112,8 @@ void SalsaRosbag::parseBag()
       imuCB(m);
     else if (datatype.compare("geometry_msgs/PoseStamped") == 0)
       poseCB(m);
+    else if (datatype.compare("inertial_sense/GNSSObsVec") == 0)
+      obsCB(m);
   }
   prog.finished();
   cout << endl;
@@ -141,6 +143,12 @@ void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
     ROS_WARN_ONCE("Subscribed to Two IMU messages, use the -i argument to specify IMU topic");
 
   seen_imu_topic_ = m.getTopic();
+}
+
+void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
+{
+  inertial_sense::GNSSObsVecConstPtr obsvec = m.instantiate<inertial_sense::GNSSObsVec>();
+
 }
 
 void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)

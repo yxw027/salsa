@@ -40,7 +40,7 @@ show_matches: true
 feature_nearby_radius: 30
 feature_mask: ""
 simulate_klt: true
-
+doppler_cov: 0.0025
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]

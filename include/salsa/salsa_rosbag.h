@@ -6,6 +6,7 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <inertial_sense/GNSSObsVec.h>
 
 #include "salsa/salsa.h"
 #include "multirotor_sim/utils.h"
@@ -25,6 +26,8 @@ public:
     void parseBag();
     void imuCB(const rosbag::MessageInstance& m);
     void poseCB(const rosbag::MessageInstance& m);
+    void obsCB(const rosbag::MessageInstance& m);
+    void ephCB(const rosbag::MessageInstance& m);
 
     rosbag::Bag bag_;
     rosbag::View* view_;

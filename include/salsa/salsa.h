@@ -92,13 +92,11 @@ public:
     void addFeatFactors(ceres::Problem& problem);
 
 
-    void pointPositioning(const GTime& t, const VecVec3& z,
-                          std::vector<Satellite>& sat, Vector8d &xhat) const;
 
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
     void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
     void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R,
-                         std::vector<Satellite>& sat, const std::vector<bool>& slip) override;
+                         SatVec &sat, const std::vector<bool>& slip) override;
     void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
     void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, bool new_keyframe);
@@ -119,8 +117,10 @@ public:
 
     int getSatIdx(int sat_id) const;
     void ephCallback(const eph_t& eph);
+    void refreshSatIdx();
+    void obsCallback(const ObsVec& obs);
     void filterObs(const ObsVec& obs);
-    void rawGnssCallback();
+    void pointPositioning(const GTime& t, const ObsVec &obs, SatVec &sat, Vector8d &xhat) const;
 
     enum {
         NOT_NEW_KEYFRAME = 0,
@@ -143,6 +143,7 @@ public:
     int current_node_;
     int oldest_node_;
     int current_kf_;
+
 
 
     int STATE_BUF_SIZE;
@@ -191,6 +192,9 @@ public:
     GTime start_time_;
     Matrix2d clk_bias_Xi_;
 
+
+    double doppler_cov_;
+    double min_satellite_elevation_;
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
     Features kf_feat_, current_feat_;
