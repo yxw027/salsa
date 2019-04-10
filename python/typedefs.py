@@ -109,7 +109,9 @@ PRangeResType = np.dtype([
     ('size', np.int32),
     ('sats', (np.dtype([
         ('id', np.int32),
-        ('res', (np.float64, 3))
+        ('res', (np.float64, 3)),
+        ('z', (np.float64, 3)),
+        ('zhat', (np.float64, 3))
     ]), params["num_sat"]))
 ])
 

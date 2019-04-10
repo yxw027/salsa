@@ -235,11 +235,11 @@ void Salsa::logPrangeRes()
                     1.0/Satellite::LAMBDA_L1 * (rec_pos - sat_pos).norm();
             Vector3d res = z - zhat;
             logs_[log::PRangeRes]->log((int)sats_[filtered_obs_[i].sat_idx].id_);
-            logs_[log::PRangeRes]->logVectors(res);
+            logs_[log::PRangeRes]->logVectors(res, z, zhat);
         }
         else
         {
-            Vector3d padding = Vector3d::Constant(NAN);
+            Vector9d padding = Vector9d::Constant(NAN);
             logs_[log::PRangeRes]->log((int)-1);
             logs_[log::PRangeRes]->logVectors(padding);
         }

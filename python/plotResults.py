@@ -66,7 +66,7 @@ def plotSatPos():
     for sat in np.unique(satPos['sats']['id']):
         if sat < 0: continue
         idx = satPos['sats']['id'] == sat
-        ax.plot(satPos['sats'][idx]['p'][:,0], satPos['sats']['p'][idx][:,1], satPos['sats']['p'][idx][:,2])
+        ax.plot(satPos['sats'][idx]['p'][:,0], satPos['sats']['p'][idx][:,1], satPos['sats']['p'][idx][:,2], label=str(sat))
     u = np.linspace(0, 2 * np.pi, 100)
     v = np.linspace(0, np.pi, 100)
     x = 6371e3 * np.outer(np.cos(u), np.sin(v))
@@ -74,6 +74,7 @@ def plotSatPos():
     z = 6371e3 * np.outer(np.ones(np.size(u)), np.cos(v))
     ax.plot_surface(x, y, z, color='b', alpha=0.7)
     ax.plot([-1798780.451], [-4532177.657], [4099857.983], 'x')
+    ax.legend()
     plt.grid()
     pw.addPlot("SatPos", f, True)
 
@@ -84,9 +85,24 @@ def plotPRangeRes():
         idx = prangeRes['sats']['id'] == sat
         for i in range(2):
             plt.subplot(2,1,i+1)
-            plt.plot(prangeRes['t'], prangeRes['sats']['res'][idx][:,i])
+            plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['res'][idx][:,i], label=str(sat))
+            if i == 0:
+                plt.legend()
     plt.grid()
     pw.addPlot("PRangeRes", f)
+    f = plt.figure()
+    for sat in np.unique(prangeRes['sats']['id']):
+        if sat < 0: continue
+        idx = prangeRes['sats']['id'] == sat
+        for i in range(2):
+            plt.subplot(2, 1, i + 1)
+            p = plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['z'][idx][:, i], label='z')
+            plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['zhat'][idx][:, i], '--', color=p[0].get_color(), label='zhat')
+
+            if i == 0 and sat == np.unique(prangeRes['sats']['id'])[0]:
+                plt.legend()
+    plt.grid()
+    pw.addPlot("PRangeResDebug", f)
 
 
 def plotMocapRes():

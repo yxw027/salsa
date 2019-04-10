@@ -113,10 +113,10 @@ void SalsaRosbag::parseBag()
             poseCB(m);
         else if (m.isType<nav_msgs::Odometry>())
             odomCB(m);
-//        else if (m.isType<inertial_sense::GNSSObsVec>())
-//            obsCB(m);
-//        else if (m.isType<inertial_sense::GNSSEphemeris>())
-//            ephCB(m);
+        else if (m.isType<inertial_sense::GNSSObsVec>())
+            obsCB(m);
+        else if (m.isType<inertial_sense::GNSSEphemeris>())
+            ephCB(m);
     }
     prog.finished();
     cout << endl;
@@ -162,7 +162,7 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
         new_obs.SNR = o.SNR;
         new_obs.LLI = o.LLI;
         new_obs.code = o.code;
-        new_obs.z << o.P, o.D, o.L;
+        new_obs.z << o.P, o.D*(Satellite::LAMBDA_L1/0.002), o.L;
         z.push_back(new_obs);
     }
     salsa_.obsCallback(z);
@@ -251,6 +251,8 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
 {
     nav_msgs::OdometryConstPtr odom = m.instantiate<nav_msgs::Odometry>();
     GTime gtime = GTime::fromUTC(odom->header.stamp.sec, odom->header.stamp.nsec/1e9);
+    if (salsa_.start_time_.tow_sec < 0)
+        return;
 
     Xformd z;
     z.arr() << odom->pose.pose.position.x,
@@ -269,8 +271,8 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
 
 
     truth_log_.log(
-//                   (gtime - salsa_.start_time_).toSec(),
-                   (m.getTime() - bag_start_).toSec(),
+                   (gtime - salsa_.start_time_).toSec(),
+//                   (m.getTime() - bag_start_).toSec(),
                    odom->pose.pose.position.x,
                    odom->pose.pose.position.y,
                    odom->pose.pose.position.z,
