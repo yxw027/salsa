@@ -8,8 +8,11 @@ namespace fs = std::experimental::filesystem;
 namespace salsa
 {
 
-void Salsa::ephCallback(const eph_t &eph)
+void Salsa::ephCallback(const GTime& t, const eph_t &eph)
 {
+    if (start_time_.tow_sec < 0)
+        start_time_ = t - current_state_.t;
+
     auto s = sats_.begin();
     while (s != sats_.end())
     {
@@ -109,6 +112,10 @@ void Salsa::obsCallback(const ObsVec &obs)
     filterObs(obs);
 
     GTime& t(filtered_obs_[0].t);
+
+    if (start_time_.tow_sec < 0)
+        start_time_ = t - current_state_.t;
+
     if (current_node_ == -1)
     {
         if (sats_.size() < 8)
@@ -123,9 +130,14 @@ void Salsa::obsCallback(const ObsVec &obs)
         auto phat = pp_sol.segment<3>(0);
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
-        x_e2n_ = WSG84::x_ecef2ned(phat);
-        start_time_ = t - current_state_.t;
-        initialize(current_state_.t, Xformd::Identity(), x_e2n_.q().rotp(vhat), that);
+
+        Xformd xhat = Xformd::Identity();
+        if (estimate_origin_)
+            x_e2n_ = WSG84::x_ecef2ned(phat);
+        else
+            xhat.t() = WSG84::ecef2ned(x_e2n_, phat);
+
+        initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
 
         prange_.emplace_back(filtered_obs_.size());
         int i = 0;
@@ -139,7 +151,7 @@ void Salsa::obsCallback(const ObsVec &obs)
     }
     else
     {
-        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, false);
+        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, true);
 
         if (obs.size() > 8)
         {

@@ -41,6 +41,9 @@ feature_nearby_radius: 30
 feature_mask: ""
 simulate_klt: true
 doppler_cov: 0.0025
+estimate_origin: false
+min_satellite_elevation: 0.43654987
+x_e2n: [ -1798780.451, -4532177.657, 4099857.983, 0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]

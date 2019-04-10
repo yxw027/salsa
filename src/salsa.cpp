@@ -13,6 +13,7 @@ Salsa::Salsa()
     bias_ = nullptr;
     anchor_ = nullptr;
     disable_solver_ = false;
+    start_time_.tow_sec = -1.0;  // flags as uninitialized
 }
 
 Salsa::~Salsa()
@@ -86,6 +87,9 @@ void Salsa::load(const string& filename)
     get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
     get_yaml_node("simulate_klt", filename, sim_KLT_);
     get_yaml_node("doppler_cov", filename, doppler_cov_);
+    get_yaml_node("estimate_origin", filename, estimate_origin_);
+    get_yaml_eigen("x_e2n", filename, x_e2n_.arr_);
+    get_yaml_node("min_satellite_elevation", filename, min_satellite_elevation_);
 
     loadKLT(filename);
 }
@@ -126,7 +130,8 @@ void Salsa::initLog()
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD);
-    problem.SetParameterBlockConstant(x_e2n_.data());
+    if (!estimate_origin_)
+        problem.SetParameterBlockConstant(x_e2n_.data());
     int idx = xbuf_tail_;
     int prev_idx = idx;
     while (prev_idx != xbuf_head_)

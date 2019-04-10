@@ -116,7 +116,7 @@ public:
     bool isTrackedFeature(int id) const;
 
     int getSatIdx(int sat_id) const;
-    void ephCallback(const eph_t& eph);
+    void ephCallback(const GTime &t, const eph_t& eph);
     void refreshSatIdx();
     void obsCallback(const ObsVec& obs);
     void filterObs(const ObsVec& obs);
@@ -193,6 +193,7 @@ public:
     Matrix2d clk_bias_Xi_;
 
 
+    bool estimate_origin_;
     double doppler_cov_;
     double min_satellite_elevation_;
     double kf_parallax_thresh_;
