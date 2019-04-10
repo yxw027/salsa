@@ -5,14 +5,20 @@ using namespace cv;
 namespace salsa
 {
 
-void Salsa::loadKLT(const std::string& filename)//, int _radius, cv::Size _size)
+void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
 {
-    got_first_img_ = false;
-    nf_ = nf_;
-
+    get_yaml_eigen("focal_len", filename, cam_.focal_len_);
+    get_yaml_eigen("distortion", filename, cam_.distortion_);
+    get_yaml_eigen("cam_center", filename, cam_.cam_center_);
+    get_yaml_eigen("image_size", filename, cam_.image_size_);
+    get_yaml_node("cam_skew", filename, cam_.s_);
+    get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
+    get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
+    get_yaml_node("simulate_klt", filename, sim_KLT_);
     get_yaml_node("show_matches", filename, show_matches_);
     get_yaml_node("feature_nearby_radius", filename, feature_nearby_radius_);
 
+    got_first_img_ = false;
     next_feature_id_ = 0;
     prev_features_.clear();
     current_feat_.clear();

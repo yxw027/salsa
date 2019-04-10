@@ -111,10 +111,12 @@ void SalsaRosbag::parseBag()
             imuCB(m);
         else if (m.isType<geometry_msgs::PoseStamped>())
             poseCB(m);
-//        else if (m.isType<inertial_sense::GNSSObservation>())
+        else if (m.isType<nav_msgs::Odometry>())
+            odomCB(m);
+//        else if (m.isType<inertial_sense::GNSSObsVec>())
 //            obsCB(m);
-        else if (m.isType<inertial_sense::GNSSEphemeris>())
-            ephCB(m);
+//        else if (m.isType<inertial_sense::GNSSEphemeris>())
+//            ephCB(m);
     }
     prog.finished();
     cout << endl;
@@ -138,7 +140,7 @@ void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
     imu_log_.log(t);
     imu_log_.logVectors(z);
 
-    imu_count_between_nodes_ ++;
+    imu_count_between_nodes_++;
     salsa_.imuCallback(t, z, imu_R_);
     if (!seen_imu_topic_.empty() && seen_imu_topic_.compare(m.getTopic()))
         ROS_WARN_ONCE("Subscribed to Two IMU messages, use the -i argument to specify IMU topic");
@@ -164,6 +166,7 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
         z.push_back(new_obs);
     }
     salsa_.obsCallback(z);
+    imu_count_between_nodes_ = 0;
 }
 
 void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
@@ -242,6 +245,45 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     Vector2d tau = Vector2d::Ones() * NAN;
     truth_log_.log(t);
     truth_log_.logVectors(z.arr(), v, b, tau);
+}
+
+void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
+{
+    nav_msgs::OdometryConstPtr odom = m.instantiate<nav_msgs::Odometry>();
+    GTime gtime = GTime::fromUTC(odom->header.stamp.sec, odom->header.stamp.nsec/1e9);
+
+    Xformd z;
+    z.arr() << odom->pose.pose.position.x,
+               odom->pose.pose.position.y,
+               odom->pose.pose.position.z,
+               odom->pose.pose.orientation.w,
+               odom->pose.pose.orientation.x,
+               odom->pose.pose.orientation.y,
+               odom->pose.pose.orientation.z;
+    double t = (m.getTime() - bag_start_).toSec();
+    if (imu_count_between_nodes_ > 20)
+    {
+        salsa_.mocapCallback(t, z, mocap_R_);
+        imu_count_between_nodes_ = 0;
+    }
+
+
+    truth_log_.log(
+//                   (gtime - salsa_.start_time_).toSec(),
+                   (m.getTime() - bag_start_).toSec(),
+                   odom->pose.pose.position.x,
+                   odom->pose.pose.position.y,
+                   odom->pose.pose.position.z,
+                   odom->pose.pose.orientation.w,
+                   odom->pose.pose.orientation.x,
+                   odom->pose.pose.orientation.y,
+                   odom->pose.pose.orientation.z,
+                   odom->twist.twist.linear.x,
+                   odom->twist.twist.linear.y,
+                   odom->twist.twist.linear.z,
+                   (double)NAN, (double)NAN, (double)NAN,
+                   (double)NAN, (double)NAN, (double)NAN,
+                   (double)NAN, (double)NAN);
 }
 
 int main(int argc, char** argv)

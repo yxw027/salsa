@@ -93,5 +93,24 @@ GnssResType = np.dtype([
     ]), params["N"]))
 ])
 
+SatPosType = np.dtype([
+    ('t', np.float64),
+    ('size', np.int32),
+    ('sats', (np.dtype([
+        ('id', np.int32),
+        ('p', (np.float64, 3)),
+        ('v', (np.float64, 3)),
+        ('tau', (np.float64, 2))
+    ]), params["num_sat"]))
+])
+
+PRangeResType = np.dtype([
+    ('t', np.float64),
+    ('size', np.int32),
+    ('sats', (np.dtype([
+        ('id', np.int32),
+        ('res', (np.float64, 3))
+    ]), params["num_sat"]))
+])
 
 

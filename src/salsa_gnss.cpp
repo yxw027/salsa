@@ -8,6 +8,17 @@ namespace fs = std::experimental::filesystem;
 namespace salsa
 {
 
+void Salsa::initGNSS(const std::string& filename)
+{
+    get_yaml_node("doppler_cov", filename, doppler_cov_);
+    get_yaml_node("estimate_origin", filename, estimate_origin_);
+    get_yaml_eigen("x_e2n", filename, x_e2n_.arr_);
+    get_yaml_node("min_satellite_elevation", filename, min_satellite_elevation_);
+    get_yaml_node("switch_weight", filename, switch_weight_);
+    get_yaml_node("use_point_positioning", filename, use_point_positioning_);
+    get_yaml_node("disable_gnss", filename, disable_gnss_);
+}
+
 void Salsa::ephCallback(const GTime& t, const eph_t &eph)
 {
     if (start_time_.tow_sec < 0)
@@ -109,8 +120,13 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
 void Salsa::obsCallback(const ObsVec &obs)
 {
     last_callback_ = GNSS;
-    filterObs(obs);
+    if (sats_.size() < 8)
+    {
+        SD("Waiting for Ephemeris\n");
+        return;
+    }
 
+    filterObs(obs);
     GTime& t(filtered_obs_[0].t);
 
     if (start_time_.tow_sec < 0)
@@ -118,26 +134,28 @@ void Salsa::obsCallback(const ObsVec &obs)
 
     if (current_node_ == -1)
     {
-        if (sats_.size() < 8)
-        {
-            SD("Waiting for GNSS\n");
-            return;
-        }
 
         SD("Initialized Raw GNSS\n");
         Vector8d pp_sol = Vector8d::Zero();
-        pointPositioning(t, filtered_obs_, sats_, pp_sol);
-        auto phat = pp_sol.segment<3>(0);
-        auto vhat = pp_sol.segment<3>(3);
-        auto that = pp_sol.segment<2>(6);
+        if (use_point_positioning_)
+        {
+            pointPositioning(t, filtered_obs_, sats_, pp_sol);
+            auto phat = pp_sol.segment<3>(0);
+            auto vhat = pp_sol.segment<3>(3);
+            auto that = pp_sol.segment<2>(6);
 
-        Xformd xhat = Xformd::Identity();
-        if (estimate_origin_)
-            x_e2n_ = WSG84::x_ecef2ned(phat);
+            Xformd xhat = Xformd::Identity();
+            if (estimate_origin_)
+                x_e2n_ = WSG84::x_ecef2ned(phat);
+            else
+                xhat.t() = WSG84::ecef2ned(x_e2n_, phat);
+
+            initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        }
         else
-            xhat.t() = WSG84::ecef2ned(x_e2n_, phat);
-
-        initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        {
+            initialize(current_state_.t, current_state_.x, current_state_.v, Vector2d::Zero());
+        }
 
         prange_.emplace_back(filtered_obs_.size());
         int i = 0;
@@ -153,16 +171,19 @@ void Salsa::obsCallback(const ObsVec &obs)
     {
         finishNode((filtered_obs_[0].t-start_time_).toSec(), true, true);
 
-        if (obs.size() > 8)
+        if (filtered_obs_.size() > 8)
         {
             Vector8d pp_sol = Vector8d::Zero();
-            pointPositioning(t, filtered_obs_, sats_, pp_sol);
-            auto phat = pp_sol.segment<3>(0);
-            auto vhat = pp_sol.segment<3>(3);
-            auto that = pp_sol.segment<2>(6);
-            xbuf_[xbuf_head_].x.t() = WSG84::ecef2ned(x_e2n_, phat);
-            xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
-            xbuf_[xbuf_head_].tau = that;
+            if (use_point_positioning_)
+            {
+                pointPositioning(t, filtered_obs_, sats_, pp_sol);
+                auto phat = pp_sol.segment<3>(0);
+                auto vhat = pp_sol.segment<3>(3);
+                auto that = pp_sol.segment<2>(6);
+                xbuf_[xbuf_head_].x.t() = WSG84::ecef2ned(x_e2n_, phat);
+                xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
+                xbuf_[xbuf_head_].tau = that;
+            }
 
             prange_.emplace_back(filtered_obs_.size());
             int i = 0;

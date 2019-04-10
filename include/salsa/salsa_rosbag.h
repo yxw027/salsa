@@ -8,6 +8,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <inertial_sense/GNSSObsVec.h>
 #include <inertial_sense/GNSSEphemeris.h>
+#include <nav_msgs/Odometry.h>
 
 #include "salsa/salsa.h"
 #include "multirotor_sim/utils.h"
@@ -29,6 +30,7 @@ public:
     void poseCB(const rosbag::MessageInstance& m);
     void obsCB(const rosbag::MessageInstance& m);
     void ephCB(const rosbag::MessageInstance& m);
+    void odomCB(const rosbag::MessageInstance& m);
 
     rosbag::Bag bag_;
     rosbag::View* view_;

@@ -60,21 +60,22 @@ public:
     void init(const std::string& filename);
 
     void load(const std::string& filename);
-    void loadKLT(const std::string& filename);
+    void initImg(const std::string& filename);
     void initState();
     void initFactors();
     void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
     void initSolverOptions();
 
-    void initLog();
+    void initLog(const string &filename);
     void logRawGNSSRes();
     void logFeatRes();
     void logMocapRes();
     void logFeatures();
     void logOptimizedWindow();
     void logState();
+    void logSatPos();
+    void logPrangeRes();
     void logCurrentState();
-    void renderGraph(const std::string& filename);
 
     void finishNode(const double& t, bool new_node, bool new_keyframe);
     void cleanUpSlidingWindow();
@@ -115,6 +116,7 @@ public:
     void calcCurrentZetas();
     bool isTrackedFeature(int id) const;
 
+    void initGNSS(const std::string& filename);
     int getSatIdx(int sat_id) const;
     void ephCallback(const GTime &t, const eph_t& eph);
     void refreshSatIdx();
@@ -172,14 +174,25 @@ public:
         MOCAP
     };
     int last_callback_;
-    Logger* current_state_log_ = nullptr;
-    Logger* opt_log_ = nullptr;
-    Logger* raw_gnss_res_log_ = nullptr;
-    Logger* feat_res_log_ = nullptr;
-    Logger* feat_log_ = nullptr;
-    Logger* state_log_ = nullptr;
-    Logger* cb_log_ = nullptr;
-    Logger* mocap_res_log_ = nullptr;
+
+    struct log
+    {
+        enum
+        {
+            CurrentState,
+            Opt,
+            RawRes,
+            FeatRes,
+            Feat,
+            State,
+            CB,
+            MocapRes,
+            SatPos,
+            PRangeRes,
+            NumLogs
+        };
+    };
+    std::vector<Logger*> logs_;
 
     std::string log_prefix_;
     Camera<double> cam_;
@@ -193,8 +206,10 @@ public:
     Matrix2d clk_bias_Xi_;
 
 
+    bool disable_gnss_;
     bool estimate_origin_;
     double doppler_cov_;
+    bool use_point_positioning_;
     double min_satellite_elevation_;
     double kf_parallax_thresh_;
     double kf_feature_thresh_;

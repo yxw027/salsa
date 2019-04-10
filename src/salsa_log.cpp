@@ -1,60 +1,68 @@
 #include "salsa/salsa.h"
-
+namespace fs = experimental::filesystem;
 namespace salsa
 {
+
+void Salsa::initLog(const std::string& filename)
+{
+    get_yaml_node("log_prefix", filename, log_prefix_);
+    if (!fs::exists(fs::path(log_prefix_).parent_path()))
+        fs::create_directories(fs::path(log_prefix_).parent_path());
+
+    logs_.resize(log::NumLogs);
+    logs_[log::CurrentState] = new Logger(log_prefix_ + "CurrentState.log");
+    logs_[log::Opt] = new Logger(log_prefix_ + "Opt.log");
+    logs_[log::RawRes] = new Logger(log_prefix_+ "RawRes.log");
+    logs_[log::FeatRes] = new Logger(log_prefix_ + "FeatRes.log");
+    logs_[log::Feat] = new Logger(log_prefix_ + "Feat.log");
+    logs_[log::State] = new Logger(log_prefix_ + "State.log");
+    logs_[log::CB] = new Logger(log_prefix_ + "CB.log");
+    logs_[log::MocapRes] = new Logger(log_prefix_ + "MocapRes.log");
+    logs_[log::SatPos] = new Logger(log_prefix_ + "SatPos.log");
+    logs_[log::PRangeRes] = new Logger(log_prefix_ + "PRangeRes.log");
+}
 
 
 void Salsa::logState()
 {
-    if (state_log_)
-    {
-        state_log_->log(xbuf_[xbuf_head_].t);
-        state_log_->logVectors(xbuf_[xbuf_head_].x.arr());
-        state_log_->logVectors(xbuf_[xbuf_head_].v);
-        state_log_->logVectors(xbuf_[xbuf_head_].tau);
-        state_log_->log(xbuf_[xbuf_head_].kf);
-        state_log_->log(xbuf_[xbuf_head_].node);
-    }
-    if (cb_log_)
-    {
-        cb_log_->log(current_state_.t, last_callback_);
-    }
+    logs_[log::State]->log(xbuf_[xbuf_head_].t);
+    logs_[log::State]->logVectors(xbuf_[xbuf_head_].x.arr());
+    logs_[log::State]->logVectors(xbuf_[xbuf_head_].v);
+    logs_[log::State]->logVectors(xbuf_[xbuf_head_].tau);
+    logs_[log::State]->log(xbuf_[xbuf_head_].kf);
+    logs_[log::State]->log(xbuf_[xbuf_head_].node);
+
+    logs_[log::CB]->log(current_state_.t, last_callback_);
 }
 
 void Salsa::logOptimizedWindow()
 {
-    if (opt_log_)
+    logs_[log::Opt]->log(STATE_BUF_SIZE, xbuf_head_, xbuf_tail_);
+    for (int i = 0; i < STATE_BUF_SIZE; i++)
     {
-        opt_log_->log(STATE_BUF_SIZE, xbuf_head_, xbuf_tail_);
-        for (int i = 0; i < STATE_BUF_SIZE; i++)
-        {
-            opt_log_->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
-            opt_log_->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
-        }
-        opt_log_->logVectors(imu_bias_);
+        logs_[log::Opt]->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
+        logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
     }
+    logs_[log::Opt]->logVectors(imu_bias_);
 }
 
 void Salsa::logCurrentState()
 {
-    if (current_state_log_)
-    {
-        current_state_log_->log(current_state_.t);
-        current_state_log_->logVectors(current_state_.x.arr(), current_state_.v, imu_bias_, current_state_.tau);
-    }
+    logs_[log::CurrentState]->log(current_state_.t);
+    logs_[log::CurrentState]->logVectors(current_state_.x.arr(), current_state_.v, imu_bias_, current_state_.tau);
 }
 
 
 void Salsa::logFeatRes()
 {
-    feat_res_log_->log(current_state_.t);
+    logs_[log::FeatRes]->log(current_state_.t);
     FeatMap::iterator ft = xfeat_.begin();
-    feat_res_log_->log((int)xfeat_.size());
+    logs_[log::FeatRes]->log((int)xfeat_.size());
     for (int i = 0; i < nf_; i++)
     {
         if (ft != xfeat_.end())
         {
-            feat_res_log_->log(ft->first, (int)ft->second.funcs.size(), xbuf_[ft->second.idx0].node);
+            logs_[log::FeatRes]->log(ft->first, (int)ft->second.funcs.size(), xbuf_[ft->second.idx0].node);
             FeatDeque::iterator func = ft->second.funcs.begin();
             for (int j = 0; j < N_; j++)
             {
@@ -63,28 +71,28 @@ void Salsa::logFeatRes()
                 {
                     (*func)(xbuf_[ft->second.idx0].x.data(), xbuf_[func->to_idx_].x.data(),
                             &ft->second.rho, res.data());
-                    feat_res_log_->log(xbuf_[func->to_idx_].node, xbuf_[func->to_idx_].t);
-                    feat_res_log_->logVectors(res);
+                    logs_[log::FeatRes]->log(xbuf_[func->to_idx_].node, xbuf_[func->to_idx_].t);
+                    logs_[log::FeatRes]->logVectors(res);
                     func++;
                 }
                 else
                 {
                     res.setConstant(NAN);
-                    feat_res_log_->log((int)(-1), (double)NAN);
-                    feat_res_log_->logVectors(res);
+                    logs_[log::FeatRes]->log((int)(-1), (double)NAN);
+                    logs_[log::FeatRes]->logVectors(res);
                 }
             }
             ft++;
         }
         else
         {
-            feat_res_log_->log((int)-1, ((int)0), (int)-1);
+            logs_[log::FeatRes]->log((int)-1, ((int)0), (int)-1);
             for (int j = 0; j < N_; j++)
             {
                 Vector2d res;
                 res.setConstant(NAN);
-                feat_res_log_->log((int)-1, (double)NAN);
-                feat_res_log_->logVectors(res);
+                logs_[log::FeatRes]->log((int)-1, (double)NAN);
+                logs_[log::FeatRes]->logVectors(res);
             }
         }
     }
@@ -92,98 +100,148 @@ void Salsa::logFeatRes()
 
 void Salsa::logFeatures()
 {
-    feat_log_->log(current_state_.t);
+    logs_[log::Feat]->log(current_state_.t);
     FeatMap::iterator ft = xfeat_.begin();
-    feat_log_->log(xfeat_.size());
+    logs_[log::Feat]->log(xfeat_.size());
     for (int i = 0; i < nf_; i++)
     {
         if (ft != xfeat_.end())
         {
-            feat_log_->log(ft->first);
+            logs_[log::Feat]->log(ft->first);
             Xformd x_I2i(xbuf_[ft->second.idx0].x);
             Vector3d p_I2l = x_I2i.t() + x_I2i.q().rota(x_u2c_.q().rota(1.0/ft->second.rho * ft->second.z0) + x_u2c_.t());
-            feat_log_->logVectors(p_I2l);
-            feat_log_->log(ft->second.rho, ft->second.rho_true, ft->second.slide_count);
+            logs_[log::Feat]->logVectors(p_I2l);
+            logs_[log::Feat]->log(ft->second.rho, ft->second.rho_true, ft->second.slide_count);
             ft++;
         }
         else
         {
-            feat_log_->log(-1);
+            logs_[log::Feat]->log(-1);
             Vector3d p_I2l = Vector3d::Constant(NAN);
-            feat_log_->logVectors(p_I2l);
-            feat_log_->log((double)NAN, (double)NAN, (int)-1);
+            logs_[log::Feat]->logVectors(p_I2l);
+            logs_[log::Feat]->log((double)NAN, (double)NAN, (int)-1);
         }
     }
 }
 
 void Salsa::logMocapRes()
 {
-    if (mocap_res_log_)
+    logs_[log::MocapRes]->log(current_state_.t);
+    logs_[log::MocapRes]->log((int)mocap_.size());
+    for (int i = 0; i < N_; i++)
     {
-        mocap_res_log_->log(current_state_.t);
-        mocap_res_log_->log((int)mocap_.size());
-        for (int i = 0; i < N_; i++)
+        double t;
+        Vector6d residual;
+        if (i < mocap_.size())
         {
-            double t;
-            Vector6d residual;
-            if (i < mocap_.size())
-            {
-                mocap_[i](xbuf_[mocap_[i].idx_].x.data(), residual.data());
-                t = xbuf_[mocap_[i].idx_].t;
-            }
-            else
-            {
-                t = NAN;
-                residual.setConstant(NAN);
-            }
-            mocap_res_log_->log(t);
-            mocap_res_log_->logVectors(residual);
+            mocap_[i](xbuf_[mocap_[i].idx_].x.data(), residual.data());
+            t = xbuf_[mocap_[i].idx_].t;
         }
+        else
+        {
+            t = NAN;
+            residual.setConstant(NAN);
+        }
+        logs_[log::MocapRes]->log(t);
+        logs_[log::MocapRes]->logVectors(residual);
     }
 }
 
 void Salsa::logRawGNSSRes()
 {
-    if (raw_gnss_res_log_)
+    logs_[log::RawRes]->log(current_state_.t);
+    logs_[log::RawRes]->log((int)prange_.size());
+    for (int i = 0; i < N_; i++)
     {
-        raw_gnss_res_log_->log(current_state_.t);
-        raw_gnss_res_log_->log((int)prange_.size());
-        for (int i = 0; i < N_; i++)
+        if (i < prange_.size())
         {
-            if (i < prange_.size())
+            logs_[log::RawRes]->log((int)prange_[i].size());
+            for (int j = 0; j < ns_; j++)
             {
-                raw_gnss_res_log_->log((int)prange_[i].size());
-                for (int j = 0; j < ns_; j++)
+                double t;
+                Vector2d res;
+                if (j < prange_[i].size())
                 {
-                    double t;
-                    Vector2d res;
-                    if (j < prange_[i].size())
-                    {
-                        int idx = prange_[i][j].idx_;
-                        prange_[i][j](xbuf_[idx].x.data(), xbuf_[idx].v.data(), xbuf_[idx].tau.data(),
-                                x_e2n_.data(), res.data());
-                        t = xbuf_[idx].t;
-                    }
-                    else
-                    {
-                        t = NAN;
-                        res.setConstant(NAN);
-                    }
-                    raw_gnss_res_log_->log(t);
-                    raw_gnss_res_log_->logVectors(res);
+                    int idx = prange_[i][j].idx_;
+                    prange_[i][j](xbuf_[idx].x.data(), xbuf_[idx].v.data(), xbuf_[idx].tau.data(),
+                            x_e2n_.data(), res.data());
+                    t = xbuf_[idx].t;
                 }
+                else
+                {
+                    t = NAN;
+                    res.setConstant(NAN);
+                }
+                logs_[log::RawRes]->log(t);
+                logs_[log::RawRes]->logVectors(res);
             }
-            else
+        }
+        else
+        {
+            logs_[log::RawRes]->log((int)-1);
+            for (int j = 0; j < ns_; j++)
             {
-                raw_gnss_res_log_->log((int)-1);
-                for (int j = 0; j < ns_; j++)
-                {
-                    double t = NAN;
-                    Vector2d res = Vector2d::Constant(NAN);
-                    raw_gnss_res_log_->log(t);
-                    raw_gnss_res_log_->logVectors(res);
-                }
+                double t = NAN;
+                Vector2d res = Vector2d::Constant(NAN);
+                logs_[log::RawRes]->log(t);
+                logs_[log::RawRes]->logVectors(res);
             }
+        }
+    }
+}
+
+void Salsa::logSatPos()
+{
+    logs_[log::SatPos]->log(current_state_.t, (int)sats_.size());
+    for (int i = 0; i < ns_; i++)
+    {
+        if (i < sats_.size())
+        {
+            Vector3d pos, vel;
+            Vector2d clk;
+            GTime now = start_time_ + current_state_.t;
+            sats_[i].computePositionVelocityClock(now, pos, vel, clk);
+            logs_[log::SatPos]->log(sats_[i].id_);
+            logs_[log::SatPos]->logVectors(pos, vel, clk);
+        }
+        else
+        {
+            Matrix<double, 8, 1> padding = Matrix<double, 8, 1>::Constant(NAN);
+            logs_[log::SatPos]->log((int)-1);
+            logs_[log::SatPos]->logVectors(padding);
+        }
+    }
+}
+
+void Salsa::logPrangeRes()
+{
+    logs_[log::PRangeRes]->log(current_state_.t, (int)sats_.size());
+    Vector3d rec_pos = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t());
+    Vector3d rec_vel = x_e2n_.rota(xbuf_[xbuf_head_].v);
+    Vector2d clk = xbuf_[xbuf_head_].tau;
+    for (int i = 0; i < ns_; i++)
+    {
+        if (i < filtered_obs_.size())
+        {
+            Vector3d z;
+            Vector3d zhat;
+            Vector3d sat_pos, sat_vel;
+            Vector2d sat_clk;
+            sats_[filtered_obs_[i].sat_idx].computePositionVelocityClock(filtered_obs_[i].t, sat_pos, sat_vel, sat_clk);
+            sats_[filtered_obs_[i].sat_idx].computeMeasurement(filtered_obs_[i].t, rec_pos, rec_vel, clk, z);
+            Vector3d e_sat = (sat_pos - rec_pos).normalized();
+            zhat << (rec_pos - sat_pos).norm(),
+                    (sat_pos - rec_pos).dot(e_sat),
+                    1.0/Satellite::LAMBDA_L1 * (rec_pos - sat_pos).norm();
+            Vector3d res = z - zhat;
+            logs_[log::PRangeRes]->log((int)sats_[filtered_obs_[i].sat_idx].id_);
+            logs_[log::PRangeRes]->logVectors(res);
+        }
+        else
+        {
+            Vector3d padding = Vector3d::Constant(NAN);
+            logs_[log::PRangeRes]->log((int)-1);
+            logs_[log::PRangeRes]->logVectors(padding);
         }
     }
 }

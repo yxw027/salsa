@@ -38,7 +38,7 @@ def plotImuBias():
     for i in range(3):
         for j in range(2):
             plt.subplot(3, 2, i * 2 + j + 1)
-            plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
+            # plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
             plt.plot(state['t'], state['b'][:, j * 3 + i], label=r'\hat{x}')
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
@@ -48,20 +48,46 @@ def plotImuBias():
 def plot3DMap():
     f = plt.figure()
     ax = f.add_subplot(111, projection='3d')
+    ax.set_aspect('equal')
 
     k = [x['kf'] != -1][0]
     ax.plot(state['x'][:,1],state['x'][:,0], -state['x'][:,2], label=r'$\hat{x}$')
     ax.plot(x['x'][k,1],x['x'][k,0], -x['x'][k,2], '*')
     ax.plot(truth['x'][:,1],truth['x'][:,0], -truth['x'][:,2], label=r'$x$')
     ax.legend()
+    plt.grid()
 
     pw.addPlot("3D", f, True)
 
-def init3DMap():
-    pass
+def plotSatPos():
+    f = plt.figure()
+    ax = f.add_subplot(111, projection='3d')
+    ax.set_aspect('equal')
+    for sat in np.unique(satPos['sats']['id']):
+        if sat < 0: continue
+        idx = satPos['sats']['id'] == sat
+        ax.plot(satPos['sats'][idx]['p'][:,0], satPos['sats']['p'][idx][:,1], satPos['sats']['p'][idx][:,2])
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 100)
+    x = 6371e3 * np.outer(np.cos(u), np.sin(v))
+    y = 6371e3 * np.outer(np.sin(u), np.sin(v))
+    z = 6371e3 * np.outer(np.ones(np.size(u)), np.cos(v))
+    ax.plot_surface(x, y, z, color='b', alpha=0.7)
+    ax.plot([-1798780.451], [-4532177.657], [4099857.983], 'x')
+    plt.grid()
+    pw.addPlot("SatPos", f, True)
 
-def animate3DMap(frame):
-    pass
+def plotPRangeRes():
+    f = plt.figure()
+    for sat in np.unique(prangeRes['sats']['id']):
+        if sat < 0: continue
+        idx = prangeRes['sats']['id'] == sat
+        for i in range(2):
+            plt.subplot(2,1,i+1)
+            plt.plot(prangeRes['t'], prangeRes['sats']['res'][idx][:,i])
+    plt.grid()
+    pw.addPlot("PRangeRes", f)
+
 
 def plotMocapRes():
     f = plt.figure()
@@ -154,19 +180,12 @@ def plotVelocity():
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
     pw.addPlot("Velocity", f)
 
-def plotGnssRes():
-    pass
-    # f = plt.figure()
-    # for i in range(2):
-    #     plt.subplot(2,1,i+1)
-    #     plt.plot(GnssRes['r']['t'].T, GnssRes['r']['res'][:,:,i].T)
-
 def plotResults(prefix):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles, trueFeatPos
-    global offset, pw, mocapRes
+    global offset, pw, mocapRes, satPos, prangeRes
 
     offset = 10
     x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
@@ -179,6 +198,8 @@ def plotResults(prefix):
     # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
     cb = np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)])
     mocapRes = np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType)
+    satPos = np.fromfile(os.path.join(prefix, "SatPos.log"), dtype=SatPosType)
+    prangeRes = np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType)
     # trueFeatPos -= truth['x'][0,0:3]
     # truth['x'][:,:3] -= truth['x'][0,0:3]
 
@@ -194,17 +215,23 @@ def plotResults(prefix):
     plotAttitude()
     plotVelocity()
     plotImuBias()
+    if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
+        plotPRangeRes()
 
-    if max(GnssRes['size']) > 0:
+    if len(GnssRes) > 0 and max(GnssRes['size']) > 0:
         plotClockBias()
-        plotGnssRes()
+        # plotGnssRes()
 
-    if max(featPos['size']) > 0:
+    if len(featPos) > 0 and max(featPos['size']) > 0:
         plotFeatRes()
         plotFeatDepths()
 
-    if max(mocapRes['size']) > 0:
+    if len(mocapRes) > 0 and max(mocapRes['size']) > 0:
         plotMocapRes()
+
+    if len(satPos) > 0 and max(satPos['size']) > 0:
+        plotSatPos()
+
 
 
 

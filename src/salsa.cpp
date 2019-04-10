@@ -21,20 +21,15 @@ Salsa::~Salsa()
     if (bias_) delete bias_;
     if (anchor_) delete anchor_;
 
-    if (current_state_log_) delete current_state_log_;
-    if (opt_log_) delete opt_log_;
-    if (raw_gnss_res_log_) delete raw_gnss_res_log_;
-    if (feat_res_log_) delete feat_res_log_;
-    if (feat_log_) delete feat_log_;
-    if (state_log_) delete state_log_;
-    if (cb_log_) delete cb_log_;
-    if (mocap_res_log_) delete mocap_res_log_;
+    for (auto&& ptr : logs_) delete ptr;
 }
 
 void Salsa::init(const string& filename)
 {
     load(filename);
-    initLog();
+    initImg(filename);
+    initGNSS(filename);
+    initLog(filename);
     initState();
     initFactors();
     initSolverOptions();
@@ -49,9 +44,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("tc", filename, dt_c_);
     get_yaml_node("N", filename, N_);
     get_yaml_node("num_sat", filename, ns_);
-    get_yaml_node("num_feat", filename, nf_);
-    get_yaml_node("log_prefix", filename, log_prefix_);
-    get_yaml_node("switch_weight", filename, switch_weight_);
+    get_yaml_node("num_feat", filename, nf_);     
     get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
     get_yaml_node("use_measured_depth", filename, use_measured_depth_);
     get_yaml_node("disable_solver", filename, disable_solver_);
@@ -77,21 +70,6 @@ void Salsa::load(const string& filename)
     Vector2d clk_bias_diag;
     get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
     clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
-
-    get_yaml_eigen("focal_len", filename, cam_.focal_len_);
-    get_yaml_eigen("distortion", filename, cam_.distortion_);
-    get_yaml_eigen("cam_center", filename, cam_.cam_center_);
-    get_yaml_eigen("image_size", filename, cam_.image_size_);
-    get_yaml_node("cam_skew", filename, cam_.s_);
-    get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
-    get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
-    get_yaml_node("simulate_klt", filename, sim_KLT_);
-    get_yaml_node("doppler_cov", filename, doppler_cov_);
-    get_yaml_node("estimate_origin", filename, estimate_origin_);
-    get_yaml_eigen("x_e2n", filename, x_e2n_.arr_);
-    get_yaml_node("min_satellite_elevation", filename, min_satellite_elevation_);
-
-    loadKLT(filename);
 }
 
 void Salsa::initState()
@@ -110,21 +88,6 @@ void Salsa::initFactors()
 {
     bias_ = new ImuBiasDynamicsFunctor(imu_bias_, acc_bias_xi_);
     anchor_ = new AnchorFunctor(anchor_xi_);
-}
-
-void Salsa::initLog()
-{
-    if (!fs::exists(fs::path(log_prefix_).parent_path()))
-        fs::create_directories(fs::path(log_prefix_).parent_path());
-
-    current_state_log_ = new Logger(log_prefix_ + "CurrentState.log");
-    opt_log_ = new Logger(log_prefix_ + "Opt.log");
-    raw_gnss_res_log_ = new Logger(log_prefix_+ "RawRes.log");
-    feat_res_log_ = new Logger(log_prefix_ + "FeatRes.log");
-    feat_log_ = new Logger(log_prefix_ + "Feat.log");
-    state_log_ = new Logger(log_prefix_ + "State.log");
-    cb_log_ = new Logger(log_prefix_ + "CB.log");
-    mocap_res_log_ = new Logger(log_prefix_ + "MocapRes.log");
 }
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
@@ -209,6 +172,9 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
 
 void Salsa::addRawGnssFactors(ceres::Problem &problem)
 {
+    if (disable_gnss_)
+        return;
+
     for (auto pvec = prange_.begin(); pvec != prange_.end(); pvec++)
     {
         for (auto it = pvec->begin(); it != pvec->end(); it++)
@@ -289,6 +255,8 @@ void Salsa::solve()
     logFeatRes();
     logMocapRes();
     logFeatures();
+    logSatPos();
+    logPrangeRes();
 }
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
