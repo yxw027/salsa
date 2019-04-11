@@ -156,7 +156,7 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
     for (const auto& o : obsvec->obs)
     {
         salsa::Obs new_obs;
-        new_obs.t = GTime::fromUTC(o.time.time, o.time.sec);
+        new_obs.t = GTime::fromTime(o.time.time, o.time.sec);
         new_obs.sat = o.sat;
         new_obs.rcv = o.rcv;
         new_obs.SNR = o.SNR;
@@ -181,9 +181,9 @@ void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
     new_eph.week = eph->week;
     new_eph.code = eph->code;
     new_eph.flag = eph->flag;
-    new_eph.toe = GTime::fromUTC(eph->toe.time, eph->toe.sec);
-    new_eph.toc = GTime::fromUTC(eph->toc.time, eph->toc.sec);
-    new_eph.ttr = GTime::fromUTC(eph->ttr.time, eph->ttr.sec);
+    new_eph.toe = GTime::fromTime(eph->toe.time, eph->toe.sec);
+    new_eph.toc = GTime::fromTime(eph->toc.time, eph->toc.sec);
+    new_eph.ttr = GTime::fromTime(eph->ttr.time, eph->ttr.sec);
     new_eph.A = eph->A;
     new_eph.e = eph->e;
     new_eph.i0 = eph->i0;
