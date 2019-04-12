@@ -200,17 +200,19 @@ void Salsa::logSatPos()
             Vector3d pos, vel;
             Vector2d clk;
             GTime now = start_time_ + current_state_.t;
+            Vector2d azel = sats_[i].azimuthElevation(now, WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t()));
             sats_[i].computePositionVelocityClock(now, pos, vel, clk);
             logs_[log::SatPos]->log(sats_[i].id_);
-            logs_[log::SatPos]->logVectors(pos, vel, clk);
+            logs_[log::SatPos]->logVectors(pos, vel, clk, azel);
         }
         else
         {
-            Matrix<double, 8, 1> padding = Matrix<double, 8, 1>::Constant(NAN);
+            Matrix<double, 10, 1> padding = Matrix<double, 10, 1>::Constant(NAN);
             logs_[log::SatPos]->log((int)-1);
             logs_[log::SatPos]->logVectors(padding);
         }
     }
+    cout << DateTime(start_time_ + current_state_.t) << endl;
 }
 
 void Salsa::logPrangeRes()
@@ -224,16 +226,25 @@ void Salsa::logPrangeRes()
         if (i < filtered_obs_.size())
         {
             Vector3d z;
-            Vector3d zhat;
+            Vector3d zhat = Vector3d::Constant(30);
             Vector3d sat_pos, sat_vel;
             Vector2d sat_clk;
-            sats_[filtered_obs_[i].sat_idx].computePositionVelocityClock(filtered_obs_[i].t, sat_pos, sat_vel, sat_clk);
-            sats_[filtered_obs_[i].sat_idx].computeMeasurement(filtered_obs_[i].t, rec_pos, rec_vel, clk, z);
-            Vector3d e_sat = (sat_pos - rec_pos).normalized();
-            zhat << (rec_pos - sat_pos).norm(),
-                    (sat_pos - rec_pos).dot(e_sat),
-                    1.0/Satellite::LAMBDA_L1 * (rec_pos - sat_pos).norm();
+            GTime& t(filtered_obs_[i].t);
+            sats_[filtered_obs_[i].sat_idx].computePositionVelocityClock(t, sat_pos, sat_vel, sat_clk);
+            sats_[filtered_obs_[i].sat_idx].computeMeasurement(t + 18, rec_pos, rec_vel, clk, zhat);
+            range_t gnss_sdr;
+            ionoutc_t ion = {true, true,
+                             0.1118E-07,-0.7451E-08,-0.5961E-07, 0.1192E-06,
+                             0.1167E+06,-0.2294E+06,-0.1311E+06, 0.1049E+07};
+//            computeRange(&gnss_sdr, sats_[filtered_obs_[i].sat_idx], &ion, t, rec_pos);
+//            Vector3d e_sat = (sat_pos - rec_pos).normalized();
+//            zhat << (rec_pos - sat_pos).norm(),
+//                    (sat_pos - rec_pos).dot(e_sat),
+//                    1.0/Satellite::LAMBDA_L1 * (rec_pos - sat_pos).norm();
+//            zhat << gnss_sdr.range, gnss_sdr.rate, gnss_sdr.d;
+            z << filtered_obs_[i].z;
             Vector3d res = z - zhat;
+//            cout << res.transpose() << endl;
             logs_[log::PRangeRes]->log((int)sats_[filtered_obs_[i].sat_idx].id_);
             logs_[log::PRangeRes]->logVectors(res, z, zhat);
         }
@@ -244,6 +255,7 @@ void Salsa::logPrangeRes()
             logs_[log::PRangeRes]->logVectors(padding);
         }
     }
+    cout << WSG84::ecef2lla(rec_pos).transpose() << endl;
 }
 
 

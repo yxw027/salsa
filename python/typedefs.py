@@ -100,7 +100,8 @@ SatPosType = np.dtype([
         ('id', np.int32),
         ('p', (np.float64, 3)),
         ('v', (np.float64, 3)),
-        ('tau', (np.float64, 2))
+        ('tau', (np.float64, 2)),
+        ('azel', (np.float64, 2))
     ]), params["num_sat"]))
 ])
 

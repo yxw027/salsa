@@ -135,37 +135,37 @@ void Salsa::obsCallback(const ObsVec &obs)
     if (current_node_ == -1)
     {
 
-//        SD("Initialized Raw GNSS\n");
-//        Vector8d pp_sol = Vector8d::Zero();
-//        if (use_point_positioning_)
-//        {
-//            pointPositioning(t, filtered_obs_, sats_, pp_sol);
-//            auto phat = pp_sol.segment<3>(0);
-//            auto vhat = pp_sol.segment<3>(3);
-//            auto that = pp_sol.segment<2>(6);
+        SD("Initialized Raw GNSS\n");
+        Vector8d pp_sol = Vector8d::Zero();
+        if (use_point_positioning_)
+        {
+            pointPositioning(t, filtered_obs_, sats_, pp_sol);
+            auto phat = pp_sol.segment<3>(0);
+            auto vhat = pp_sol.segment<3>(3);
+            auto that = pp_sol.segment<2>(6);
 
-//            Xformd xhat = Xformd::Identity();
-//            if (estimate_origin_)
-//                x_e2n_ = WSG84::x_ecef2ned(phat);
-//            else
-//                xhat.t() = WSG84::ecef2ned(x_e2n_, phat);
+            Xformd xhat = Xformd::Identity();
+            if (estimate_origin_)
+                x_e2n_ = WSG84::x_ecef2ned(phat);
+            else
+                xhat.t() = WSG84::ecef2ned(x_e2n_, phat);
 
-//            initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
-//        }
-//        else
-//        {
-//            initialize(current_state_.t, current_state_.x, current_state_.v, Vector2d::Zero());
-//        }
+            initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        }
+        else
+        {
+            initialize(current_state_.t, current_state_.x, current_state_.v, Vector2d::Zero());
+        }
 
-//        prange_.emplace_back(filtered_obs_.size());
-//        int i = 0;
-//        for (auto& ob : filtered_obs_)
-//        {
-//            Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
-//            prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], pp_sol.topRows<3>(),
-//                    R, current_node_, current_kf_, xbuf_head_);
-//        }
-//        return;
+        prange_.emplace_back(filtered_obs_.size());
+        int i = 0;
+        for (auto& ob : filtered_obs_)
+        {
+            Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
+            prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], pp_sol.topRows<3>(),
+                    R, current_node_, current_kf_, xbuf_head_);
+        }
+        return;
     }
     else
     {

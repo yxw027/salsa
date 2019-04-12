@@ -153,6 +153,9 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
     inertial_sense::GNSSObsVecConstPtr obsvec = m.instantiate<inertial_sense::GNSSObsVec>();
     salsa::ObsVec z;
     z.reserve(obsvec->obs.size());
+    std::cout << "obs header" << DateTime(GTime::fromUTC(m.getTime().sec, m.getTime().nsec/1e9)) << std::endl;
+    std::cout << "obs obs[0]" << DateTime(GTime::fromTime(obsvec->obs[0].time.time, obsvec->obs[0].time.sec)) << std::endl;
+
     for (const auto& o : obsvec->obs)
     {
         salsa::Obs new_obs;
@@ -171,7 +174,9 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
 
 void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
 {
+    std::cout << "eph header" << DateTime(GTime::fromUTC(m.getTime().sec, m.getTime().nsec/1e9)) << std::endl;
     inertial_sense::GNSSEphemerisConstPtr eph = m.instantiate<inertial_sense::GNSSEphemeris>();
+    std::cout << "eph toe" << DateTime(GTime::fromTime(eph->toe.time, eph->toe.sec)) << std::endl;
     eph_t new_eph;
     new_eph.sat = eph->sat;
     new_eph.iode = eph->iode;

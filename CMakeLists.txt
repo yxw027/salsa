@@ -55,6 +55,7 @@ add_library(salsa
     src/salsa_vision.cpp
     src/salsa_log.cpp
     src/klt.cpp
+    lib/multirotor_sim/src/test/reference_algorithms.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry

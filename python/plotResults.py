@@ -78,6 +78,27 @@ def plotSatPos():
     plt.grid()
     pw.addPlot("SatPos", f, True)
 
+def plotAzel():
+    f = plt.figure()
+    for sat in np.unique(satPos['sats']['id']):
+        if sat < 0: continue
+        idx = satPos['sats']['id'] == sat
+        labels = ["az", "el"]
+        for i in range(2):
+            plt.subplot(2,1,i+1)
+            plt.plot(satPos['t'][np.sum(idx, axis=1).astype(np.bool)], 180.0/np.pi * satPos['sats']['azel'][idx][:,i], label=str(sat))
+            plt.ylabel(labels[i])
+            if i == 0:
+                plt.legend()
+    azel = satPos['sats']['azel'][-1]*180.0/np.pi
+    dist = np.sqrt(np.sum(np.square(satPos['sats']['p'][-1]), axis=1))/1000
+    ids = satPos['sats']['id'][-1]
+    for i in range(len(ids)):
+        print ids[i], ", ", dist[i], ", ", azel[i,:]
+
+    pw.addPlot("AzEl", f)
+
+
 def plotPRangeRes():
     f = plt.figure()
     for sat in np.unique(prangeRes['sats']['id']):
@@ -98,9 +119,7 @@ def plotPRangeRes():
             plt.subplot(2, 1, i + 1)
             p = plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['z'][idx][:, i], label='z')
             plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['zhat'][idx][:, i], '--', color=p[0].get_color(), label='zhat')
-
-            if i == 0 and sat == np.unique(prangeRes['sats']['id'])[0]:
-                plt.legend()
+    plt.legend()
     plt.grid()
     pw.addPlot("PRangeResDebug", f)
 
@@ -226,6 +245,7 @@ def plotResults(prefix):
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
 
+    plotAzel()
     plot3DMap()
     plotPosition()
     plotAttitude()
@@ -247,6 +267,7 @@ def plotResults(prefix):
 
     if len(satPos) > 0 and max(satPos['size']) > 0:
         plotSatPos()
+
 
 
 
