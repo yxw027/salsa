@@ -134,11 +134,11 @@ void Salsa::obsCallback(const ObsVec &obs)
 
     if (current_node_ == -1)
     {
-
         SD("Initialized Raw GNSS\n");
-        Vector8d pp_sol = Vector8d::Zero();
         if (use_point_positioning_)
         {
+            Vector8d pp_sol = Vector8d::Zero();
+            pp_sol.topRows<3>() = x_e2n_.t();
             pointPositioning(t, filtered_obs_, sats_, pp_sol);
             auto phat = pp_sol.segment<3>(0);
             auto vhat = pp_sol.segment<3>(3);
@@ -157,13 +157,14 @@ void Salsa::obsCallback(const ObsVec &obs)
             initialize(current_state_.t, current_state_.x, current_state_.v, Vector2d::Zero());
         }
 
+        Vector3d rec_pos_ecef = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
         prange_.emplace_back(filtered_obs_.size());
         int i = 0;
         for (auto& ob : filtered_obs_)
         {
             Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
-            prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], pp_sol.topRows<3>(),
-                    R, current_node_, current_kf_, xbuf_head_);
+            prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
+                                     current_node_, current_kf_, xbuf_head_);
         }
         return;
     }
@@ -173,9 +174,10 @@ void Salsa::obsCallback(const ObsVec &obs)
 
         if (filtered_obs_.size() > 8)
         {
-            Vector8d pp_sol = Vector8d::Zero();
             if (use_point_positioning_)
             {
+                Vector8d pp_sol = Vector8d::Zero();
+                pp_sol.topRows<3>() = x_e2n_.t();
                 pointPositioning(t, filtered_obs_, sats_, pp_sol);
                 auto phat = pp_sol.segment<3>(0);
                 auto vhat = pp_sol.segment<3>(3);
@@ -185,15 +187,15 @@ void Salsa::obsCallback(const ObsVec &obs)
                 xbuf_[xbuf_head_].tau = that;
             }
 
+            Vector3d rec_pos_ecef = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
             prange_.emplace_back(filtered_obs_.size());
             int i = 0;
             for (auto& ob : filtered_obs_)
             {
                 Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
-                prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx],
-                        pp_sol.topRows<3>(), R, current_node_, current_kf_, xbuf_head_);
+                prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
+                                         current_node_, current_kf_, xbuf_head_);
             }
-
             solve();
         }
     }

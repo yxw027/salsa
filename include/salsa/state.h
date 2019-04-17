@@ -21,6 +21,7 @@ public:
     int node;
     Xformd x;
     double& t;
+    Map<Vector3d> p;
     Map<Vector3d> v;
     Map<Vector2d> tau;
 

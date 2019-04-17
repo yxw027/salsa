@@ -16,7 +16,7 @@ class PseudorangeFunctor
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     PseudorangeFunctor();
-    void init(const GTime& _t, const Vector2d& _rho, const Satellite& sat,
+    void init(const GTime& _t, const Vector2d& _rho, Satellite &sat,
               const Vector3d& _rec_pos_ecef, const Matrix2d& cov,
               int node, int kf, int idx);
     template <typename T>

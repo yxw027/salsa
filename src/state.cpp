@@ -7,6 +7,7 @@ namespace salsa
 State::State() :
     t(buf_[0]),
     x(buf_+1),
+    p(buf_+1),
     v(buf_+8),
     tau(buf_+11)
 {
