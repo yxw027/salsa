@@ -217,10 +217,29 @@ void Salsa::logSatPos()
 
 void Salsa::logPrangeRes()
 {
+    x_e2n_ = WSG84::x_ecef2ned(WSG84::lla2ecef(Vector3d(40.24650*M_PI/180.0, -111.64623*M_PI/180.0, 1410)));
     logs_[log::PRangeRes]->log(current_state_.t, (int)sats_.size());
     Vector3d rec_pos = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t());
     Vector3d rec_vel = x_e2n_.rota(xbuf_[xbuf_head_].v);
     Vector2d clk = xbuf_[xbuf_head_].tau;
+
+    GTime& t(filtered_obs_[0].t);
+    if (filtered_obs_.size() >= 8)
+    {
+        Vector8d pp_sol;
+        pp_sol.setZero();
+        pp_sol.topRows<3>() = x_e2n_.t();
+        pointPositioning(t, filtered_obs_, sats_, pp_sol);
+        rec_pos = pp_sol.head<3>();
+        rec_vel = pp_sol.segment<3>(3);
+        clk = pp_sol.tail<2>();
+
+        cout << DateTime(filtered_obs_[0].t) << ": ";
+        printLla(WSG84::ecef2lla(rec_pos));
+        cout << " vs ";
+        printLla(WSG84::ecef2lla(x_e2n_.t()));
+        cout << " err = " << WSG84::ecef2ned(x_e2n_, rec_pos).transpose() << endl;
+    }
     for (int i = 0; i < ns_; i++)
     {
         if (i < filtered_obs_.size())
@@ -229,9 +248,19 @@ void Salsa::logPrangeRes()
             Vector3d zhat = Vector3d::Constant(30);
             Vector3d sat_pos, sat_vel;
             Vector2d sat_clk;
-            GTime& t(filtered_obs_[i].t);
+
+
             sats_[filtered_obs_[i].sat_idx].computePositionVelocityClock(t, sat_pos, sat_vel, sat_clk);
-            sats_[filtered_obs_[i].sat_idx].computeMeasurement(t + 18, rec_pos, rec_vel, clk, zhat);
+            sats_[filtered_obs_[i].sat_idx].computeMeasurement(t, rec_pos, rec_vel, clk, zhat);
+            cout << "Sat: " << (int)filtered_obs_[i].sat;
+            cout << "  Dist: " << setprecision(10) << (sat_pos-rec_pos).norm();
+            cout << "  Zhat: " << setprecision(10) << zhat(0);
+            cout << "  Z: " << setprecision(10) << filtered_obs_[i].z(0);
+            cout << "  Zhat - Dist: " << setprecision(10) << zhat(0) - (sat_pos-rec_pos).norm();
+            cout << "  z - Zhat: " << setprecision(10) << filtered_obs_[i].z(0) - zhat(0);
+            cout << "  Az: " << sats_[filtered_obs_[i].sat_idx].azimuthElevation(t, rec_pos)(0)*180.0/M_PI;
+            cout << "  El: " << sats_[filtered_obs_[i].sat_idx].azimuthElevation(t, rec_pos)(1)*180.0/M_PI;
+            cout << endl;
             range_t gnss_sdr;
             ionoutc_t ion = {true, true,
                              0.1118E-07,-0.7451E-08,-0.5961E-07, 0.1192E-06,

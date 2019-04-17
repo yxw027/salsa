@@ -10,5 +10,5 @@ python/.idea/*
 *.lyx~
 node_modules/
 vid/*
-
+*.pdf
 *.8-pre1

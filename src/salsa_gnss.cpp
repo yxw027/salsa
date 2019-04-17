@@ -211,7 +211,6 @@ void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Ve
     int iter = 0;
     do
     {
-        iter++;
         int i = 0;
         for (auto&& o : obs)
         {
@@ -242,7 +241,7 @@ void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Ve
         dx = solver.solve(b);
 
         xhat += dx;
-    } while (dx.norm() > 1e-4);
+    } while (dx.norm() > 1e-4 && ++iter < 10);
 }
 
 }
