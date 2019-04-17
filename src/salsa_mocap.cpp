@@ -7,6 +7,9 @@ using namespace salsa;
 
 void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 {
+    if (disable_mocap_)
+        return;
+
     last_callback_ = MOCAP;
     if (current_node_ == -1)
     {

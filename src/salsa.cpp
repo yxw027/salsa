@@ -48,6 +48,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
     get_yaml_node("use_measured_depth", filename, use_measured_depth_);
     get_yaml_node("disable_solver", filename, disable_solver_);
+    get_yaml_node("disable_mocap", filename, disable_mocap_);
 
     xbuf_.resize(STATE_BUF_SIZE);
     s_.reserve(ns_);

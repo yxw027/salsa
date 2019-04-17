@@ -204,6 +204,7 @@ public:
     double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
     GTime start_time_;
     Matrix2d clk_bias_Xi_;
+    bool disable_mocap_;
 
 
     bool disable_gnss_;
