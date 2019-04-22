@@ -5,13 +5,14 @@
 
 #include "factors/shield.h"
 
-using namespace Eigen;
+namespace salsa
+{
 
 class ClockBiasFunctor
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    ClockBiasFunctor(const Matrix2d& Xi, int from_idx, int from_node);
+    ClockBiasFunctor(const Eigen::Matrix2d& Xi, int from_idx, int from_node);
     bool finished(double dt, int to_idx);
 
     template <typename T>
@@ -21,7 +22,7 @@ public:
     int from_idx_;
     int to_idx_;
     double dt_;
-    Matrix2d Xi_;
+    Eigen::Matrix2d Xi_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasFunctor>, 2, 2, 2> ClockBiasFactorAD;
 
@@ -40,3 +41,5 @@ typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasFunctor>, 2, 2, 2> Cl
 //    Matrix2d Xi_;
 //};
 //typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasPinFunctor>, 2, 2> ClockBiasPinFunctorAD;
+
+}

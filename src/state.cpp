@@ -1,5 +1,8 @@
 #include "salsa/state.h"
 
+using namespace Eigen;
+using namespace xform;
+
 namespace salsa
 {
 

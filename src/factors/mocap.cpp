@@ -1,5 +1,11 @@
 #include "factors/mocap.h"
 
+using namespace Eigen;
+using namespace xform;
+
+namespace salsa
+{
+
 MocapFunctor::MocapFunctor(const double& dt_m, const Xformd& x_u2m, const Vector7d& _xm,
                            const Vector6d& _xmdot, const Matrix6d& _Xi, int idx, int node, int kf) :
     dt_m_(dt_m),
@@ -29,3 +35,4 @@ template bool MocapFunctor::operator()<double>(const double* _xu, double* _res) 
 typedef ceres::Jet<double, 7> jactype;
 template bool MocapFunctor::operator()<jactype>(const jactype* _xu, jactype* _res) const;
 
+}

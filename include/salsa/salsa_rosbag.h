@@ -13,7 +13,8 @@
 #include "salsa/salsa.h"
 #include "multirotor_sim/utils.h"
 
-using namespace salsa;
+namespace salsa
+{
 
 class SalsaRosbag
 {
@@ -34,25 +35,27 @@ public:
 
     rosbag::Bag bag_;
     rosbag::View* view_;
-    string bag_filename_;
-    string param_filename_;
-    string log_prefix_;
+    std::string bag_filename_;
+    std::string param_filename_;
+    std::string log_prefix_;
     double start_;
     double duration_;
     double end_;
 
     int imu_count_between_nodes_;
 
-    Quatd q_mocap_to_NED_pos_, q_mocap_to_NED_att_;
+    quat::Quatd q_mocap_to_NED_pos_, q_mocap_to_NED_att_;
     ros::Time bag_start_;
     ros::Time bag_duration_;
     ros::Time bag_end_;
     Salsa salsa_;
 
     Matrix6d imu_R_;
-    string seen_imu_topic_;
+    std::string seen_imu_topic_;
 
     Matrix6d mocap_R_;
     Logger truth_log_;
     Logger imu_log_;
 };
+
+}

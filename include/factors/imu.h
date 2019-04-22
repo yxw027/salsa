@@ -8,13 +8,13 @@
 #include "salsa/misc.h"
 #include "geometry/xform.h"
 
-using namespace Eigen;
-using namespace xform;
+namespace salsa
+{
 
 class ImuFunctor
 {
 public:
-    typedef Matrix<double, 9, 6> Matrix96;
+    typedef Eigen::Matrix<double, 9, 6> Matrix96;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node);
@@ -68,7 +68,7 @@ public:
     Matrix6d cov_;
 
     Matrix96 J_;
-    static Vector3d gravity_;
+    static Eigen::Vector3d gravity_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;
@@ -87,3 +87,5 @@ public:
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuBiasDynamicsFunctor>, 6, 6> ImuBiasFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuBiasDynamicsFunctor, 6, 6> UnshieldedImuBiasFactorAD;
+
+}

@@ -3,10 +3,16 @@
 #include "multirotor_sim/simulator.h"
 #include "multirotor_sim/controller.h"
 #include "multirotor_sim/utils.h"
-#include "multirotor_sim/wsg84.h"
-#include "multirotor_sim/raw_gnss.h"
+#include "gnss_utils//wgs84.h"
 #include "salsa/test_common.h"
 #include "salsa/salsa.h"
+
+
+using namespace Eigen;
+using namespace xform;
+using namespace multirotor_sim;
+using namespace salsa;
+using namespace gnss_utils;
 
 TEST (DISABLED_Salsa, PointPositioningInit)
 {
@@ -39,7 +45,7 @@ TEST (DISABLED_Salsa, PointPositioningInit)
   sim.register_estimator(&salsa);
   sim.t_ = 0.0;
 
-  State x;
+  multirotor_sim::State x;
   x.p << 16, 4, 8;
   x.v << 3, -4, 5;
   sim.dyn_.set_state(x);
@@ -48,10 +54,10 @@ TEST (DISABLED_Salsa, PointPositioningInit)
   sim.t_ = 0.3;
   sim.update_raw_gnss_meas();
 
-  Vector3d p_ecef_true = WSG84::ned2ecef(sim.X_e2n_, x.p);
+  Vector3d p_ecef_true = WGS84::ned2ecef(sim.X_e2n_, x.p);
   Vector3d v_ecef_true = sim.X_e2n_.q().rota(x.v);
   Vector2d tau_true(sim.clock_bias_, sim.clock_bias_rate_);
-  Vector3d p_ecef_hat = WSG84::ned2ecef(salsa.x_e2n_, salsa.xbuf_[0].x.t());
+  Vector3d p_ecef_hat = WGS84::ned2ecef(salsa.x_e2n_, salsa.xbuf_[0].x.t());
   Vector3d v_ecef_hat = salsa.x_e2n_.q().rota(salsa.xbuf_[0].v);
   Vector2d tau_hat = salsa.xbuf_[0].tau;
 

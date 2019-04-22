@@ -5,6 +5,7 @@
 
 using namespace salsa;
 using namespace std;
+using namespace multirotor_sim;
 
 
 int main()

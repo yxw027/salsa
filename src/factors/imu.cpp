@@ -2,6 +2,10 @@
 
 using namespace Eigen;
 using namespace xform;
+using namespace quat;
+
+namespace salsa
+{
 
 Vector3d ImuFunctor::gravity_{0, 0, 9.80665};
 
@@ -210,3 +214,4 @@ bool ImuBiasDynamicsFunctor::operator()(const T* _b, T* _res) const
 template bool ImuBiasDynamicsFunctor::operator ()<double>(const double* _b, double* _res) const;
 typedef ceres::Jet<double, 6> jactype2;
 template bool ImuBiasDynamicsFunctor::operator ()<jactype2>(const jactype2* _b, jactype2* _res) const;
+}

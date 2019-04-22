@@ -10,9 +10,9 @@
 
 #include "geometry/xform.h"
 #include "multirotor_sim/estimator_base.h"
-#include "multirotor_sim/satellite.h"
-#include "multirotor_sim/wsg84.h"
 #include "multirotor_sim/utils.h"
+#include "gnss_utils/satellite.h"
+#include "gnss_utils/wgs84.h"
 
 #include "factors/imu.h"
 #include "factors/mocap.h"
@@ -29,9 +29,6 @@
 
 #include "opencv2/opencv.hpp"
 
-using namespace std;
-using namespace Eigen;
-using namespace xform;
 using multirotor_sim::VecMat3;
 using multirotor_sim::VecVec3;
 using multirotor_sim::ImageFeat;
@@ -50,7 +47,7 @@ public:
     typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
     typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
     typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
-    typedef std::vector<Satellite, aligned_allocator<Satellite>> SatVec;
+    typedef std::vector<gnss_utils::Satellite, aligned_allocator<gnss_utils::Satellite>> SatVec;
     typedef std::map<int,Feat,std::less<int>,aligned_allocator<std::pair<const int,Feat>>> FeatMap;
 
 
@@ -66,7 +63,7 @@ public:
     void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
     void initSolverOptions();
 
-    void initLog(const string &filename);
+    void initLog(const std::string &filename);
     void logRawGNSSRes();
     void logFeatRes();
     void logMocapRes();
@@ -96,7 +93,7 @@ public:
 
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
     void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
-    void rawGnssCallback(const GTime& t, const VecVec3& z, const VecMat3& R,
+    void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
                          SatVec &sat, const std::vector<bool>& slip) override;
     void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
@@ -118,11 +115,11 @@ public:
 
     void initGNSS(const std::string& filename);
     int getSatIdx(int sat_id) const;
-    void ephCallback(const GTime &t, const eph_t& eph);
+    void ephCallback(const gnss_utils::GTime &t, const gnss_utils::eph_t& eph);
     void refreshSatIdx();
     void obsCallback(const ObsVec& obs);
     void filterObs(const ObsVec& obs);
-    void pointPositioning(const GTime& t, const ObsVec &obs, SatVec &sat, Vector8d &xhat) const;
+    void pointPositioning(const gnss_utils::GTime& t, const ObsVec &obs, SatVec &sat, Vector8d &xhat) const;
 
     enum {
         NOT_NEW_KEYFRAME = 0,
@@ -140,7 +137,7 @@ public:
     bool disable_solver_;
 
     StateVec xbuf_;
-    vector<double> s_; int ns_;
+    std::vector<double> s_; int ns_;
     Vector6d imu_bias_;
     int current_node_;
     int oldest_node_;
@@ -202,7 +199,7 @@ public:
     Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
     double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
     double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
-    GTime start_time_;
+    gnss_utils::GTime start_time_;
     Matrix2d clk_bias_Xi_;
     bool disable_mocap_;
 
@@ -229,7 +226,7 @@ public:
     bool show_matches_;
     int feature_nearby_radius_;
     int next_feature_id_;
-    vector<uchar> match_status_;
+    std::vector<uchar> match_status_;
     std::vector<cv::Point2f> prev_features_;
     std::vector<cv::Scalar> colors_;
     std::vector<uchar> status_;
@@ -248,23 +245,23 @@ public:
 
 };
 }
-typedef struct
-{
-    GTime g;
-    double range; // pseudorange
-    double rate;
-    double d; // geometric distance
-    double azel[2];
-    double iono_delay;
-} range_t;
-typedef struct
-{
-    int enable;
-    int vflg;
-    double alpha0,alpha1,alpha2,alpha3;
-    double beta0,beta1,beta2,beta3;
-} ionoutc_t;
-void eph2pos(const GTime& t, const eph_t *eph, Eigen::Vector3d& pos, double *dts);
-double ionmodel(const GTime& t, const double *pos, const double *azel);
-double ionosphericDelay(const ionoutc_t *ionoutc, GTime g, double *llh, double *azel);
-void computeRange(range_t *rho, Satellite &eph, ionoutc_t *ionoutc, GTime g, Vector3d& xyz);
+//typedef struct
+//{
+//    gnss_utils::GTime g;
+//    double range; // pseudorange
+//    double rate;
+//    double d; // geometric distance
+//    double azel[2];
+//    double iono_delay;
+//} range_t;
+//typedef struct
+//{
+//    int enable;
+//    int vflg;
+//    double alpha0,alpha1,alpha2,alpha3;
+//    double beta0,beta1,beta2,beta3;
+//} ionoutc_t;
+//void eph2pos(const gnss_utils::GTime& t, const gnss_utils::eph_t *eph, Eigen::Vector3d& pos, double *dts);
+//double ionmodel(const gnss_utils::GTime& t, const double *pos, const double *azel);
+//double ionosphericDelay(const ionoutc_t *ionoutc, GTime g, double *llh, double *azel);
+//void computeRange(range_t *rho, gnss_utils::Satellite &eph, ionoutc_t *ionoutc, gnss_utils::GTime g, Vector3d& xyz);

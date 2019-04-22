@@ -1,5 +1,8 @@
 #include "salsa/salsa_ros.h"
 
+namespace salsa
+{
+
 SalsaROS::SalsaROS() :
   nh_(), nh_private_("~")
 {
@@ -98,6 +101,4 @@ void SalsaROS::tformCB(const geometry_msgs::TransformStampedPtr& msg)
   salsa_.mocapCallback(t, z, mocap_R_);
 }
 
-
-
-
+}

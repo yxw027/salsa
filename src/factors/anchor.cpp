@@ -1,5 +1,10 @@
 #include "factors/anchor.h"
 
+using namespace Eigen;
+using namespace xform;
+
+namespace salsa
+{
 
 AnchorFunctor::AnchorFunctor(const Matrix11d &Xi):
     Xi_(Xi)
@@ -32,3 +37,5 @@ bool AnchorFunctor::operator()(const T* _x, const T* _v, const T* _tau, T* _res)
 template bool AnchorFunctor::operator()<double>(const double* _x, const double* v, const double* _tau, double* _res) const;
 typedef ceres::Jet<double, 12> jactype;
 template bool AnchorFunctor::operator()<jactype>(const jactype* _x, const jactype* _v, const jactype* _tau, jactype* _res) const;
+
+}

@@ -1,5 +1,9 @@
 #include "salsa/salsa.h"
-namespace fs = experimental::filesystem;
+
+namespace fs = std::experimental::filesystem;
+using namespace gnss_utils;
+using namespace Eigen;
+
 namespace salsa
 {
 
@@ -200,7 +204,7 @@ void Salsa::logSatPos()
             Vector3d pos, vel;
             Vector2d clk;
             GTime now = start_time_ + current_state_.t;
-            Vector2d azel = sats_[i].azimuthElevation(now, WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t()));
+            Vector2d azel = sats_[i].azimuthElevation(now, WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t()));
             sats_[i].computePositionVelocityClock(now, pos, vel, clk);
             logs_[log::SatPos]->log(sats_[i].id_);
             logs_[log::SatPos]->logVectors(pos, vel, clk, azel);
@@ -217,7 +221,7 @@ void Salsa::logSatPos()
 void Salsa::logPrangeRes()
 {
     logs_[log::PRangeRes]->log(current_state_.t, (int)sats_.size());
-    Vector3d rec_pos = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t());
+    Vector3d rec_pos = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].x.t());
     Vector3d rec_vel = x_e2n_.rota(xbuf_[xbuf_head_].v);
     Vector2d clk = xbuf_[xbuf_head_].tau;
 

@@ -3,6 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace xform;
+using namespace gnss_utils;
 namespace fs = std::experimental::filesystem;
 
 namespace salsa
@@ -34,7 +35,7 @@ void Salsa::ephCallback(const GTime& t, const eph_t &eph)
     bool new_sat = (s == sats_.end());
 
     GTime now = start_time_ + current_state_.t;
-    Vector3d rec_pos_ecef = WSG84::ned2ecef(x_e2n_, current_state_.x.t());
+    Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, current_state_.x.t());
     Satellite sat(eph, sats_.size());
     bool high_enough = sat.azimuthElevation(now, rec_pos_ecef)(1) > min_satellite_elevation_;
     if (new_sat)
@@ -146,9 +147,9 @@ void Salsa::obsCallback(const ObsVec &obs)
 
             Xformd xhat = Xformd::Identity();
             if (estimate_origin_)
-                x_e2n_ = WSG84::x_ecef2ned(phat);
+                x_e2n_ = WGS84::x_ecef2ned(phat);
             else
-                xhat.t() = WSG84::ecef2ned(x_e2n_, phat);
+                xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
 
             initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
         }
@@ -157,7 +158,7 @@ void Salsa::obsCallback(const ObsVec &obs)
             initialize(current_state_.t, current_state_.x, current_state_.v, Vector2d::Zero());
         }
 
-        Vector3d rec_pos_ecef = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
+        Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
         prange_.emplace_back(filtered_obs_.size());
         int i = 0;
         for (auto& ob : filtered_obs_)
@@ -182,12 +183,12 @@ void Salsa::obsCallback(const ObsVec &obs)
                 auto phat = pp_sol.segment<3>(0);
                 auto vhat = pp_sol.segment<3>(3);
                 auto that = pp_sol.segment<2>(6);
-                xbuf_[xbuf_head_].x.t() = WSG84::ecef2ned(x_e2n_, phat);
+                xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
                 xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
                 xbuf_[xbuf_head_].tau = that;
             }
 
-            Vector3d rec_pos_ecef = WSG84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
+            Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
             prange_.emplace_back(filtered_obs_.size());
             int i = 0;
             for (auto& ob : filtered_obs_)

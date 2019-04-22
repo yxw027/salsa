@@ -4,3 +4,6 @@
 [submodule "lib/geometry"]
 	path = lib/geometry
 	url = git@github.com:superjax/geometry
+[submodule "lib/gnss_utils"]
+	path = lib/gnss_utils
+	url = git@github.com:superjax/gnss_utils

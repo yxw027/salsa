@@ -5,10 +5,7 @@
 #include "geometry/xform.h"
 #include "factors/feat.h"
 #include "opencv2/opencv.hpp"
-#include "multirotor_sim/gtime.h"
-
-using namespace Eigen;
-using namespace xform;
+#include "gnss_utils/gtime.h"
 
 namespace salsa
 {
@@ -19,15 +16,15 @@ public:
     double buf_[13];
     int kf;
     int node;
-    Xformd x;
+    xform::Xformd x;
     double& t;
-    Map<Vector3d> p;
-    Map<Vector3d> v;
-    Map<Vector2d> tau;
+    Eigen::Map<Eigen::Vector3d> p;
+    Eigen::Map<Eigen::Vector3d> v;
+    Eigen::Map<Eigen::Vector2d> tau;
 
     State();
 };
-typedef std::vector<salsa::State, aligned_allocator<salsa::State>> StateVec;
+typedef std::vector<salsa::State, Eigen::aligned_allocator<salsa::State>> StateVec;
 
 class Features
 {
@@ -35,7 +32,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     int id; // image label
     double t; // time stamp of this image
-    std::vector<Vector3d, aligned_allocator<Vector3d>> zetas; // unit vectors to features
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> zetas; // unit vectors to features
     std::vector<double> depths; // feature distances corresponding to feature measurements
     std::vector<int> feat_ids; // feature ids corresonding to pixel measurements
     std::vector<cv::Point2f> pix; // pixel measurements
@@ -47,7 +44,7 @@ public:
     int size() const;
 };
 
-typedef std::deque<FeatFunctor, aligned_allocator<FeatFunctor>> FeatDeque;
+typedef std::deque<FeatFunctor, Eigen::aligned_allocator<FeatFunctor>> FeatDeque;
 
 struct Feat
 {
@@ -57,21 +54,23 @@ struct Feat
     double rho;
     double rho_true;
     int slide_count;
-    Vector3d z0;
+    Eigen::Vector3d z0;
     FeatDeque funcs;
     bool updated_in_last_image_;
 
-    Feat(int _idx, int _kf0, const Vector3d& _z0, double _rho, double _rho_true=NAN);
+    Feat(int _idx, int _kf0, const Eigen::Vector3d& _z0, double _rho, double _rho_true=NAN);
 
-    void addMeas(int to_idx, const Xformd& x_b2c, const Matrix2d& cov, const Vector3d& zj);
-    void moveMeas(int to_idx, const Vector3d& zj);
-    bool slideAnchor(int new_from_idx, int new_from_kf, const StateVec& xbuf, const Xformd& x_b2c);
-    Vector3d pos(const StateVec& xbuf, const Xformd& x_b2c);
+    void addMeas(int to_idx, const xform::Xformd& x_b2c,
+                 const Eigen::Matrix2d& cov, const Eigen::Vector3d& zj);
+    void moveMeas(int to_idx, const Eigen::Vector3d& zj);
+    bool slideAnchor(int new_from_idx, int new_from_kf, const StateVec& xbuf,
+                     const xform::Xformd& x_b2c);
+    Eigen::Vector3d pos(const StateVec& xbuf, const xform::Xformd& x_b2c);
 };
 
 struct Obs
 {
-    GTime t;
+    gnss_utils::GTime t;
     uint8_t sat_idx; // index in sats_ SatVec
     uint8_t sat;
     uint8_t rcv;
@@ -80,7 +79,7 @@ struct Obs
     uint8_t code;
     uint8_t qualL; // carrier phase cov
     uint8_t qualP; // psuedorange cov
-    Vector3d z; // [prange, doppler, cphase]
+    Eigen::Vector3d z; // [prange, doppler, cphase]
 
     Obs();
 

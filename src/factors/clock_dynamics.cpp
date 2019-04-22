@@ -1,5 +1,10 @@
 #include "factors/clock_dynamics.h"
 
+using namespace Eigen;
+
+namespace salsa {
+
+
 ClockBiasFunctor::ClockBiasFunctor(const Matrix2d& Xi, int from_idx, int from_node)
 {
     Xi_ = Xi;
@@ -61,3 +66,4 @@ template bool ClockBiasFunctor::operator()<jactype>(const jactype* _taui, const 
 //template bool ClockBiasPinFunctor::operator()<double>(const double* tau, double* res) const;
 //typedef ceres::Jet<double, 2> jactype2;
 //template bool ClockBiasPinFunctor::operator()<jactype2>(const jactype2* tau, jactype2* res) const;
+}

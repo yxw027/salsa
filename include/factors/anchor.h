@@ -5,7 +5,10 @@
 #include "factors/shield.h"
 #include "salsa/state.h"
 
-typedef Matrix<double, 11, 11> Matrix11d;
+namespace salsa
+{
+
+typedef Eigen::Matrix<double, 11, 11> Matrix11d;
 
 struct AnchorFunctor
 {
@@ -22,3 +25,5 @@ struct AnchorFunctor
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<AnchorFunctor>, 11, 7, 3, 2> AnchorFactorAD;
 typedef ceres::AutoDiffCostFunction<AnchorFunctor, 11, 7, 3, 2> UnshiedledAnchorFactorAD;
+
+}

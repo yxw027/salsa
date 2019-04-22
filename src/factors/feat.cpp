@@ -1,5 +1,12 @@
 #include "factors/feat.h"
 
+using namespace Eigen;
+using namespace xform;
+
+
+namespace salsa
+{
+
 FeatFunctor::FeatFunctor(const Xformd& x_b2c, const Matrix2d& cov,
                          const Vector3d &zetai, const Vector3d &zetaj, int to_idx) :
   to_idx_(to_idx),
@@ -65,4 +72,5 @@ bool FeatFactor::Evaluate(double * const * parameters, double *residuals, double
     }
 
 
+}
 }

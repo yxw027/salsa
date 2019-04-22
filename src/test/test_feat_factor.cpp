@@ -7,6 +7,9 @@
 #include "multirotor_sim/simulator.h"
 #include "multirotor_sim/estimator_wrapper.h"
 
+using namespace salsa;
+using namespace multirotor_sim;
+
 
 TEST (FeatFactor, InitZeroResidual)
 {

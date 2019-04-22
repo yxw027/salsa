@@ -17,19 +17,15 @@ find_package(catkin REQUIRED COMPONENTS
 	rosbag
 	roscpp
 	sensor_msgs
-    inertial_sense
+        inertial_sense
 	nav_msgs)
 
 add_subdirectory(lib/geometry)
+add_subdirectory(lib/gnss_utils)
 add_subdirectory(lib/multirotor_sim)
 
-include_directories(include
-    lib
-    lib/utils/include
-    ${CERES_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIRS}
-    ${OPENCV_INCLUDE_DIRS}
-    ${YAML_CPP_INCLUDE_DIR})
+add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
+add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
 
 add_library(factors
     src/factors/xform.cpp
@@ -41,11 +37,12 @@ add_library(factors
     src/factors/pseudorange.cpp)
 target_link_libraries(factors
     geometry
-    multirotor_sim
+    gnss_utils
     ${CERES_LIBRARIES})
 target_include_directories(factors PUBLIC
-     ${EIGEN3_INCLUDE_DIRS}
-     ${CERES_INCLUDE_DIRS})
+    include
+    ${EIGEN3_INCLUDE_DIRS}
+    ${CERES_INCLUDE_DIRS})
 
 add_library(salsa
     src/state.cpp
@@ -55,7 +52,6 @@ add_library(salsa
     src/salsa_vision.cpp
     src/salsa_log.cpp
     src/klt.cpp
-    lib/multirotor_sim/src/test/reference_algorithms.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     geometry
@@ -70,7 +66,7 @@ target_link_libraries(salsa
 
 if (${catkin_FOUND})
     message(STATUS "catkin_FOUND - Building salsa ROS library")
-	add_library(salsa_ros src/salsa_ros.cpp)
+    add_library(salsa_ros src/salsa_ros.cpp)
     target_include_directories(salsa_ros PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
     target_link_libraries(salsa_ros salsa ${catkin_LIBRARIES})
 
@@ -78,16 +74,14 @@ if (${catkin_FOUND})
     target_include_directories(salsa_rosbag PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
     target_link_libraries(salsa_rosbag salsa_ros ${catkin_LIBRARIES})
 
-    add_executable(salsa_node src/salsa_node.cpp)
-    target_link_libraries(salsa_node salsa_ros ${catkin_LIBRARIES})
-    target_include_directories(salsa_node PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+#    add_executable(salsa_node src/salsa_node.cpp)
+#    target_link_libraries(salsa_node salsa_ros ${catkin_LIBRARIES})
+#    target_include_directories(salsa_node PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 endif()
 
 
 if (${GTEST_FOUND})
     message(STATUS "GTEST_FOUND - Building salsa tests")
-    add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
-    add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
     add_executable(test_salsa
 #        src/test/test_salsa.cpp
         src/test/test_mocap_factor.cpp
@@ -104,27 +98,17 @@ if (${GTEST_FOUND})
      )
      target_link_libraries(test_salsa
          salsa
-         geometry
          gtest
          gtest_main
          multirotor_sim
          ${GTEST_LIBRARIES}
-         ${CERES_LIBRARIES}
      )
-     add_test(NAME test_salsa COMMAND test_salsa --gtest_color=yes)
-#     add_custom_command(
-#          TARGET test_salsa
-#          COMMENT "Run tests"
-#          POST_BUILD
-#          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-#          COMMAND test_salsa
-#     )
 endif()
 
 add_executable(featSim src/examples/feat_sim.cpp)
-target_link_libraries(featSim salsa geometry multirotor_sim ${CERES_LIBRARIES})
+target_link_libraries(featSim salsa geometry multirotor_sim)
 add_executable(gnssSim src/examples/gnss_sim.cpp)
-target_link_libraries(gnssSim salsa geometry multirotor_sim ${CERES_LIBRARIES})
+target_link_libraries(gnssSim salsa geometry multirotor_sim)
 add_executable(mocapSim src/examples/mocap_sim.cpp)
-target_link_libraries(mocapSim salsa geometry multirotor_sim ${CERES_LIBRARIES})
+target_link_libraries(mocapSim salsa geometry multirotor_sim)
 

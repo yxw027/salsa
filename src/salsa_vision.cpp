@@ -3,6 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace xform;
+using namespace quat;
 
 namespace salsa
 {

@@ -13,9 +13,6 @@
 
 #define LOGGER_BUFFER_SIZE 1024*1024
 
-using namespace std;
-using namespace Eigen;
-
 namespace salsa
 {
 
@@ -68,12 +65,12 @@ public:
     buffer_ = new char[N];
     file_.open(filename);
     if (!file_.is_open())
-      cerr << "unable to open " << filename << endl;
+      std::cerr << "unable to open " << filename << std::endl;
 
     buf_head_ = buf_tail_ = 0;
     buf_free_ = N;
     shutdown_ = false;
-    write_thread = new thread([this](){ this->writeThread(); });
+    write_thread = new std::thread([this](){ this->writeThread(); });
   }
 
   ~MTLogger()
@@ -107,7 +104,7 @@ public:
   {
     if (size > buf_free_)
     {
-      cerr << "Buffer Overflow" << endl;
+      std::cerr << "Buffer Overflow" << std::endl;
       exit(2);
     }
 
@@ -202,12 +199,12 @@ public:
   }
 
   std::mutex mtx_;
-  ofstream file_;
+  std::ofstream file_;
   bool shutdown_;
   char* buffer_;
   int buf_head_, buf_tail_;
   int buf_free_;
-  thread* write_thread;
+  std::thread* write_thread;
 };
 }
 

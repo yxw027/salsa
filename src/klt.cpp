@@ -91,7 +91,7 @@ void Salsa::imageCallback(const double& t, const Mat& img, const Matrix2d& R_pix
 
 void Salsa::trackFeatures()
 {
-    vector<float> err;
+    std::vector<float> err;
     calcOpticalFlowPyrLK(prev_img_, current_img_, prev_features_, current_feat_.pix, match_status_, err);
 }
 
@@ -140,10 +140,10 @@ int Salsa::calcNewKeyframeConditionKLT()
         return NOT_NEW_KEYFRAME;
 
     kf_parallax_ = 0;
-    Quatd q_I2i(lastKfState().x.q());
-    Quatd q_I2j(current_state_.x.q());
-    Quatd q_b2c(x_u2c_.q());
-    Quatd q_cj2ci = q_b2c.inverse() * q_I2j.inverse() * q_I2i * q_b2c;
+    quat::Quatd q_I2i(lastKfState().x.q());
+    quat::Quatd q_I2j(current_state_.x.q());
+    quat::Quatd q_b2c(x_u2c_.q());
+    quat::Quatd q_cj2ci = q_b2c.inverse() * q_I2j.inverse() * q_I2i * q_b2c;
     Matrix3d R_cj2ci = q_cj2ci.R();
 
     assert(kf_feat_.size() == current_feat_.size());
@@ -214,7 +214,7 @@ void Salsa::collectNewfeatures()
 
         // Now find a bunch of points, not in the mask
         int num_new_features = nf_ - current_feat_.size();
-        vector<Point2f> new_corners;
+        std::vector<Point2f> new_corners;
         goodFeaturesToTrack(current_img_, new_corners, num_new_features, 0.3,
                             feature_nearby_radius_, point_mask_, 7);
 
@@ -237,7 +237,7 @@ void Salsa::showImage()
     {
         const Scalar& color(colors_[current_feat_.feat_ids[i] % nf_]);
         circle(color_img_, prev_features_[i], 5, color, -1);
-        putText(color_img_, to_string(current_feat_.feat_ids[i]), prev_features_[i],
+        putText(color_img_, std::to_string(current_feat_.feat_ids[i]), prev_features_[i],
                 FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
     }
 

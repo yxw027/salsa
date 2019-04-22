@@ -8,9 +8,8 @@
 
 #include "salsa/salsa.h"
 
-using namespace Eigen;
-using namespace salsa;
-
+namespace salsa
+{
 
 class SalsaROS
 {
@@ -38,3 +37,5 @@ public:
     Matrix6d imu_R_;
     Matrix6d mocap_R_;
 };
+
+}

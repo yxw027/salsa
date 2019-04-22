@@ -1,6 +1,10 @@
 #include "salsa/salsa_rosbag.h"
 
 using namespace std;
+using namespace gnss_utils;
+
+namespace salsa
+{
 
 SalsaRosbag::SalsaRosbag(int argc, char** argv)
 {
@@ -289,8 +293,10 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
                    (double)NAN, (double)NAN);
 }
 
+}
+
 int main(int argc, char** argv)
 {
-    SalsaRosbag thing(argc, argv);
+    salsa::SalsaRosbag thing(argc, argv);
     thing.parseBag();
 }

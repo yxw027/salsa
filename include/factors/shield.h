@@ -6,6 +6,9 @@
 // This gives ceres something to delete, but protects the actual
 // functor from being deleted
 
+namespace salsa
+{
+
 template<typename Functor>
 struct FunctorShield
 {
@@ -20,3 +23,5 @@ struct FunctorShield
     }
     const Functor* ptr;
 };
+
+}

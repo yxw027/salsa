@@ -1,7 +1,11 @@
 #include "factors/pseudorange.h"
 
 using namespace Eigen;
+using namespace xform;
+using namespace gnss_utils;
 
+namespace salsa
+{
 
 PseudorangeFunctor::PseudorangeFunctor()
 {
@@ -35,7 +39,7 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& 
 
     los_to_sat = sat_pos - rec_pos;
     Vector2d az_el = sat.los2azimuthElevation(rec_pos, los_to_sat);
-    ion_delay = sat.ionosphericDelay(t, WSG84::ecef2lla(rec_pos), az_el);
+    ion_delay = sat.ionosphericDelay(t, WGS84::ecef2lla(rec_pos), az_el);
     Xi_ = cov.inverse().llt().matrixL().transpose();
     active_ = true;
 }
@@ -75,3 +79,4 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
 template bool PseudorangeFunctor::operator()<double>(const double* _x, const double* _v, const double* _clk, const double* _x_e2n, double* _res) const;
 typedef ceres::Jet<double, 19> jactype;
 template bool PseudorangeFunctor::operator()<jactype>(const jactype* _x, const jactype* _v, const jactype* _clk, const jactype* _x_e2n, jactype* _res) const;
+}
