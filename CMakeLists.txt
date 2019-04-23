@@ -26,6 +26,7 @@ add_subdirectory(lib/multirotor_sim)
 
 add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
 add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
+add_definitions(-DGNSS_UTILS_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/gnss_utils")
 
 add_library(factors
     src/factors/xform.cpp
@@ -93,7 +94,7 @@ if (${GTEST_FOUND})
         src/test/test_vision.cpp
         src/test/test_klt.cpp
 #        src/test/test_salsa_mocap_indexing.cpp
-#        src/test/test_pseudorange_factor.cpp
+        src/test/test_pseudorange_factor.cpp
 #        src/test/test_salsa_gps_indexing.cpp
      )
      target_link_libraries(test_salsa

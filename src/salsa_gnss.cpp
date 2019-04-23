@@ -22,9 +22,6 @@ void Salsa::initGNSS(const std::string& filename)
 
 void Salsa::ephCallback(const GTime& t, const eph_t &eph)
 {
-    if (start_time_.tow_sec < 0)
-        start_time_ = t - current_state_.t;
-
     auto s = sats_.begin();
     while (s != sats_.end())
     {
@@ -34,7 +31,10 @@ void Salsa::ephCallback(const GTime& t, const eph_t &eph)
     }
     bool new_sat = (s == sats_.end());
 
-    GTime now = start_time_ + current_state_.t;
+    if (start_time_.tow_sec < 0)
+        return;
+
+    GTime now = t;
     Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, current_state_.x.t());
     Satellite sat(eph, sats_.size());
     bool high_enough = sat.azimuthElevation(now, rec_pos_ecef)(1) > min_satellite_elevation_;
@@ -121,17 +121,18 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
 void Salsa::obsCallback(const ObsVec &obs)
 {
     last_callback_ = GNSS;
+
+    if (start_time_.tow_sec < 0)
+        start_time_ = obs[0].t - current_state_.t;
+
+    filterObs(obs);
+    GTime& t(filtered_obs_[0].t);
+
     if (sats_.size() < 8)
     {
         SD("Waiting for Ephemeris\n");
         return;
     }
-
-    filterObs(obs);
-    GTime& t(filtered_obs_[0].t);
-
-    if (start_time_.tow_sec < 0)
-        start_time_ = t - current_state_.t;
 
     if (current_node_ == -1)
     {
@@ -184,7 +185,9 @@ void Salsa::obsCallback(const ObsVec &obs)
                 auto vhat = pp_sol.segment<3>(3);
                 auto that = pp_sol.segment<2>(6);
                 xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
+//                xbuf_[xbuf_head_].x.q() = quat::Quatd::Identity();
                 xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
+//                std::cout << "vhat " << xbuf_[xbuf_head_].v.transpose() << std::endl;
                 xbuf_[xbuf_head_].tau = that;
             }
 
@@ -228,7 +231,8 @@ void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Ve
 
             Vector3d zhat ;
             sat.computeMeasurement(tnew, phat, vhat, that, zhat);
-            b.block<2,1>(2*i,0) = o.z.topRows<2>() - zhat.topRows<2>();
+            b(2*i) = o.z(0) - zhat(0);
+            b(2*i + 1) = o.z(1) - zhat(1);
 
             Vector3d e_i = (sat_pos - phat).normalized();
             A.block<1,3>(2*i,0) = -e_i.transpose();

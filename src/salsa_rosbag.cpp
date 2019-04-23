@@ -12,6 +12,7 @@ SalsaRosbag::SalsaRosbag(int argc, char** argv)
     duration_ = 1e3;
     seen_imu_topic_ = "";
     getArgs(argc, argv);
+    salsa_.log_prefix_ = log_prefix_;
 
     loadParams();
     salsa_.init(param_filename_);
@@ -36,7 +37,7 @@ void SalsaRosbag::loadParams()
     get_yaml_node("position_noise_stdev", param_filename_, pos_stdev);
     get_yaml_node("attitude_noise_stdev", param_filename_, att_stdev);
     mocap_R_ << pos_stdev * pos_stdev * I_3x3,   Matrix3d::Zero(),
-            Matrix3d::Zero(),   att_stdev * att_stdev * I_3x3;
+                Matrix3d::Zero(),   att_stdev * att_stdev * I_3x3;
 
     get_yaml_eigen("q_mocap_to_NED_pos", param_filename_, q_mocap_to_NED_pos_.arr_);
     get_yaml_eigen("q_mocap_to_NED_att", param_filename_, q_mocap_to_NED_att_.arr_);
@@ -167,7 +168,9 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
         new_obs.SNR = o.SNR;
         new_obs.LLI = o.LLI;
         new_obs.code = o.code;
-        new_obs.z << o.P, o.D*(Satellite::LAMBDA_L1/0.002), o.L;
+        new_obs.qualP = o.qualP;
+        new_obs.qualL = o.qualL;
+        new_obs.z << o.P, -o.D*Satellite::LAMBDA_L1, o.L;
         z.push_back(new_obs);
     }
     salsa_.obsCallback(z);
@@ -255,7 +258,7 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
 {
     nav_msgs::OdometryConstPtr odom = m.instantiate<nav_msgs::Odometry>();
-    GTime gtime = GTime::fromUTC(odom->header.stamp.sec, odom->header.stamp.nsec/1e9);
+//    GTime gtime = GTime::fromUTC(odom->header.stamp.sec, odom->header.stamp.nsec/1e9);
     if (salsa_.start_time_.tow_sec < 0)
         return;
 
@@ -276,7 +279,7 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
 
 
     truth_log_.log(
-                   (gtime - salsa_.start_time_).toSec(),
+                   (odom->header.stamp - bag_start_).toSec(),
 //                   (m.getTime() - bag_start_).toSec(),
                    odom->pose.pose.position.x,
                    odom->pose.pose.position.y,

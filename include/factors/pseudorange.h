@@ -32,8 +32,10 @@ public:
     Eigen::Vector2d rho;
     Eigen::Vector3d sat_pos;
     Eigen::Vector3d sat_vel;
-    Eigen::Vector2d sat_clk_bias;
+    Eigen::Vector2d sat_clk;
     double ion_delay;
+    double trop_delay;
+    double sagnac_comp;
     Eigen::Vector3d rec_pos;
     Eigen::Matrix2d Xi_;
     double sw;

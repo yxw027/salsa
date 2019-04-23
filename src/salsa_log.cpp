@@ -9,7 +9,9 @@ namespace salsa
 
 void Salsa::initLog(const std::string& filename)
 {
-    get_yaml_node("log_prefix", filename, log_prefix_);
+    if (log_prefix_.empty())
+        get_yaml_node("log_prefix", filename, log_prefix_);
+
     if (!fs::exists(fs::path(log_prefix_).parent_path()))
         fs::create_directories(fs::path(log_prefix_).parent_path());
 

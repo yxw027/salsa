@@ -26,24 +26,33 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& 
     t = _t;
     rho = _rho;
     rec_pos = _rec_pos_ecef;
-    sat.computePositionVelocityClock(t, sat_pos, sat_vel, sat_clk_bias);
+    sat.computePositionVelocityClock(t, sat_pos, sat_vel, sat_clk);
+
+    Vector3d los_to_sat = sat_pos - rec_pos;
+    double range = (sat_pos - rec_pos).norm();
+    sagnac_comp = Satellite::OMEGA_EARTH * (sat_pos.x()*rec_pos.y() - sat_pos.y()*rec_pos.x())/Satellite::C_LIGHT;
+    range += sagnac_comp;
+    double tau = range / Satellite::C_LIGHT;
+    sat_pos -= sat_vel * tau;
 
     // Earth rotation correction. The change in velocity can be neglected.
-    Vector3d los_to_sat = sat_pos - rec_pos;
-    double tau = los_to_sat.norm() / Satellite::C_LIGHT;
-    sat_pos -= sat_vel * tau;
-    double xrot = sat_pos.x() + sat_pos.y() * Satellite::OMEGA_EARTH * tau;
-    double yrot = sat_pos.y() - sat_pos.x() * Satellite::OMEGA_EARTH * tau;
-    sat_pos.x() = xrot;
-    sat_pos.y() = yrot;
+    Vector3d earth_rot = sat_pos.cross(e_z*Satellite::OMEGA_EARTH * tau);
+    sat_pos += earth_rot;
 
+    // pre-calculate the (basically) constant adjustments to pseudorange we will have to make
     los_to_sat = sat_pos - rec_pos;
+    sagnac_comp = Satellite::OMEGA_EARTH * (sat_pos.x()*rec_pos.y() - sat_pos.y()*rec_pos.x())/Satellite::C_LIGHT;
     Vector2d az_el = sat.los2azimuthElevation(rec_pos, los_to_sat);
-    ion_delay = sat.ionosphericDelay(t, WGS84::ecef2lla(rec_pos), az_el);
+    Vector3d lla = WGS84::ecef2lla(rec_pos);
+    ion_delay = sat.ionosphericDelay(t, lla, az_el);
+    trop_delay = sat.troposphericDelay(t, lla, az_el);
+    sat_clk = sat.clk;
     Xi_ = cov.inverse().llt().matrixL().transpose();
     active_ = true;
 }
 
+#include <iostream>
+#define DBG(x) printf(#x": %6.6f\n", x); std::cout << std::flush
 template <typename T>
 bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
                                     const T* _x_e2n, T* _res) const
@@ -60,13 +69,18 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
 
 
     Vec3 v_ECEF = x_e2n.q().rota(x.q().rota(v_b));
+    DBG(v_ECEF.x());
+    DBG(v_ECEF.y());
+    DBG(v_ECEF.z());
     Vec3 p_ECEF = x_e2n.transforma(x.t());
     Vec3 los_to_sat = sat_pos - p_ECEF;
 
     Vec2 rho_hat;
-    rho_hat(0) = los_to_sat.norm() + ion_delay + (T)Satellite::C_LIGHT*(clk(0)- sat_clk_bias(0));
-    rho_hat(1) = (sat_vel - v_ECEF).dot(los_to_sat.normalized())
-                   + (T)Satellite::C_LIGHT*(clk(1) - sat_clk_bias(1));
+    T range = los_to_sat.norm() + sagnac_comp;
+    rho_hat(0) = range + ion_delay + trop_delay + (T)Satellite::C_LIGHT*(clk(0)- sat_clk(0));
+    rho_hat(1) = (sat_vel - v_ECEF).dot(los_to_sat/range)
+            + Satellite::OMEGA_EARTH / Satellite::C_LIGHT * (sat_vel[1]*rec_pos[0] + sat_pos[1]*v_ECEF[0] - sat_vel[0]*rec_pos[1] - sat_pos[0]*v_ECEF[1])
+                   + (T)Satellite::C_LIGHT*(clk(1) - sat_clk(1));
 
     res = Xi_ * (rho - rho_hat);
 

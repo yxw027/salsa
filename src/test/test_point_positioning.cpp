@@ -14,7 +14,7 @@ using namespace multirotor_sim;
 using namespace salsa;
 using namespace gnss_utils;
 
-TEST (DISABLED_Salsa, PointPositioningInit)
+TEST (Salsa, PointPositioningInit)
 {
   Simulator sim;
   salsa::Salsa salsa;

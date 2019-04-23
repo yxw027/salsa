@@ -176,7 +176,7 @@ def plotPosition():
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x'][:,i], label='x')
-        plt.plot(state['t'], state['x'][:,i], label=r'$\hat{x}$')
+        plt.plot(x['t'], x['x'][:,i], label=r'$\hat{x}$')
         if i == 0:
             plt.legend()
     pw.addPlot("Position", f)
@@ -188,7 +188,7 @@ def plotAttitude():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x'][:,i+3], label='x')
-        plt.plot(state['t'], state['x'][:,i+3], label=r'\hat{x}')
+        plt.plot(x['t'], x['x'][:,i+3], label=r'\hat{x}')
         # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
         if i == 0:
             plt.legend()
@@ -205,14 +205,14 @@ def plotVelocity():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['v'][:,i], label='x')
-        plt.plot(state['t'], state['v'][:,i], label=r'\hat{x}')
+        plt.plot(x['t'], x['v'][:,i], label=r'\hat{x}')
         # plt.plot(state[:,0], state[:,i+7], label=r'\hat{x}')
         if i == 0:
             plt.legend()
     plt.subplot(4,1,4)
     plt.ylabel("Magnitude")
-    plt.plot(state['t'], norm(state['v'], axis=1), label=r'\hat{x}')
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
+    plt.plot(x['t'], norm(x['v'], axis=1), label=r'\hat{x}')
     pw.addPlot("Velocity", f)
 
 def plotResults(prefix):

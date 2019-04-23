@@ -17,7 +17,7 @@ num_feat: 25
 R_clock_bias: [0.01, 0.01] # nsec
 switch_weight: 1000.0
 state_buf_size: 100
-disable_solver: true
+disable_solver: false
 
 accel_noise_stdev:  0.2
 gyro_noise_stdev: 0.3
@@ -42,7 +42,7 @@ feature_mask: ""
 simulate_klt: true
 
 doppler_cov: 0.0025
-estimate_origin: false
+estimate_origin: true
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
