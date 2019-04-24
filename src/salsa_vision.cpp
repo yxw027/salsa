@@ -64,17 +64,13 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
     if (current_node_ == -1)
     {
         initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
+        kf_condition_ = FIRST_KEYFRAME;
+        setNewKeyframe();
     }
     else
     {
         endInterval(t);
-        if (new_keyframe)
-        {
-            xbuf_[xbuf_head_].kf = ++current_kf_;
-            if (new_kf_cb_)
-                new_kf_cb_(current_kf_, kf_condition_);
-            startNewInterval(t);
-        }
+        setNewKeyframe();
     }
 
     for (auto& ft : xfeat_)

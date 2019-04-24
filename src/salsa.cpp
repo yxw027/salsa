@@ -370,13 +370,19 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     current_state_.x = x0;
     xbuf_[0].v = current_state_.v = v0;
     xbuf_[0].tau = current_state_.tau =tau0;
-    xbuf_[0].kf = current_state_.kf = current_kf_ = 0;
+    xbuf_[0].kf = current_state_.kf = current_kf_ = -1;
     xbuf_[0].node = current_state_.node = current_node_ = 0;
     oldest_node_ = 0;
 
     imu_.emplace_back(t, imu_bias_, 0, current_node_);
     clk_.emplace_back(clk_bias_Xi_, 0, current_node_);
-    kf_condition_ = FIRST_KEYFRAME;
+}
+
+void Salsa::setNewKeyframe()
+{
+    current_kf_++;
+    xbuf_[xbuf_head_].kf = current_kf_;
+    current_state_.kf = current_kf_;
     if (new_kf_cb_)
         new_kf_cb_(current_kf_, kf_condition_);
 }

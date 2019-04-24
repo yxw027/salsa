@@ -80,6 +80,7 @@ public:
     void endInterval(double t);
     void startNewInterval(double t);
     void cleanUpSlidingWindow();
+    void setNewKeyframe();
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);
     void cleanUpFeatureTracking();

@@ -423,8 +423,6 @@ TEST (Vision, HandleWindowSlide)
 
     for (int k = 0; k < salsa.node_window_*2; k++)
     {
-        if (k >= 20)
-            int debug = 1;
         for (int i = 0; i < 10; i++)
         {
             if (i == 0)
