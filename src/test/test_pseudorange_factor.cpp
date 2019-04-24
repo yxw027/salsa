@@ -26,7 +26,7 @@ TEST (PrangeFactor, InitZeroResidual)
     Vector3d z;
     sat.computeMeasurement(log_start, rec_pos, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, rec_pos, Matrix2d::Identity(), 0, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, rec_pos, Matrix2d::Identity(), 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
     Vector2d res;

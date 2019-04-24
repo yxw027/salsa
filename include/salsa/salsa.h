@@ -77,10 +77,8 @@ public:
     void logImu();
     void logXe2n();
 
-    void finishNode(const double& t, bool new_node, bool new_keyframe);
     void endInterval(double t);
     void startNewInterval(double t);
-    void createNode();
     void cleanUpSlidingWindow();
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);

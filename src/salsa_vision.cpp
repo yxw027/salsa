@@ -62,9 +62,20 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
     last_callback_ = IMG;
 
     if (current_node_ == -1)
+    {
         initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
+    }
     else
-        finishNode(t, prev_keyframe != -1, new_keyframe);
+    {
+        endInterval(t);
+        if (new_keyframe)
+        {
+            xbuf_[xbuf_head_].kf = ++current_kf_;
+            if (new_kf_cb_)
+                new_kf_cb_(current_kf_, kf_condition_);
+            startNewInterval(t);
+        }
+    }
 
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;

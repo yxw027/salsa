@@ -337,60 +337,6 @@ void Salsa::startNewInterval(double t)
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 }
 
-
-
-// ends IMU preintegration and Clock bias interval
-// starts new IMU preintegration
-// computes new node using interval
-// Creates new Keyframe
-// Cleans up Sliding Window
-//
-void Salsa::finishNode(const double& t, bool new_node, bool new_keyframe)
-{
-    int to_idx = xbuf_head_;
-    if (new_node)
-    {
-        to_idx = (xbuf_head_+1) % STATE_BUF_SIZE;
-        ++current_node_;
-    }
-
-    ImuFunctor& imu(imu_.back());
-    ClockBiasFunctor& clk(clk_.back());
-    int from = imu.from_idx_;
-
-    // Finish the transition factors
-    imu.integrate(t, imu.u_, imu.cov_);
-    imu.finished(to_idx);
-    clk.finished(imu.delta_t_, to_idx);
-
-    // Set up the next node
-    xbuf_[to_idx].t = t;
-    imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
-                   xbuf_[to_idx].x.data(), xbuf_[to_idx].v.data());
-    xbuf_[to_idx].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
-    xbuf_[to_idx].tau(1) = xbuf_[from].tau(1);
-    xbuf_[to_idx].node = current_node_;
-
-    if (new_keyframe)
-    {
-        imu_.emplace_back(t, imu_bias_, to_idx, current_node_);
-        clk_.emplace_back(clk_bias_Xi_, imu.from_idx_, current_node_);
-        xbuf_[to_idx].kf = ++current_kf_;
-
-        cleanUpSlidingWindow();
-        if (new_kf_cb_)
-            new_kf_cb_(current_kf_, kf_condition_);
-    }
-    else
-    {
-        xbuf_[to_idx].kf = -1;
-    }
-
-    xbuf_head_ = to_idx;
-    SALSA_ASSERT(xbuf_head_ < xbuf_.size(), "Not wrapping xbuf_ properly");
-    SALSA_ASSERT(xbuf_head_ != xbuf_tail_, "Ran out of xbuf_");
-}
-
 void Salsa::cleanUpSlidingWindow()
 {
     if (current_node_ < node_window_)

@@ -24,7 +24,8 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
     {
         int prev_x_idx = xbuf_head_;
 
-        finishNode(t, true, true);
+        endInterval(t);
+        startNewInterval(t);
 
         xbuf_[xbuf_head_].kf = current_node_;
         xbuf_[xbuf_head_].x = z.elements();
