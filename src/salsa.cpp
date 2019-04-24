@@ -42,7 +42,7 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("X_u2c", filename, x_u2b_.arr());
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
-    get_yaml_node("N", filename, N_);
+    get_yaml_node("node_window", filename, node_window_);
     get_yaml_node("num_sat", filename, ns_);
     get_yaml_node("num_feat", filename, nf_);     
     get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
@@ -289,6 +289,55 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     logImu();
 }
 
+void Salsa::endInterval(double t)
+{
+    // shortcuts to the relevant transition factors
+    ImuFunctor& imu(imu_.back());
+    ClockBiasFunctor& clk(clk_.back());
+    const int from = imu.from_idx_;
+    int to = imu.to_idx_;
+
+    // see if this interval is pointing anywhere
+    bool do_cleanup = false;
+    if (to < 0)
+    {
+        assert(from == xbuf_head_);
+        // if it's not, then set up a new node
+        to = (xbuf_head_+1) % STATE_BUF_SIZE;
+        ++current_node_;
+        do_cleanup = true;
+    }
+
+    // Finish the transition factors
+    imu.integrate(t, imu.u_, imu.cov_);
+    imu.finished(to);
+    clk.finished(imu.delta_t_, to);
+
+    // Initialize the estimated state at the end of the interval
+    xbuf_[to].t = t;
+    imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
+                   xbuf_[to].x.data(), xbuf_[to].v.data());
+    xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
+    xbuf_[to].tau(1) = xbuf_[from].tau(1);
+    xbuf_[to].kf = -1;
+    xbuf_[to].node = current_node_;
+    xbuf_head_ = to;
+
+    if (do_cleanup)
+        cleanUpSlidingWindow();
+
+    assert(xbuf_head_ < xbuf_.size());
+    assert(xbuf_head_ != xbuf_tail_);
+}
+
+
+void Salsa::startNewInterval(double t)
+{
+    imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
+    clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
+}
+
+
 
 // ends IMU preintegration and Clock bias interval
 // starts new IMU preintegration
@@ -344,16 +393,12 @@ void Salsa::finishNode(const double& t, bool new_node, bool new_keyframe)
 
 void Salsa::cleanUpSlidingWindow()
 {
-    if (current_kf_ <= N_)
+    if (current_node_ < node_window_)
         return;
 
-    int oldest_desired_kf = current_kf_ - N_;
-    while (xbuf_[xbuf_tail_].kf != oldest_desired_kf)
-    {
-        SALSA_ASSERT(xbuf_tail_ != xbuf_head_, "Cleaned up too much!");
+    oldest_node_ = current_node_ - node_window_;
+    while (xbuf_[xbuf_tail_].node < oldest_node_)
         xbuf_tail_ = (xbuf_tail_ + 1) % STATE_BUF_SIZE;
-    }
-    oldest_node_ = xbuf_[xbuf_tail_].node;
 
     while (imu_.begin()->from_node_ < oldest_node_)
         imu_.pop_front();
@@ -367,8 +412,7 @@ void Salsa::cleanUpSlidingWindow()
     while (prange_.size() > 0 && prange_.front().front().node_ < oldest_node_)
         prange_.pop_front();
 
-
-    cleanUpFeatureTracking(xbuf_tail_, oldest_desired_kf);
+    cleanUpFeatureTracking();
 }
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)

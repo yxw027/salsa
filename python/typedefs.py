@@ -64,7 +64,7 @@ ResType1 = np.dtype([
     ('id', np.int32),
     ('size', np.int32),
     ('from_node', np.int32),
-    ('to', (ResType2, params["N"]))
+    ('to', (ResType2, params["node_window"]))
 ])
 FeatResType = np.dtype([
     ('t', np.float64),
@@ -78,7 +78,7 @@ MocapResType = np.dtype([
     ('r', (np.dtype([
         ('t', np.float64),
         ('res', (np.float64, 6))
-    ]), params["N"]))
+    ]), params["node_window"]))
 ])
 
 GnssResType = np.dtype([
@@ -90,7 +90,7 @@ GnssResType = np.dtype([
             ('t', np.float64),
             ('res', (np.float64, 2))
         ]), params["num_sat"])
-    ]), params["N"]))
+    ]), params["node_window"]))
 ])
 
 SatPosType = np.dtype([

@@ -72,7 +72,7 @@ void Salsa::logFeatRes()
         {
             logs_[log::FeatRes]->log(ft->first, (int)ft->second.funcs.size(), xbuf_[ft->second.idx0].node);
             FeatDeque::iterator func = ft->second.funcs.begin();
-            for (int j = 0; j < N_; j++)
+            for (int j = 0; j < node_window_; j++)
             {
                 Vector2d res;
                 if (func != ft->second.funcs.end())
@@ -95,7 +95,7 @@ void Salsa::logFeatRes()
         else
         {
             logs_[log::FeatRes]->log((int)-1, ((int)0), (int)-1);
-            for (int j = 0; j < N_; j++)
+            for (int j = 0; j < node_window_; j++)
             {
                 Vector2d res;
                 res.setConstant(NAN);
@@ -136,7 +136,7 @@ void Salsa::logMocapRes()
 {
     logs_[log::MocapRes]->log(current_state_.t);
     logs_[log::MocapRes]->log((int)mocap_.size());
-    for (int i = 0; i < N_; i++)
+    for (int i = 0; i < node_window_; i++)
     {
         double t;
         Vector6d residual;
@@ -159,7 +159,7 @@ void Salsa::logRawGNSSRes()
 {
     logs_[log::RawRes]->log(current_state_.t);
     logs_[log::RawRes]->log((int)prange_.size());
-    for (int i = 0; i < N_; i++)
+    for (int i = 0; i < node_window_; i++)
     {
         if (i < prange_.size())
         {

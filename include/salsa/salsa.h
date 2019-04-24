@@ -78,10 +78,13 @@ public:
     void logXe2n();
 
     void finishNode(const double& t, bool new_node, bool new_keyframe);
+    void endInterval(double t);
+    void startNewInterval(double t);
+    void createNode();
     void cleanUpSlidingWindow();
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);
-    void cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf);
+    void cleanUpFeatureTracking();
     void rmLostFeatFromKf();
 
     void solve();
@@ -223,7 +226,7 @@ public:
     int kf_num_feat_;
     bool use_measured_depth_;
 
-    int N_;
+    int node_window_;
 
     bool sim_KLT_;
 

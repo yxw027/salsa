@@ -61,11 +61,6 @@ void Salsa::refreshSatIdx()
     }
 }
 
-//void Salsa::obsCallback(const ObsVec &obs)
-//{
-//  filterObs(obs);
-//}
-
 void Salsa::filterObs(const ObsVec &obs)
 {
     filtered_obs_.clear();
@@ -137,27 +132,22 @@ void Salsa::obsCallback(const ObsVec &obs)
     if (current_node_ == -1)
     {
         SD("Initialized Raw GNSS\n");
-        if (use_point_positioning_)
-        {
-            Vector8d pp_sol = Vector8d::Zero();
-            pp_sol.topRows<3>() = x_e2n_.t();
-            pointPositioning(t, filtered_obs_, sats_, pp_sol);
-            auto phat = pp_sol.segment<3>(0);
-            auto vhat = pp_sol.segment<3>(3);
-            auto that = pp_sol.segment<2>(6);
 
-            Xformd xhat = x0_;
-            if (estimate_origin_)
-                x_e2n_ = WGS84::x_ecef2ned(phat);
-            else
-                xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
+        Vector8d pp_sol = Vector8d::Zero();
+        pp_sol.topRows<3>() = x_e2n_.t();
+        pointPositioning(t, filtered_obs_, sats_, pp_sol);
+        auto phat = pp_sol.segment<3>(0);
+        auto vhat = pp_sol.segment<3>(3);
+        auto that = pp_sol.segment<2>(6);
 
-            initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
-        }
+        Xformd xhat = x0_;
+        if (estimate_origin_)
+            x_e2n_ = WGS84::x_ecef2ned(phat);
         else
-        {
-            initialize(current_state_.t, current_state_.x, current_state_.v, Vector2d::Zero());
-        }
+            xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
+
+        initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+
 
         Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
         prange_.emplace_back(filtered_obs_.size());
@@ -166,29 +156,28 @@ void Salsa::obsCallback(const ObsVec &obs)
         {
             Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
             prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-                                     current_node_, current_kf_, xbuf_head_);
+                    current_node_, xbuf_head_);
         }
         return;
     }
     else
     {
-        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, true);
+//        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, false);
+        double tt = (filtered_obs_[0].t-start_time_).toSec();
+        endInterval(tt);
+        startNewInterval(tt);
 
         if (filtered_obs_.size() > 8)
         {
-            if (use_point_positioning_)
-            {
-                Vector8d pp_sol = Vector8d::Zero();
-                pp_sol.topRows<3>() = x_e2n_.t();
-                pointPositioning(t, filtered_obs_, sats_, pp_sol);
-                auto phat = pp_sol.segment<3>(0);
-                auto vhat = pp_sol.segment<3>(3);
-                auto that = pp_sol.segment<2>(6);
-                xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
-                xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
-//                std::cout << "vhat " << xbuf_[xbuf_head_].v.transpose() << std::endl;
-                xbuf_[xbuf_head_].tau = that;
-            }
+            Vector8d pp_sol = Vector8d::Zero();
+            pp_sol.topRows<3>() = x_e2n_.t();
+            pointPositioning(t, filtered_obs_, sats_, pp_sol);
+            auto phat = pp_sol.segment<3>(0);
+            auto vhat = pp_sol.segment<3>(3);
+            auto that = pp_sol.segment<2>(6);
+            xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
+            xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
+            xbuf_[xbuf_head_].tau = that;
 
             Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
             prange_.emplace_back(filtered_obs_.size());
@@ -197,7 +186,7 @@ void Salsa::obsCallback(const ObsVec &obs)
             {
                 Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
                 prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-                                         current_node_, current_kf_, xbuf_head_);
+                        current_node_, xbuf_head_);
             }
             solve();
         }

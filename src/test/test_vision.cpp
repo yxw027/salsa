@@ -219,7 +219,7 @@ TEST (Vision, KeyframeCleanup)
 
     sim.register_estimator(&salsa);
 
-    while (salsa.current_kf_ <= salsa.N_)
+    while (salsa.current_kf_ <= salsa.kf_window_)
     {
         sim.run();
     }
@@ -418,13 +418,13 @@ TEST (Vision, HandleWindowSlide)
         kf_cb_cond = kf_cond;
     };
 
-    for (int k = 0; k < salsa.N_*2; k++)
+    for (int k = 0; k < salsa.kf_window_*2; k++)
     {
         for (int i = 0; i < 10; i++)
         {
             salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
             EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
-            EXPECT_EQ(salsa.xbuf_tail_, k <= salsa.N_ ? 0 : k - salsa.N_);
+            EXPECT_EQ(salsa.xbuf_tail_, k <= salsa.kf_window_ ? 0 : k - salsa.kf_window_);
             if (i == 0)
             {
                 EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k);
@@ -463,14 +463,14 @@ TEST (Vision, HandleWindowSlide)
         else
             EXPECT_EQ(kf_cb_cond, Salsa::INSUFFICIENT_MATCHES);
 
-        if (k > salsa.N_)
+        if (k > salsa.kf_window_)
         {
             for (auto feat : salsa.xfeat_)
             {
                 Feat& ft(feat.second);
-                if (feat.first < 2*(k - salsa.N_))
+                if (feat.first < 2*(k - salsa.kf_window_))
                 {
-                    EXPECT_EQ(ft.kf0, k - salsa.N_);
+                    EXPECT_EQ(ft.kf0, k - salsa.kf_window_);
                 }
             }
         }

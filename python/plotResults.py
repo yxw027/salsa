@@ -38,7 +38,7 @@ def plotImuBias():
     for i in range(3):
         for j in range(2):
             plt.subplot(3, 2, i * 2 + j + 1)
-            # plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
+            plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
             plt.plot(state['t'], state['b'][:, j * 3 + i], label=r'\hat{x}')
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
@@ -50,7 +50,7 @@ def plot3DMap():
     ax = f.add_subplot(111, projection='3d')
     ax.set_aspect('equal')
 
-    k = [x['kf'] != -1][0]
+    k = [x['node'] != -1][0]
     ax.plot(state['x'][:,1],state['x'][:,0], -state['x'][:,2], label=r'$\hat{x}$')
     ax.plot(x['x'][k,1],x['x'][k,0], -x['x'][k,2], '*')
     ax.plot(truth['x'][:,1],truth['x'][:,0], -truth['x'][:,2], label=r'$x$')
@@ -276,7 +276,6 @@ def plotResults(prefix):
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
 
-    plotAzel()
     plot3DMap()
     plotPosition()
     plotAttitude()
@@ -286,10 +285,8 @@ def plotResults(prefix):
     plotXe2n()
     if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
         plotPRangeRes()
-
-    if len(GnssRes) > 0 and max(GnssRes['size']) > 0:
         plotClockBias()
-        # plotGnssRes()
+        plotAzel()
 
     if len(featPos) > 0 and max(featPos['size']) > 0:
         plotFeatRes()

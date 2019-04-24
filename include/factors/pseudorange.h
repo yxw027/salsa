@@ -19,14 +19,13 @@ public:
     PseudorangeFunctor();
     void init(const gnss_utils::GTime& _t, const Eigen::Vector2d& _rho, gnss_utils::Satellite &sat,
               const Eigen::Vector3d& _rec_pos_ecef, const Eigen::Matrix2d& cov,
-              int node, int kf, int idx);
+              int node, int idx);
     template <typename T>
     bool operator()(const T* _x, const T* _v, const T* _clk,
                     const T* _x_e2n, T* _res) const;
 
     bool active_ = false;
     int node_;
-    int kf_;
     int idx_;
     gnss_utils::GTime t;
     Eigen::Vector2d rho;

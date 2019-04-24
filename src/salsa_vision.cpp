@@ -151,12 +151,17 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
         return false;
 }
 
-void Salsa::cleanUpFeatureTracking(int new_from_idx, int oldest_desired_kf)
+void Salsa::cleanUpFeatureTracking()
 {
+    // Find the oldest keyframe still in the window
+    int tmp = xbuf_tail_;
+    while (tmp != xbuf_head_ && xbuf_[tmp].kf < 0)
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+
     FeatMap::iterator fit = xfeat_.begin();
     while (fit != xfeat_.end())
     {
-        if (!fit->second.slideAnchor(new_from_idx, oldest_desired_kf, xbuf_, x_u2c_))
+        if (!fit->second.slideAnchor(tmp, xbuf_, x_u2c_))
             fit = xfeat_.erase(fit);
         else
             fit++;
