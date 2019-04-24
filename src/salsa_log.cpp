@@ -26,6 +26,8 @@ void Salsa::initLog(const std::string& filename)
     logs_[log::MocapRes] = new Logger(log_prefix_ + "MocapRes.log");
     logs_[log::SatPos] = new Logger(log_prefix_ + "SatPos.log");
     logs_[log::PRangeRes] = new Logger(log_prefix_ + "PRangeRes.log");
+    logs_[log::Imu] = new Logger(log_prefix_ + "Imu.log");
+    logs_[log::Xe2n] = new Logger(log_prefix_ + "Xe2n.log");
 }
 
 
@@ -247,6 +249,17 @@ void Salsa::logPrangeRes()
     }
 }
 
+void Salsa::logImu()
+{
+    logs_[log::Imu]->log(current_state_.t);
+    logs_[log::Imu]->logVectors(imu_.back().u_);
+}
+
+void Salsa::logXe2n()
+{
+    logs_[log::Xe2n]->log(current_state_.t);
+    logs_[log::Xe2n]->logVectors(x_e2n_.arr());
+}
 
 
 

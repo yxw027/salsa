@@ -185,7 +185,6 @@ void Salsa::obsCallback(const ObsVec &obs)
                 auto vhat = pp_sol.segment<3>(3);
                 auto that = pp_sol.segment<2>(6);
                 xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
-//                xbuf_[xbuf_head_].x.q() = quat::Quatd::Identity();
                 xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
 //                std::cout << "vhat " << xbuf_[xbuf_head_].v.transpose() << std::endl;
                 xbuf_[xbuf_head_].tau = that;

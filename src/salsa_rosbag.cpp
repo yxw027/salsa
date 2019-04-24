@@ -148,7 +148,10 @@ void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
     imu_count_between_nodes_++;
     salsa_.imuCallback(t, z, imu_R_);
     if (!seen_imu_topic_.empty() && seen_imu_topic_.compare(m.getTopic()))
-        ROS_WARN_ONCE("Subscribed to Two IMU messages, use the -i argument to specify IMU topic");
+    {
+        std::cerr << "Subscribed to Two IMU messages, use the -i argument to specify IMU topic" << std::endl;
+        exit(-1);
+    }
 
     seen_imu_topic_ = m.getTopic();
 }

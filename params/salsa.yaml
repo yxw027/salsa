@@ -19,8 +19,8 @@ switch_weight: 1000.0
 state_buf_size: 100
 disable_solver: false
 
-accel_noise_stdev:  0.2
-gyro_noise_stdev: 0.3
+accel_noise_stdev:  3.0
+gyro_noise_stdev: 0.5
 position_noise_stdev: 0.001
 attitude_noise_stdev: 0.001
 acc_wander_weight: 0.004
@@ -41,8 +41,9 @@ feature_nearby_radius: 30
 feature_mask: ""
 simulate_klt: true
 
+
 doppler_cov: 0.0025
-estimate_origin: true
+estimate_origin: false
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
@@ -55,8 +56,8 @@ q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
 disable_mocap: true
 
-anchor_cov: [0.001, 0.001, 0.001,
-             0.001, 0.001, 0.001,
+anchor_cov: [0.1, 0.1, 0.1,
+             0.01, 0.01, 0.01,
              0.0005, 0.0005, 0.0005,
              0.001, 0.001] # nsec
 

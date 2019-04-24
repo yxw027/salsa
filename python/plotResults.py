@@ -198,6 +198,35 @@ def fixState(x):
     x['x'][:,3:] *= np.sign(x['x'][:,3,None])
     return x
 
+def plotImu():
+    f = plt.figure()
+    plt.suptitle('Imu')
+    imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
+                  r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+    for i in range(3):
+        plt.subplot(3, 2, 2*i+1)
+        plt.plot(Imu['t'], Imu['acc'][:, i], label=imu_titles[i])
+        plt.legend()
+        plt.subplot(3, 2, 2*i+2)
+        plt.plot(Imu['t'], Imu['omega'][:, i], label=imu_titles[i+3])
+        plt.legend()
+    pw.addPlot("IMU", f)
+
+def plotXe2n():
+    f = plt.figure()
+    plt.suptitle("xe2n")
+    titles = ["px", "py", "pz", "~", "qw", "qx", "qy", "qz"]
+    for i in range(4):
+        if i < 3:
+            plt.subplot(4,2,2*i+1)
+            plt.plot(Xe2n['t'], Xe2n['p'][:,i], label=titles[i])
+            plt.legend()
+        plt.subplot(4,2, 2*i+2)
+        plt.plot(Xe2n['t'], Xe2n['q'][:,i], label=titles[i+4])
+        plt.legend()
+    pw.addPlot("X_e2n", f)
+
+
 def plotVelocity():
     f = plt.figure()
     plt.suptitle('Velocity')
@@ -220,7 +249,7 @@ def plotResults(prefix):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles, trueFeatPos
-    global offset, pw, mocapRes, satPos, prangeRes
+    global offset, pw, mocapRes, satPos, prangeRes, Imu, Xe2n
 
     offset = 10
     x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
@@ -235,6 +264,8 @@ def plotResults(prefix):
     mocapRes = np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType)
     satPos = np.fromfile(os.path.join(prefix, "SatPos.log"), dtype=SatPosType)
     prangeRes = np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType)
+    Imu = np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType)
+    Xe2n = np.fromfile(os.path.join(prefix, "Xe2n.log"), dtype=XType)
     # trueFeatPos -= truth['x'][0,0:3]
     # truth['x'][:,:3] -= truth['x'][0,0:3]
 
@@ -251,6 +282,8 @@ def plotResults(prefix):
     plotAttitude()
     plotVelocity()
     plotImuBias()
+    plotImu()
+    plotXe2n()
     if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
         plotPRangeRes()
 

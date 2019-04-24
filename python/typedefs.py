@@ -116,4 +116,19 @@ PRangeResType = np.dtype([
     ]), params["num_sat"]))
 ])
 
+ImuType = np.dtype([
+    ('t', np.float64),
+    ('acc', (np.float64, 3)),
+    ('omega', (np.float64, 3))
+])
+
+XType = np.dtype([
+    ('t', np.float64),
+    ('p', (np.float64, 3)),
+    ('q', (np.float64, 4))
+])
+
+
+
+
 

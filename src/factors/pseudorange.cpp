@@ -51,8 +51,8 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& 
     active_ = true;
 }
 
-#include <iostream>
-#define DBG(x) printf(#x": %6.6f\n", x); std::cout << std::flush
+//#include <iostream>
+//#define DBG(x) printf(#x": %6.6f\n", x); std::cout << std::flush
 template <typename T>
 bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
                                     const T* _x_e2n, T* _res) const
@@ -69,9 +69,6 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
 
 
     Vec3 v_ECEF = x_e2n.q().rota(x.q().rota(v_b));
-    DBG(v_ECEF.x());
-    DBG(v_ECEF.y());
-    DBG(v_ECEF.z());
     Vec3 p_ECEF = x_e2n.transforma(x.t());
     Vec3 los_to_sat = sat_pos - p_ECEF;
 

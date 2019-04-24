@@ -73,6 +73,8 @@ public:
     void logSatPos();
     void logPrangeRes();
     void logCurrentState();
+    void logImu();
+    void logXe2n();
 
     void finishNode(const double& t, bool new_node, bool new_keyframe);
     void cleanUpSlidingWindow();
@@ -186,7 +188,9 @@ public:
             MocapRes,
             SatPos,
             PRangeRes,
-            NumLogs
+            Imu,
+            Xe2n,
+            NumLogs,
         };
     };
     std::vector<Logger*> logs_;

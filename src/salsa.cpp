@@ -258,6 +258,7 @@ void Salsa::solve()
     logFeatures();
     logSatPos();
     logPrangeRes();
+    logXe2n();
 }
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
@@ -280,9 +281,16 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
                  "NaN Detected in propagation");
 
     logCurrentState();
+    logImu();
 }
 
 
+// ends IMU preintegration and Clock bias interval
+// starts new IMU preintegration
+// computes new node using interval
+// Creates new Keyframe
+// Cleans up Sliding Window
+//
 void Salsa::finishNode(const double& t, bool new_node, bool new_keyframe)
 {
     int to_idx = xbuf_head_;
