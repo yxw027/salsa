@@ -273,6 +273,9 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
                odom->pose.pose.orientation.x,
                odom->pose.pose.orientation.y,
                odom->pose.pose.orientation.z;
+    if (salsa_.current_node_ < 0)
+        salsa_.setInitialState(z);
+
     double t = (m.getTime() - bag_start_).toSec();
     if (imu_count_between_nodes_ > 20)
     {

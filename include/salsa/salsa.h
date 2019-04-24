@@ -62,6 +62,7 @@ public:
     void initFactors();
     void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
     void initSolverOptions();
+    void setInitialState(const xform::Xformd& x0);
 
     void initLog(const std::string &filename);
     void logRawGNSSRes();
@@ -133,6 +134,7 @@ public:
     std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
 
     State current_state_;
+    xform::Xformd x0_;
 
     int xbuf_head_, xbuf_tail_;
 

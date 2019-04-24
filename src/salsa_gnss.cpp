@@ -146,7 +146,7 @@ void Salsa::obsCallback(const ObsVec &obs)
             auto vhat = pp_sol.segment<3>(3);
             auto that = pp_sol.segment<2>(6);
 
-            Xformd xhat = Xformd::Identity();
+            Xformd xhat = x0_;
             if (estimate_origin_)
                 x_e2n_ = WGS84::x_ecef2ned(phat);
             else

@@ -85,6 +85,11 @@ void Salsa::initState()
     current_state_.v.setZero();
 }
 
+void Salsa::setInitialState(const Xformd &x0)
+{
+    x0_ = x0;
+}
+
 void Salsa::initFactors()
 {
     bias_ = new ImuBiasDynamicsFunctor(imu_bias_, acc_bias_xi_);
