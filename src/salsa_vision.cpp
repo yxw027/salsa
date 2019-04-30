@@ -70,7 +70,11 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
     else
     {
         endInterval(t);
-        setNewKeyframe();
+        if (new_keyframe)
+        {
+            setNewKeyframe();
+            startNewInterval(t);
+        }
     }
 
     for (auto& ft : xfeat_)
@@ -102,7 +106,7 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
 
 bool Salsa::calcNewKeyframeCondition(const Features &z)
 {
-    if (current_node_ == -1)
+    if (current_kf_ == -1)
     {
         kf_feat_ = z;
         kf_num_feat_ = z.feat_ids.size();

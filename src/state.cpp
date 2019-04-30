@@ -74,6 +74,7 @@ void Feat::moveMeas(int to_idx, const Vector3d &zj)
 bool Feat::slideAnchor(int new_from_idx, const StateVec &xbuf, const Xformd &x_b2c)
 {
     int new_from_kf = xbuf[new_from_idx].kf;
+    assert (new_from_kf >= 0);
     if (new_from_kf <= kf0)
         return true; // Don't need to slide, this one is anchored ahead of the slide
     if (funcs.size() <= 1)

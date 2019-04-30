@@ -107,7 +107,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
         new_obs.qualL = R[i](2,2);
         new_obs.qualP = R[i](0,0);
         new_obs.sat = sats[i].id_;
-        new_obs.sat_idx = sats[i].idx_;
+        new_obs.sat_idx = sats_[i].idx_ = i;
         obsvec.push_back(new_obs);
     }
     obsCallback(obsvec);
@@ -220,6 +220,7 @@ void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Ve
 
             Vector3d zhat ;
             sat.computeMeasurement(tnew, phat, vhat, that, zhat);
+            assert ((zhat.array() == zhat.array()).all());
             b(2*i) = o.z(0) - zhat(0);
             b(2*i + 1) = o.z(1) - zhat(1);
 
@@ -238,6 +239,7 @@ void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Ve
 
         xhat += dx;
     } while (dx.norm() > 1e-4 && ++iter < 10);
+    assert ((xhat.array() == xhat.array()).all());
 }
 
 }

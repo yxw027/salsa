@@ -3,6 +3,7 @@
 #include "gnss_utils/satellite.h"
 
 #include "salsa/salsa.h"
+#include "salsa/test_common.h"
 
 using namespace gnss_utils;
 using namespace salsa;
@@ -62,7 +63,8 @@ public:
 
     void initIMU()
     {
-        imu.resize(3);
+        imu.resize(4);
+        imu[0] = (Vector6d() << 0.00, 0.0, -9.80665, 0.0, 0, 0).finished();
         imu[0] = (Vector6d() << 0.05, 0.0, -9.80665, 0.1, 0, 0).finished();
         imu[1] = (Vector6d() << -0.05, 0.05, -9.80665, -0.1, 0.1, 0).finished();
         imu[2] = (Vector6d() << 0.0, -0.05, -9.80665, 0.0, -0.1, 0).finished();
@@ -88,9 +90,12 @@ public:
         dt = 0.002;
     }
 
-    void simFeatMeas()
+    void simulateFeat()
     {
         feat.id += 1;
+        if (feat.id == 1)
+            expected_kf = true;
+
         feat.t = t;
         for (int j = 0; j < 4; j++)
         {
@@ -104,7 +109,8 @@ public:
     {
         feat.feat_ids[(2*keyframe_) % feat.feat_ids.size()] += feat.feat_ids.size();
         feat.feat_ids[(2*keyframe_+1) % feat.feat_ids.size()] += feat.feat_ids.size();
-        simFeatMeas();
+        expected_kf = true;
+        simulateFeat();
     }
 
     void incrementImuIt()
@@ -116,7 +122,9 @@ public:
 
     void simulateIMU()
     {
-        t += dt;
+        t += dt/2.0;
+        salsa.imuCallback(t, *imuit, R_imu);
+        t += dt/2.0;
         salsa.imuCallback(t, *imuit, R_imu);
     }
 
@@ -145,23 +153,71 @@ public:
         salsa.rawGnssCallback(gtime, zvec, Rvec, sats, slip);
     }
 
-    void run()
+    void runGNSSFirst()
     {
         simulateIMU(); // initialize everything
         simulateGNSS(); // initialize with GNSS pntpos
-        simulateIMU(); // space between GNSS and vision
 
         EXPECT_EQ(salsa.xbuf_head_, 0);
         EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
         EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 0);
+        EXPECT_MAT_FINITE(salsa.xbuf_[salsa.xbuf_head_].x.arr());
+        EXPECT_MAT_FINITE(salsa.xbuf_[salsa.xbuf_head_].v);
+        EXPECT_MAT_FINITE(salsa.current_state_.x.arr());
+        EXPECT_MAT_FINITE(salsa.current_state_.v);
+    }
 
-        keyframe_ = 0;
-        while (keyframe_ < salsa.STATE_BUF_SIZE*1.2)
-        {
+    void runFeatFirst()
+    {
+        simulateIMU(); // initialize everything
+        expected_kf = true;
+        simulateFeat(); // initialize with Features
+        EXPECT_EQ(salsa.xbuf_head_, 0);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, 0);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 0);
+        EXPECT_MAT_FINITE(salsa.xbuf_[salsa.xbuf_head_].x.arr());
+        EXPECT_MAT_FINITE(salsa.xbuf_[salsa.xbuf_head_].v);
+        EXPECT_MAT_FINITE(salsa.current_state_.x.arr());
+        EXPECT_MAT_FINITE(salsa.current_state_.v);
+    }
 
+    void runGNSSThenKF()
+    {
+        simulateIMU();
+        simulateGNSS(); // First node, not a keyframe
+        EXPECT_EQ(salsa.xbuf_head_, 0);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 0);
 
-            keyframe_++;
-        }
+        simulateIMU(); // space between GNSS and vision
+        simulateFeat(); // Second node, first keyframe
+        EXPECT_EQ(salsa.xbuf_head_, 1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, 0);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 1);
+
+        simulateIMU();
+        simulateFeat(); // Third node, not a keyframe
+        EXPECT_EQ(salsa.xbuf_head_, 2);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 2);
+
+        simulateIMU();
+        simulateGNSS(); // Still Third node, not a keyframe
+        EXPECT_EQ(salsa.xbuf_head_, 2);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 2);
+
+        simulateIMU();
+        simulateFeat(); // Fourth node, not a keyframe
+        EXPECT_EQ(salsa.xbuf_head_, 3);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 3);
+
+        simulateIMU();
+        createNewKeyframe(); // Fourth node, Second Keyframe
+        EXPECT_EQ(salsa.xbuf_head_, 3);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, 1);
+        EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, 3);
     }
 
 
@@ -184,9 +240,20 @@ public:
     int keyframe_;
 };
 
-TEST_F (SalsaFeatGNSSTest, GNSS_First)
+TEST_F (SalsaFeatGNSSTest, GNSSFirst)
 {
-    run();
+    runGNSSFirst();
+}
+
+TEST_F (SalsaFeatGNSSTest, KfFirst)
+{
+    runFeatFirst();
+}
+
+TEST_F (SalsaFeatGNSSTest, GNSSThenKF)
+
+{
+    runGNSSThenKF();
 }
 
 //    for (int k = 0; k < salsa.node_window_*2; k++)

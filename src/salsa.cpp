@@ -1,4 +1,4 @@
-﻿#include "salsa/salsa.h"
+#include "salsa/salsa.h"
 
 using namespace std;
 using namespace Eigen;
@@ -375,8 +375,10 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     xbuf_[0].node = current_state_.node = current_node_ = 0;
     oldest_node_ = 0;
 
-    imu_.emplace_back(t, imu_bias_, 0, current_node_);
-    clk_.emplace_back(clk_bias_Xi_, 0, current_node_);
+    startNewInterval(t);
+
+    assert((current_state_.x.arr().array() == current_state_.x.arr().array()).all()
+            && (current_state_.v.array() == current_state_.v.array()).all());
 }
 
 void Salsa::setNewKeyframe()
@@ -391,6 +393,7 @@ void Salsa::setNewKeyframe()
 
 const State& Salsa::lastKfState()
 {
+    assert (current_kf_ >= 0);
     int it = xbuf_tail_;
     while (xbuf_[it].kf < 0)
         it = (it - 1 + STATE_BUF_SIZE) % STATE_BUF_SIZE;
