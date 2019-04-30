@@ -168,7 +168,7 @@ void Salsa::obsCallback(const ObsVec &obs)
         endInterval(tt);
         startNewInterval(tt);
 
-        if (filtered_obs_.size() > 8)
+        if (filtered_obs_.size() > 7)
         {
             Vector8d pp_sol = Vector8d::Zero();
             pp_sol.topRows<3>() = x_e2n_.t();

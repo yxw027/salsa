@@ -1,4 +1,4 @@
-#include "salsa/salsa.h"
+﻿#include "salsa/salsa.h"
 
 using namespace std;
 using namespace Eigen;
@@ -58,7 +58,6 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
 void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_pix,
                           bool new_keyframe)
 {
-    int prev_keyframe = xbuf_[xbuf_head_].kf;
     last_callback_ = IMG;
 
     if (current_node_ == -1)
@@ -85,7 +84,7 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
         if (isTrackedFeature(z.feat_ids[i]))
         {
             Feat& ft(xfeat_.at(z.feat_ids[i]));
-            if (prev_keyframe != -1)
+            if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0 && !new_keyframe))
                 ft.addMeas(xbuf_head_, x_u2c_, R_pix, z.zetas[i]);
             else
                 ft.moveMeas(xbuf_head_, z.zetas[i]);
@@ -98,6 +97,10 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
             if (use_measured_depth_)
                 rho0 = 1.0/z.depths[i];
             xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0, 1.0/z.depths[i])});
+        }
+        else
+        {
+            int debug = 1;
         }
     }       
     rmLostFeatFromKf();
@@ -199,7 +202,8 @@ void Salsa::rmLostFeatFromKf()
             ftpair++;
             continue;
         }
-        else if (ft.funcs.back().to_idx_ == xbuf_head_ && !ft.updated_in_last_image_)
+        else if (!ft.updated_in_last_image_
+           && (ft.funcs.back().to_idx_ == xbuf_head_ || xbuf_[ft.funcs.back().to_idx_].kf < 0))
         {
             ft.funcs.pop_back();
             if (ft.funcs.size() == 0)

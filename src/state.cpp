@@ -62,6 +62,8 @@ Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_tru
 
 void Feat::addMeas(int to_idx, const Xformd &x_b2c, const Matrix2d &cov, const Vector3d &zj)
 {
+    assert (to_idx != idx0);
+    assert (funcs.size() > 0 ? funcs.back().to_idx_ != to_idx : true);
     funcs.emplace_back(x_b2c, cov, z0, zj, to_idx);
 }
 
@@ -95,6 +97,7 @@ bool Feat::slideAnchor(int new_from_idx, const StateVec &xbuf, const Xformd &x_b
     kf0 = new_from_kf;
     funcs.pop_front();
     slide_count++;
+    assert (funcs.front().to_idx_ != idx0);
     return true;
 }
 
