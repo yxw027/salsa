@@ -33,6 +33,7 @@ void Salsa::init(const string& filename)
     initState();
     initFactors();
     initSolverOptions();
+    x0_ = Xformd::Identity();
 }
 
 void Salsa::load(const string& filename)

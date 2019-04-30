@@ -146,6 +146,7 @@ void Salsa::obsCallback(const ObsVec &obs)
         else
             xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
 
+        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
         initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
 
 

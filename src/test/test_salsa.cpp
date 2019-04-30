@@ -14,7 +14,7 @@ public:
     void initGNSS()
     {
         std::vector<int> sat_ids = {3, 8, 10, 11, 14, 18, 22, 31, 32};
-        log_start = GTime::fromUTC(1541454646,  0.993);
+        log_start = GTime(2026, 165029);
         log_start += 200;
 
         for (int i = 1; i < sat_ids.size(); i++)
