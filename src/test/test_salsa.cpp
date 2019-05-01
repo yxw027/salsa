@@ -34,6 +34,7 @@ public:
 
 
         feat.resize(4);
+        keyframe_ = 0;
         for (int j = 0; j < 4; j++)
         {
             feat.zetas[j] = l.row(j).transpose().normalized();
@@ -97,14 +98,11 @@ public:
             expected_kf = true;
 
         feat.t = t;
-//        std::cout << "F: ";
         for (int j = 0; j < 4; j++)
         {
             feat.zetas[j] = salsa.current_state_.x.transformp(l.row(j).transpose()).normalized();
             feat.depths[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).norm();
-//            std::cout << feat.feat_ids[j] << ", ";
         }
-//        std::cout << std::endl;
         salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
     }
 
@@ -115,6 +113,7 @@ public:
         expected_kf = true;
 //        std::cout << "K";
         simulateFeat();
+        EXPECT_FALSE(expected_kf);
     }
 
     void incrementImuIt()
@@ -444,81 +443,3 @@ TEST_F (SalsaFeatGNSSTest, SubsequentKF)
     ///TODO - There is a bug in this condition
 //    runMixedCleanup();
 }
-
-//    for (int k = 0; k < salsa.node_window_*2; k++)
-//    {
-//        for (int i = 0; i < 10; i++)
-//        {
-//            if (i == 0)
-//                expected_kf = true;
-//            salsa.imageCallback(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
-//            EXPECT_FALSE(expected_kf);
-//            EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
-//            if (i == 0)
-//            {
-//                EXPECT_EQ(salsa.xbuf_tail_, k < salsa.node_window_ ? 0 : k - salsa.node_window_);
-//                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k);
-//                EXPECT_EQ(salsa.current_node_, k);
-//                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, k);
-//                EXPECT_EQ(salsa.current_kf_, k);
-//                EXPECT_EQ(salsa.xbuf_head_, k);
-//            }
-//            else
-//            {
-//                EXPECT_EQ(salsa.xbuf_tail_, k < salsa.node_window_ ? 0 : k - salsa.node_window_ + 1);
-//                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k+1);
-//                EXPECT_EQ(salsa.current_node_, k+1);
-//                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
-//                EXPECT_EQ(salsa.current_kf_, k);
-//                EXPECT_EQ(salsa.xbuf_head_, k+1);
-//            }
-
-//            for (int ii = 0; ii < 3; ii++)
-//            {
-//                t += dt;
-//                salsa.imuCallback(t, *imuit, R_imu);
-
-//                if (ii == 2)
-//                {
-//                    VecVec3 z;
-//                    VecMat3 R;
-//                    GTime gime = log_start + t;
-//                    for (auto& sat: sats)
-//                    {
-//                        sat.computeMeasurement(gtime, );
-//                        z.push_back(sat);
-//                    }
-//                    salsa.rawGnssCallback(log_start + t, );
-//                }
-//            }
-
-
-//        }
-
-//        EXPECT_EQ(kf_cb_id, k);
-//        if (k == 0)
-//            EXPECT_EQ(kf_cb_cond, Salsa::FIRST_KEYFRAME);
-//        else
-//            EXPECT_EQ(kf_cb_cond, Salsa::INSUFFICIENT_MATCHES);
-
-//        if (k > salsa.node_window_)
-//        {
-//            for (auto feat : salsa.xfeat_)
-//            {
-//                Feat& ft(feat.second);
-//                if (feat.first < 2*(k - salsa.node_window_))
-//                {
-//                    EXPECT_EQ(ft.kf0, k - salsa.node_window_);
-//                }
-//            }
-//        }
-
-
-//        imuit++;
-//        if (imuit == imu.end())
-//            imuit = imu.begin();
-
-//        feat.feat_ids[(2*k) % feat.feat_ids.size()] += feat.feat_ids.size();
-//        feat.feat_ids[(2*k+1) % feat.feat_ids.size()] += feat.feat_ids.size();
-//    }
-//}

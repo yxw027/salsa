@@ -208,6 +208,7 @@ void Salsa::rmLostFeatFromKf()
             ft.funcs.pop_back();
             if (ft.funcs.size() == 0)
             {
+                SD(2, "removing feature %d", ftpair->first);
                 ftpair = xfeat_.erase(ftpair);
                 continue;
             }
