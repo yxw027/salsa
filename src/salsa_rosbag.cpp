@@ -184,6 +184,8 @@ void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
 {
     inertial_sense::GNSSEphemerisConstPtr eph = m.instantiate<inertial_sense::GNSSEphemeris>();
     eph_t new_eph;
+    if (new_eph.sat > 90)
+        return; // Don't use Beidou or SBAS
     new_eph.sat = eph->sat;
     new_eph.iode = eph->iode;
     new_eph.iodc = eph->iodc;
