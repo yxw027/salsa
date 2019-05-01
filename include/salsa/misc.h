@@ -26,9 +26,17 @@
 #define DEBUGPRINT 1
 #endif
 
+#define DEBUGLEVEL 3
+
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl
-#define SD(f_, ...) printf((f_), ##__VA_ARGS__); printf("\n")
+#define SD(level, f_, ...) do{ \
+    if ((level) > DEBUGLEVEL) {\
+        printf((f_), ##__VA_ARGS__);\
+        printf("\n");\
+    }\
+} while(false)
+
 #define SD_S(args) std::cout << args;
 #else
 #define SL
@@ -64,7 +72,7 @@ inline std::string small_feat_test(const std::string& prefix, bool init_depth=tr
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;
     node["N"] = 4;
-    node["kf_feature_thresh"] = 0.75;
+    node["kf_feature_thresh"] = 0.80;
     node["kf_parallax_thresh"] = 500;
     node["num_feat"] = 4;
     node["use_measured_depth"] = init_depth;

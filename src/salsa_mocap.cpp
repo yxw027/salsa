@@ -13,7 +13,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
     last_callback_ = MOCAP;
     if (current_node_ == -1)
     {
-        SD("Initialized Mocap\n");
+        SD(3, "Initialized Mocap\n");
         initialize(t, z, Vector3d::Zero(), Vector2d::Zero());
         mocap_.emplace_back(dt_m_, x_u2m_, z.arr(), Vector6d::Zero(),
                             R.inverse().llt().matrixL().transpose(),

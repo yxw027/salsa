@@ -125,13 +125,13 @@ void Salsa::obsCallback(const ObsVec &obs)
 
     if (sats_.size() < 8)
     {
-        SD("Waiting for Ephemeris\n");
+        SD(3, "Waiting for Ephemeris\n");
         return;
     }
 
     if (current_node_ == -1)
     {
-        SD("Initialized Raw GNSS\n");
+        SD(3, "Initialized Raw GNSS\n");
 
         Vector8d pp_sol = Vector8d::Zero();
         pp_sol.topRows<3>() = x_e2n_.t();
@@ -146,7 +146,7 @@ void Salsa::obsCallback(const ObsVec &obs)
         else
             xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
 
-        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
+//        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
         initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
 
 

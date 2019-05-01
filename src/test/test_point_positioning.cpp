@@ -65,10 +65,10 @@ TEST (Salsa, PointPositioningInit)
   EXPECT_MAT_NEAR(v_ecef_hat, v_ecef_true, 1e-5);
   EXPECT_MAT_NEAR(tau_hat, tau_true, 1e-5);
 
-  cout << "ptrue " << p_ecef_true.transpose() << endl;
-  cout << "phat  " << p_ecef_hat.transpose() << endl;
-  cout << "vtrue " << v_ecef_true.transpose() << endl;
-  cout << "vhat  " << v_ecef_hat.transpose() << endl;
-  cout << "tautrue " << tau_true.transpose() << endl;
-  cout << "tauhat  " << tau_hat.transpose() << endl;
+//  cout << "ptrue " << p_ecef_true.transpose() << endl;
+//  cout << "phat  " << p_ecef_hat.transpose() << endl;
+//  cout << "vtrue " << v_ecef_true.transpose() << endl;
+//  cout << "vhat  " << v_ecef_hat.transpose() << endl;
+//  cout << "tautrue " << tau_true.transpose() << endl;
+//  cout << "tauhat  " << tau_hat.transpose() << endl;
 }
