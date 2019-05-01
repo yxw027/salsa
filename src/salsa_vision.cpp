@@ -64,16 +64,10 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
     {
         initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
         kf_condition_ = FIRST_KEYFRAME;
-        setNewKeyframe();
     }
     else
     {
         endInterval(t);
-        if (new_keyframe)
-        {
-            setNewKeyframe();
-            startNewInterval(t);
-        }
     }
 
     for (auto& ft : xfeat_)
@@ -84,7 +78,7 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
         if (isTrackedFeature(z.feat_ids[i]))
         {
             Feat& ft(xfeat_.at(z.feat_ids[i]));
-            if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0 && !new_keyframe))
+            if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
                 ft.addMeas(xbuf_head_, x_u2c_, R_pix, z.zetas[i]);
             else
                 ft.moveMeas(xbuf_head_, z.zetas[i]);
@@ -98,11 +92,14 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
                 rho0 = 1.0/z.depths[i];
             xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0, 1.0/z.depths[i])});
         }
-        else
-        {
-            int debug = 1;
-        }
-    }       
+    }
+
+    if (new_keyframe)
+    {
+        setNewKeyframe();
+        if (kf_condition_ != FIRST_KEYFRAME)
+            startNewInterval(t);
+    }
     rmLostFeatFromKf();
     solve();
 }
@@ -215,7 +212,6 @@ void Salsa::rmLostFeatFromKf()
         }
         ftpair++;
     }
-
 }
 
 
