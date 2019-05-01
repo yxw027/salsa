@@ -63,7 +63,6 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
     if (current_node_ == -1)
     {
         initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
-        kf_condition_ = FIRST_KEYFRAME;
     }
     else
     {
@@ -90,15 +89,14 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
             double rho0 = 0.1;
             if (use_measured_depth_)
                 rho0 = 1.0/z.depths[i];
-            xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_, z.zetas[i], rho0, 1.0/z.depths[i])});
+            xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, z.zetas[i], rho0, 1.0/z.depths[i])});
         }
     }
 
     if (new_keyframe)
     {
         setNewKeyframe();
-        if (kf_condition_ != FIRST_KEYFRAME)
-            startNewInterval(t);
+        startNewInterval(t);
     }
     rmLostFeatFromKf();
     solve();
@@ -108,6 +106,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
 {
     if (current_kf_ == -1)
     {
+        kf_condition_ = FIRST_KEYFRAME;
         kf_feat_ = z;
         kf_num_feat_ = z.feat_ids.size();
         return true;

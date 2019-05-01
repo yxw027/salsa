@@ -148,6 +148,7 @@ void Salsa::obsCallback(const ObsVec &obs)
 
 //        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
         initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        startNewInterval(current_state_.t);
 
 
         Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);

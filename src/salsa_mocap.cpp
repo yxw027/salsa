@@ -15,6 +15,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
     {
         SD(3, "Initialized Mocap\n");
         initialize(t, z, Vector3d::Zero(), Vector2d::Zero());
+        startNewInterval(t);
         mocap_.emplace_back(dt_m_, x_u2m_, z.arr(), Vector6d::Zero(),
                             R.inverse().llt().matrixL().transpose(),
                             xbuf_head_, current_node_, current_kf_);
