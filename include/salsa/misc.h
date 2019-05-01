@@ -28,7 +28,7 @@
 
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl
-#define SD(f_, ...) printf((f_), ##__VA_ARGS__)
+#define SD(f_, ...) printf((f_), ##__VA_ARGS__); printf("\n")
 #define SD_S(args) std::cout << args;
 #else
 #define SL

@@ -319,15 +319,32 @@ public:
 
     void runMixedCleanup()
     {
-        // K    0                   |  1                   | 2
-        // N    0    1              |  2    3              | 4
-        //     KF -- G -- F -- F -- | KF -- G -- F -- F -- | KF ...
+        // K    |  0                   |  1                   | 2                    |  3
+        // N    |  0    1    1    2    |  2    3    3    4    | 4     5    5    6    |  6
+        // head |  0    1    1    2    |  2    3    3    4    | 4     5    5    6    |  6
+        //      | KF -- F -- G -- F -- | KF -- F -- G -- F -- | KF -- F -- G -- F -- | KF ...
         for (int i = 0; i < salsa.node_window_; i += 2)
         {
             simulateIMU(); createNewKeyframe();
+            EXPECT_EQ(salsa.xbuf_head_, i);
+            EXPECT_EQ(salsa.current_node_, i);
+            EXPECT_EQ(salsa.current_kf_, i/2);
+            EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, i/2);
+            simulateIMU(); simulateFeat();
+            EXPECT_EQ(salsa.xbuf_head_, i+1);
+            EXPECT_EQ(salsa.current_node_, i+1);
+            EXPECT_EQ(salsa.current_kf_, i/2);
+            EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
             simulateIMU(); simulateGNSS();
+            EXPECT_EQ(salsa.xbuf_head_, i+1);
+            EXPECT_EQ(salsa.current_node_, i+1);
+            EXPECT_EQ(salsa.current_kf_, i/2);
+            EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
             simulateIMU(); simulateFeat();
-            simulateIMU(); simulateFeat();
+            EXPECT_EQ(salsa.xbuf_head_, i+2);
+            EXPECT_EQ(salsa.current_node_, i+2);
+            EXPECT_EQ(salsa.current_kf_, i/2);
+            EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
         }
         for (int i = 0; i < salsa.node_window_; i+=2)
         {
@@ -339,19 +356,42 @@ public:
 
         simulateIMU(); createNewKeyframe();
         EXPECT_EQ(salsa.current_node_, salsa.node_window_);
-        EXPECT_EQ(salsa.xfeat_.size(), salsa.node_window_*2);
-        for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
-            EXPECT_GE(ft.first, 2);  // The first two landmarks were only seen over the first interval
+        EXPECT_EQ(salsa.xfeat_.size(), salsa.node_window_/2 + 3);
         EXPECT_EQ(salsa.prange_.size(), salsa.node_window_/2);
-
+        for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
+        {
+            EXPECT_GT(ft.first, 1);
+            if (ft.first == 14 )
+                EXPECT_EQ(ft.second.funcs.size(), 0);
+            else if (ft.first == 2 || ft.first == 13)
+                EXPECT_EQ(ft.second.funcs.size(), 1);
+            else if (ft.first == 3 || ft.first == 12)
+                EXPECT_EQ(ft.second.funcs.size(), 2);
+            else
+                EXPECT_EQ(ft.second.funcs.size(), 3);
+        }
+        simulateIMU(); simulateFeat();
         simulateIMU(); simulateGNSS();
         simulateIMU(); simulateFeat();
-        simulateIMU(); simulateFeat();
 
-//        EXPECT_EQ(salsa.xbuf_[0].node, salsa.STATE_BUF_SIZE);
-//        EXPECT_EQ(salsa.xbuf_[1].node, salsa.STATE_BUF_SIZE+1);
-//        EXPECT_EQ(salsa.xbuf_[0].kf, salsa.STATE_BUF_SIZE/2);
-//        EXPECT_EQ(salsa.xbuf_[1].kf, -1);
+        simulateIMU(); createNewKeyframe();
+        EXPECT_EQ(salsa.current_node_, salsa.node_window_+2);
+        EXPECT_EQ(salsa.xfeat_.size(), salsa.node_window_/2 + 3);
+        EXPECT_EQ(salsa.prange_.size(), salsa.node_window_/2);
+        EXPECT_EQ(salsa.xbuf_tail_, 2);
+        for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
+        {
+            EXPECT_GT(ft.first, 2);
+            if (ft.first == 15 )
+                EXPECT_EQ(ft.second.funcs.size(), 0);
+            else if (ft.first == 3 || ft.first == 14)
+                EXPECT_EQ(ft.second.funcs.size(), 1);
+            else if (ft.first == 4 || ft.first == 13)
+                EXPECT_EQ(ft.second.funcs.size(), 2);
+            else
+                EXPECT_EQ(ft.second.funcs.size(), 3);
+            EXPECT_GT(ft.second.kf0, 0);
+        }
     }
 
 

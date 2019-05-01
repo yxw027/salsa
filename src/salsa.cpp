@@ -76,7 +76,9 @@ void Salsa::load(const string& filename)
 
 void Salsa::initState()
 {
+    SD("init State");
     xbuf_head_ = xbuf_tail_ = 0;
+    SD("move head %d", xbuf_head_);
     imu_bias_.setZero();
 
     current_node_ = -1;
@@ -293,6 +295,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 void Salsa::endInterval(double t)
 {
     // shortcuts to the relevant transition factors
+    SD("end Interval");
     ImuFunctor& imu(imu_.back());
     ClockBiasFunctor& clk(clk_.back());
     const int from = imu.from_idx_;
@@ -306,6 +309,7 @@ void Salsa::endInterval(double t)
         // if it's not, then set up a new node
         to = (xbuf_head_+1) % STATE_BUF_SIZE;
         ++current_node_;
+        SD("new node %d", current_node_);
         do_cleanup = true;
     }
 
@@ -323,6 +327,7 @@ void Salsa::endInterval(double t)
     xbuf_[to].kf = -1;
     xbuf_[to].node = current_node_;
     xbuf_head_ = to;
+    SD("move head %d", xbuf_head_);
 
     if (do_cleanup)
         cleanUpSlidingWindow();
@@ -334,6 +339,7 @@ void Salsa::endInterval(double t)
 
 void Salsa::startNewInterval(double t)
 {
+    SD("start Interval");
     imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 }
@@ -346,6 +352,7 @@ void Salsa::cleanUpSlidingWindow()
     oldest_node_ = current_node_ - node_window_;
     while (xbuf_[xbuf_tail_].node < oldest_node_)
         xbuf_tail_ = (xbuf_tail_ + 1) % STATE_BUF_SIZE;
+    SD("move tail %d", xbuf_tail_);
 
     while (imu_.begin()->from_node_ < oldest_node_)
         imu_.pop_front();
@@ -364,8 +371,10 @@ void Salsa::cleanUpSlidingWindow()
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
+    SD("initialize");
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
+    SD("move head %d", xbuf_head_);
     xbuf_[0].t = current_state_.t = t;
     xbuf_[0].x = x0;
     current_state_.x = x0;
@@ -373,6 +382,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     xbuf_[0].tau = current_state_.tau =tau0;
     xbuf_[0].kf = current_state_.kf = current_kf_ = -1;
     xbuf_[0].node = current_state_.node = current_node_ = 0;
+    SD("current node %d", current_node_);
     oldest_node_ = 0;
 
     startNewInterval(t);
@@ -384,6 +394,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
 void Salsa::setNewKeyframe()
 {
     current_kf_++;
+    SD("new keyframe %d", current_kf_);
     xbuf_[xbuf_head_].kf = current_kf_;
     current_state_.kf = current_kf_;
     if (new_kf_cb_)

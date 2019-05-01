@@ -154,7 +154,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
         kf_num_feat_ = z.feat_ids.size();
         return true;
     }
-    else if(kf_Nmatch_feat_ < std::round(kf_feature_thresh_ * kf_num_feat_))
+    else if(kf_Nmatch_feat_ <= std::round(kf_feature_thresh_ * kf_num_feat_) + 0.001)
     {
         kf_condition_ = INSUFFICIENT_MATCHES;
         kf_feat_ = z;
