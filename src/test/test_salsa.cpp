@@ -111,7 +111,6 @@ public:
         feat.feat_ids[keyframe_ % feat.feat_ids.size()] += feat.feat_ids.size();
         keyframe_++;
         expected_kf = true;
-//        std::cout << "K";
         simulateFeat();
         EXPECT_FALSE(expected_kf);
     }
@@ -129,12 +128,6 @@ public:
         salsa.imuCallback(t, *imuit, R_imu);
         t += dt/2.0;
         salsa.imuCallback(t, *imuit, R_imu);
-//        for (int i = 0; i < 6; i++)
-//        {
-//            std::cout << i << ": " << (salsa.xfeat_.count(i) > 0 ? (int)salsa.xfeat_.at(i).funcs.size() : -1) << "  |  ";
-//        }
-//        std::cout << std::endl;
-
     }
 
     void simulateGNSS()
