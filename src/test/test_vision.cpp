@@ -62,7 +62,7 @@ TEST (Vision, NewKFRotate)
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_ = sim.x_b2c_;
+    salsa.x_b2c_ = sim.x_b2c_;
 
 
     sim.register_estimator(&salsa);
@@ -111,7 +111,7 @@ TEST (Vision, NewKFTranslate)
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
     salsa.sim_KLT_ = false;
-    salsa.x_u2c_ = sim.x_b2c_;
+    salsa.x_b2c_ = sim.x_b2c_;
 
     sim.register_estimator(&salsa);
     salsa.imu_[0].cov_ = sim.imu_R_;
@@ -156,7 +156,7 @@ TEST (Vision, SlideAnchor)
     int idx = 0;
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_ = sim.x_b2c_;
+    salsa.x_b2c_ = sim.x_b2c_;
     Camera<double> cam = salsa.cam_;
 
     StateVec xbuf(10);
@@ -189,22 +189,22 @@ TEST (Vision, SlideAnchor)
     }
 
     Vector3d pt = sim.env_.get_points()[0];
-    EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
+    EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_b2c_), 1e-5);
     Vector2d res;
     feat->funcs.front()(xbuf[feat->idx0].x.data(),
                         xbuf[feat->funcs.front().to_idx_].x.data(),
-                        &feat->rho, salsa.x_u2c_.data(), res.data());
+                        &feat->rho, salsa.x_b2c_.data(), res.data());
     for (int i = 1; i < 9; i++)
     {
-        EXPECT_TRUE(feat->slideAnchor(i, xbuf, salsa.x_u2c_));
+        EXPECT_TRUE(feat->slideAnchor(i, xbuf, salsa.x_b2c_));
         feat->funcs.front()(xbuf[feat->idx0].x.data(),
                             xbuf[feat->funcs.front().to_idx_].x.data(),
-                            &feat->rho, salsa.x_u2c_.data(), res.data());
+                            &feat->rho, salsa.x_b2c_.data(), res.data());
         EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-5);
         EXPECT_NEAR(feat->rho, rho[i], 1e-5);
-        EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);
+        EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_b2c_), 1e-5);
     }
-    EXPECT_FALSE(feat->slideAnchor(9, xbuf, salsa.x_u2c_));
+    EXPECT_FALSE(feat->slideAnchor(9, xbuf, salsa.x_b2c_));
     delete feat;
 }
 
@@ -215,7 +215,7 @@ TEST (Vision, KeyframeCleanup)
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_u2c_ = sim.x_b2c_;
+    salsa.x_b2c_ = sim.x_b2c_;
 
     sim.register_estimator(&salsa);
 
@@ -234,8 +234,8 @@ TEST (Vision, HandleFeatureHandoff)
 {
     Salsa salsa;
     salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
-    salsa.x_u2c_.q() = quat::Quatd::Identity();
-    salsa.x_u2c_.t() = Vector3d::Zero();
+    salsa.x_b2c_.q() = quat::Quatd::Identity();
+    salsa.x_b2c_.t() = Vector3d::Zero();
 
     MatrixXd l;
     l.resize(4,3);
@@ -373,8 +373,8 @@ TEST (Vision, HandleWindowSlide)
 {
     Salsa salsa;
     salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
-    salsa.x_u2c_.q() = quat::Quatd::Identity();
-    salsa.x_u2c_.t() = Vector3d::Zero();
+    salsa.x_b2c_.q() = quat::Quatd::Identity();
+    salsa.x_b2c_.t() = Vector3d::Zero();
 
     Matrix<double, 4, 3> l;
     l << 1,  0, 1,

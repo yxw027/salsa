@@ -142,7 +142,7 @@ int Salsa::calcNewKeyframeConditionKLT()
     kf_parallax_ = 0;
     quat::Quatd q_I2i(lastKfState().x.q());
     quat::Quatd q_I2j(current_state_.x.q());
-    quat::Quatd q_b2c(x_u2c_.q());
+    quat::Quatd q_b2c(x_b2c_.q());
     quat::Quatd q_cj2ci = q_b2c.inverse() * q_I2j.inverse() * q_I2i * q_b2c;
     Eigen::Matrix3d R_cj2ci = q_cj2ci.R();
 

@@ -56,8 +56,8 @@ public:
     void initSalsa()
     {
         salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
-        salsa.x_u2c_.q() = quat::Quatd::Identity();
-        salsa.x_u2c_.t() = Vector3d::Zero();
+        salsa.x_b2c_.q() = quat::Quatd::Identity();
+        salsa.x_b2c_.t() = Vector3d::Zero();
         Vector3d provo_lla{40.246184 * M_PI/180.0 , -111.647769 * M_PI/180.0, 1387.997511};
         Vector3d provo_ecef = WGS84::lla2ecef(provo_lla);
         salsa.x_e2n_ = WGS84::x_ecef2ned(provo_ecef);

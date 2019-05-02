@@ -117,7 +117,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
     kf_Nmatch_feat_ = 0;
     Quatd q_I2i(lastKfState().x.q());
     Quatd q_I2j(current_state_.x.q());
-    Quatd q_b2c(x_u2c_.q());
+    Quatd q_b2c(x_b2c_.q());
     Quatd q_cj2ci = q_b2c.inverse() * q_I2j.inverse() * q_I2i * q_b2c;
     Matrix3d R_cj2ci = q_cj2ci.R();
     int ni = 0;
@@ -175,7 +175,7 @@ void Salsa::cleanUpFeatureTracking()
     FeatMap::iterator fit = xfeat_.begin();
     while (fit != xfeat_.end())
     {
-        if (!fit->second.slideAnchor(tmp, xbuf_, x_u2c_))
+        if (!fit->second.slideAnchor(tmp, xbuf_, x_b2c_))
             fit = xfeat_.erase(fit);
         else
             fit++;

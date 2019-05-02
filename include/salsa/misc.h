@@ -49,9 +49,8 @@ inline std::string default_params(const std::string& prefix)
     std::string filename = "/tmp/Salsa.default.yaml";
     std::ofstream tmp(filename);
     YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/salsa.yaml");
-    node["X_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-    node["X_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-    node["q_u2b"] = std::vector<double>{1, 0, 0, 0};
+    node["x_b2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+    node["x_b2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["tm"] = 0.0;
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;
@@ -65,9 +64,8 @@ inline std::string small_feat_test(const std::string& prefix, bool init_depth=tr
     std::string filename = "/tmp/Salsa.smallfeat.yaml";
     std::ofstream tmp(filename);
     YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/salsa.yaml");
-    node["X_u2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-    node["X_u2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
-    node["q_u2b"] = std::vector<double>{1, 0, 0, 0};
+    node["x_b2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+    node["x_b2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["tm"] = 0.0;
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;

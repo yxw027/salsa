@@ -79,7 +79,7 @@ void Salsa::logFeatRes()
                 if (func != ft->second.funcs.end())
                 {
                     (*func)(xbuf_[ft->second.idx0].x.data(), xbuf_[func->to_idx_].x.data(),
-                            &ft->second.rho, x_u2c_.data(), res.data());
+                            &ft->second.rho, x_b2c_.data(), res.data());
                     logs_[log::FeatRes]->log(xbuf_[func->to_idx_].node, xbuf_[func->to_idx_].t);
                     logs_[log::FeatRes]->logVectors(res);
                     func++;
@@ -118,7 +118,7 @@ void Salsa::logFeatures()
         {
             logs_[log::Feat]->log(ft->first);
             Xformd x_I2i(xbuf_[ft->second.idx0].x);
-            Vector3d p_I2l = x_I2i.t() + x_I2i.q().rota(x_u2c_.q().rota(1.0/ft->second.rho * ft->second.z0) + x_u2c_.t());
+            Vector3d p_I2l = x_I2i.t() + x_I2i.q().rota(x_b2c_.q().rota(1.0/ft->second.rho * ft->second.z0) + x_b2c_.t());
             logs_[log::Feat]->logVectors(p_I2l);
             logs_[log::Feat]->log(ft->second.rho, ft->second.rho_true, ft->second.slide_count);
             ft++;

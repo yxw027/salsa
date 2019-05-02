@@ -160,7 +160,7 @@ public:
     Matrix6d acc_bias_xi_;
     State::dxMat state_anchor_xi_;
     Matrix6d x_e2n_anchor_xi_;
-    Matrix6d x_u2c_anchor_xi_;
+    Matrix6d x_b2c_anchor_xi_;
 
     ImuDeque imu_;
     ImuBiasAnchor* bias_;
@@ -206,10 +206,9 @@ public:
 
     std::string log_prefix_;
     Camera<double> cam_;
-    xform::Xformd x_u2m_; // transform from imu to mocap frame
-    xform::Xformd x_u2b_; // transform from imu to body frame
-    xform::Xformd x_u2c_; // transform from imu to camera frame
-    xform::Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
+    xform::Xformd x_b2m_; // transform from imu to mocap frame
+    xform::Xformd x_b2c_; // transform from imu to camera frame
+    xform::Xformd x_e2n_; // transform from ECEF to inertial frame
     double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
     double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
     gnss_utils::GTime start_time_;

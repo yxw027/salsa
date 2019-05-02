@@ -16,7 +16,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
         SD(3, "Initialized Mocap\n");
         initialize(t, z, Vector3d::Zero(), Vector2d::Zero());
         startNewInterval(t);
-        mocap_.emplace_back(dt_m_, x_u2m_, z.arr(), Vector6d::Zero(),
+        mocap_.emplace_back(dt_m_, x_b2m_, z.arr(), Vector6d::Zero(),
                             R.inverse().llt().matrixL().transpose(),
                             xbuf_head_, current_node_, current_kf_);
         return;
@@ -32,7 +32,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
         xbuf_[xbuf_head_].x = z.elements();
         Vector6d zdot = (Xformd(xbuf_[xbuf_head_].x) - Xformd(xbuf_[prev_x_idx].x))
                 / (xbuf_[xbuf_head_].t - xbuf_[prev_x_idx].t);
-        mocap_.emplace_back(dt_m_, x_u2m_, z.arr(), zdot, R.inverse().llt().matrixL().transpose(),
+        mocap_.emplace_back(dt_m_, x_b2m_, z.arr(), zdot, R.inverse().llt().matrixL().transpose(),
                             xbuf_head_, current_node_, current_kf_);
 
         solve();

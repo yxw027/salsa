@@ -16,6 +16,8 @@ Salsa::Salsa()
     x_u2c_anchor_ = nullptr;
     disable_solver_ = false;
     start_time_.tow_sec = -1.0;  // flags as uninitialized
+    x_e2n_ = xform::Xformd::Identity();
+    x_b2c_ = xform::Xformd::Identity();
 }
 
 Salsa::~Salsa()
@@ -42,9 +44,8 @@ void Salsa::init(const string& filename)
 
 void Salsa::load(const string& filename)
 {
-    get_yaml_eigen("X_u2m", filename, x_u2m_.arr());
-    get_yaml_eigen("q_u2b", filename, x_u2c_.q().arr_);
-    get_yaml_eigen("X_u2c", filename, x_u2b_.arr());
+    get_yaml_eigen("x_b2m", filename, x_b2m_.arr());
+    get_yaml_eigen("x_b2c", filename, x_b2c_.arr());
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
     get_yaml_node("node_window", filename, node_window_);
@@ -58,19 +59,18 @@ void Salsa::load(const string& filename)
     xbuf_.resize(STATE_BUF_SIZE);
     s_.reserve(ns_);
 
-    Vector11d anchor_cov;
-    get_yaml_eigen("anchor_cov", filename, anchor_cov);
-    state_anchor_xi_ = anchor_cov.cwiseInverse().cwiseSqrt().asDiagonal();
+    Vector11d state_anchor_cov;
+    get_yaml_eigen("state_anchor_cov", filename, state_anchor_cov);
+    state_anchor_xi_ = state_anchor_cov.cwiseInverse().cwiseSqrt().asDiagonal();
 
     Vector6d cov_diag;
-    get_yaml_node("gyro_wander_weight", filename, gyro_wander_weight_);
-    get_yaml_node("acc_wander_weight", filename, acc_wander_weight_);
-    cov_diag << acc_wander_weight_*acc_wander_weight_,
-                acc_wander_weight_*acc_wander_weight_,
-                acc_wander_weight_*acc_wander_weight_,
-                gyro_wander_weight_*gyro_wander_weight_,
-                gyro_wander_weight_*gyro_wander_weight_,
-                gyro_wander_weight_*gyro_wander_weight_;
+    get_yaml_eigen("x_b2c_anchor_cov", filename, cov_diag);
+    x_b2c_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
+
+    get_yaml_eigen("x_e2n_anchor_cov", filename, cov_diag);
+    x_e2n_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
+
+    get_yaml_eigen("bias_anchor_cov", filename, cov_diag);
     acc_bias_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
     Vector2d clk_bias_diag;
@@ -100,13 +100,13 @@ void Salsa::initFactors()
     bias_ = new ImuBiasAnchor(imu_bias_, acc_bias_xi_);
     state_anchor_ = new StateAnchor(state_anchor_xi_);
     x_e2n_anchor_ = new XformAnchor(x_e2n_anchor_xi_);
-    x_u2c_anchor_ = new XformAnchor(x_u2c_anchor_xi_);
+    x_u2c_anchor_ = new XformAnchor(x_b2c_anchor_xi_);
 }
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD);
-    problem.AddParameterBlock(x_u2c_.data(), 7, new XformParamAD());
+    problem.AddParameterBlock(x_b2c_.data(), 7, new XformParamAD());
     problem.AddParameterBlock(imu_bias_.data(), 6);
 
     int idx = xbuf_tail_;
@@ -164,9 +164,9 @@ void Salsa::setAnchors(ceres::Problem &problem)
     FunctorShield<ImuBiasAnchor>* imu_ptr = new FunctorShield<ImuBiasAnchor>(bias_);
     problem.AddResidualBlock(new ImuBiasAnchorFactorAD(imu_ptr), NULL, imu_bias_.data());
 
-    x_u2c_anchor_->set(&x_u2c_);
+    x_u2c_anchor_->set(&x_b2c_);
     FunctorShield<XformAnchor>* u2c_ptr = new FunctorShield<XformAnchor>(x_u2c_anchor_);
-    problem.AddResidualBlock(new XformAnchorFactorAD(u2c_ptr), NULL, x_u2c_.data());
+    problem.AddResidualBlock(new XformAnchorFactorAD(u2c_ptr), NULL, x_b2c_.data());
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)
@@ -249,7 +249,7 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
                                      xbuf_[ft->second.idx0].x.data(),
                                      xbuf_[func->to_idx_].x.data(),
                                      &ft->second.rho,
-                                     x_u2c_.data());
+                                     x_b2c_.data());
             func++;
         }
         ft++;
