@@ -192,26 +192,4 @@ typedef ceres::Jet<double, 26> jactype;
 template bool ImuFunctor::operator()<jactype>(const jactype* _xi, const jactype* _xj, const jactype* _vi, const jactype* _vj, const jactype* _b, jactype* residuals) const;
 
 
-
-ImuBiasDynamicsFunctor::ImuBiasDynamicsFunctor(const Vector6d& bias_prev, const Matrix6d& xi) :
-    bias_prev_(bias_prev),
-    Xi_(xi)
-{}
-void ImuBiasDynamicsFunctor::setBias(const Vector6d& bias_prev)
-{
-    bias_prev_ = bias_prev;
-}
-
-template <typename T>
-bool ImuBiasDynamicsFunctor::operator()(const T* _b, T* _res) const
-{
-    typedef Matrix<T,6,1> Vec6;
-    Map<const Vec6> b(_b);
-    Map<Vec6> res(_res);
-    res = Xi_ * (b - bias_prev_);
-    return true;
-}
-template bool ImuBiasDynamicsFunctor::operator ()<double>(const double* _b, double* _res) const;
-typedef ceres::Jet<double, 6> jactype2;
-template bool ImuBiasDynamicsFunctor::operator ()<jactype2>(const jactype2* _b, jactype2* _res) const;
 }

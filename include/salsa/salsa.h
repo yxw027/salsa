@@ -91,7 +91,7 @@ public:
     void addParameterBlocks(ceres::Problem& problem);
     void addImuFactors(ceres::Problem& problem);
     void addMocapFactors(ceres::Problem& problem);
-    void addOriginConstraint(ceres::Problem& problem);
+    void setAnchors(ceres::Problem& problem);
     void addRawGnssFactors(ceres::Problem& problem);
     void addFeatFactors(ceres::Problem& problem);
 
@@ -158,11 +158,15 @@ public:
     double acc_wander_weight_;
     double gyro_wander_weight_;
     Matrix6d acc_bias_xi_;
-    Matrix11d anchor_xi_;
+    State::dxMat state_anchor_xi_;
+    Matrix6d x_e2n_anchor_xi_;
+    Matrix6d x_u2c_anchor_xi_;
 
     ImuDeque imu_;
-    ImuBiasDynamicsFunctor* bias_;
-    AnchorFunctor* anchor_;
+    ImuBiasAnchor* bias_;
+    StateAnchor* state_anchor_;
+    XformAnchor* x_e2n_anchor_;
+    XformAnchor* x_u2c_anchor_;
     MocapDeque mocap_;
     PseudorangeDeque prange_;
     ClockBiasDeque clk_;

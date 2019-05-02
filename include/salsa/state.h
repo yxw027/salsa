@@ -13,6 +13,11 @@ namespace salsa
 class State
 {
 public:
+    enum {
+        xSize = 12,
+        dxSize = 11
+    };
+    typedef Eigen::Matrix<double, dxSize, dxSize> dxMat;
     double buf_[13];
     int kf;
     int node;

@@ -73,19 +73,4 @@ public:
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;
 
-
-class ImuBiasDynamicsFunctor
-{
-public:
-    ImuBiasDynamicsFunctor(const Vector6d& bias_prev, const Matrix6d& xi);
-    void setBias(const Vector6d& bias_prev);
-    template <typename T>
-    bool operator() (const T* _b, T* _res) const;
-
-    Vector6d bias_prev_;
-    const Matrix6d Xi_;
-};
-typedef ceres::AutoDiffCostFunction<FunctorShield<ImuBiasDynamicsFunctor>, 6, 6> ImuBiasFactorAD;
-typedef ceres::AutoDiffCostFunction<ImuBiasDynamicsFunctor, 6, 6> UnshieldedImuBiasFactorAD;
-
 }

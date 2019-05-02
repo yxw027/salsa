@@ -8,22 +8,47 @@
 namespace salsa
 {
 
-typedef Eigen::Matrix<double, 11, 11> Matrix11d;
+struct XformAnchor
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    XformAnchor(const Matrix6d& Xi);
+    void set(const xform::Xformd* x);
 
-struct AnchorFunctor
+    template <typename T>
+    bool operator()(const T* _x, T* _res) const;
+
+    const xform::Xformd* x_;
+    const Matrix6d& Xi_;
+};
+typedef ceres::AutoDiffCostFunction<FunctorShield<XformAnchor>, 6, 7> XformAnchorFactorAD;
+
+struct StateAnchor
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AnchorFunctor(const Matrix11d& Xi);
-  void set(const salsa::State *x);
+  StateAnchor(const State::dxMat& Xi);
+  void set(const State *x);
 
   template<typename T>
   bool operator()(const T* _x, const T* _v, const T* _tau, T* _res) const;
 
   const salsa::State* x_;
-  const Matrix11d& Xi_;
+  const State::dxMat& Xi_;
 
 };
-typedef ceres::AutoDiffCostFunction<FunctorShield<AnchorFunctor>, 11, 7, 3, 2> AnchorFactorAD;
-typedef ceres::AutoDiffCostFunction<AnchorFunctor, 11, 7, 3, 2> UnshiedledAnchorFactorAD;
+typedef ceres::AutoDiffCostFunction<FunctorShield<StateAnchor>, 11, 7, 3, 2> StateAnchorFactorAD;
+
+
+class ImuBiasAnchor
+{
+public:
+    ImuBiasAnchor(const Vector6d& bias_prev, const Matrix6d& xi);
+    void setBias(const Vector6d& bias_prev);
+    template <typename T>
+    bool operator() (const T* _b, T* _res) const;
+
+    Vector6d bias_prev_;
+    const Matrix6d Xi_;
+};
+typedef ceres::AutoDiffCostFunction<FunctorShield<ImuBiasAnchor>, 6, 6> ImuBiasAnchorFactorAD;
 
 }
