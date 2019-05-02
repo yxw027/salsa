@@ -55,7 +55,7 @@ void Salsa::setFeatureMask(const std::string& filename)
     cv::threshold(cv::imread(filename, IMREAD_GRAYSCALE), mask_, 1, 255, CV_8UC1);
 }
 
-void Salsa::imageCallback(const double& t, const Mat& img, const Matrix2d& R_pix)
+void Salsa::imageCallback(const double& t, const Mat& img, const Eigen::Matrix2d& R_pix)
 {
     if (img.channels() > 1)
         cvtColor(img, current_img_, COLOR_BGR2GRAY);
@@ -99,7 +99,7 @@ void Salsa::calcCurrentZetas()
 {
     for (int i = 0; i < current_feat_.size(); i++)
     {
-        Vector2d pix(current_feat_.pix[i].x, current_feat_.pix[i].y);
+        Eigen::Vector2d pix(current_feat_.pix[i].x, current_feat_.pix[i].y);
         current_feat_.zetas[i] = cam_.invProj(pix, 1.0);
     }
 }
@@ -144,14 +144,14 @@ int Salsa::calcNewKeyframeConditionKLT()
     quat::Quatd q_I2j(current_state_.x.q());
     quat::Quatd q_b2c(x_u2c_.q());
     quat::Quatd q_cj2ci = q_b2c.inverse() * q_I2j.inverse() * q_I2i * q_b2c;
-    Matrix3d R_cj2ci = q_cj2ci.R();
+    Eigen::Matrix3d R_cj2ci = q_cj2ci.R();
 
     assert(kf_feat_.size() == current_feat_.size());
     for (int i = 0; i < kf_feat_.size(); i++)
     {
-        Vector3d zihat = R_cj2ci * current_feat_.zetas[i];
-        Vector2d lihat = cam_.proj(zihat);
-        Vector2d li(kf_feat_.pix[i].x, kf_feat_.pix[i].y);
+        Eigen::Vector3d zihat = R_cj2ci * current_feat_.zetas[i];
+        Eigen::Vector2d lihat = cam_.proj(zihat);
+        Eigen::Vector2d li(kf_feat_.pix[i].x, kf_feat_.pix[i].y);
         double err = (lihat - li).norm();
         kf_parallax_ += err;
     }
@@ -220,7 +220,7 @@ void Salsa::collectNewfeatures()
 
         for (int i = 0; i < new_corners.size(); i++)
         {
-            Vector2d pix(new_corners[i].x, new_corners[i].y);
+            Eigen::Vector2d pix(new_corners[i].x, new_corners[i].y);
             current_feat_.zetas.push_back(cam_.invProj(pix, 1.0));
             current_feat_.pix.emplace_back(std::move(new_corners[i]));
             current_feat_.feat_ids.push_back(next_feature_id_++);

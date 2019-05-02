@@ -2,6 +2,8 @@
 
 using namespace std;
 using namespace gnss_utils;
+using namespace Eigen;
+using namespace xform;
 
 namespace salsa
 {

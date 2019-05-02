@@ -61,7 +61,7 @@ public:
     void initImg(const std::string& filename);
     void initState();
     void initFactors();
-    void initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0);
+    void initialize(const double& t, const xform::Xformd &x0, const Eigen::Vector3d& v0, const Eigen::Vector2d& tau0);
     void initSolverOptions();
     void setInitialState(const xform::Xformd& x0);
 

@@ -3,6 +3,9 @@
 
 #include "salsa/salsa.h"
 
+using namespace Eigen;
+using namespace xform;
+
 
 TEST (KLT, TrackVideo)
 {

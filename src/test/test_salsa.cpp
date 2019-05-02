@@ -8,6 +8,8 @@
 using namespace gnss_utils;
 using namespace salsa;
 using namespace multirotor_sim;
+using namespace Eigen;
+using namespace xform;
 
 class SalsaFeatGNSSTest : public ::testing::Test
 {

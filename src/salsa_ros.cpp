@@ -1,5 +1,8 @@
 #include "salsa/salsa_ros.h"
 
+using namespace xform;
+using namespace Eigen;
+
 namespace salsa
 {
 
