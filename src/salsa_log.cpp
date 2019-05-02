@@ -52,7 +52,7 @@ void Salsa::logOptimizedWindow()
         logs_[log::Opt]->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
         logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
     }
-    logs_[log::Opt]->logVectors(imu_bias_);
+    logs_[log::Opt]->logVectors(imu_bias_, x_b2c_.arr(), x_e2n_.arr());
 }
 
 void Salsa::logCurrentState()

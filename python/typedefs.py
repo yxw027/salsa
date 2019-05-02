@@ -37,7 +37,9 @@ OptType = np.dtype([
     ('tail', np.int32),
     ('x', (OptStateType, params["state_buf_size"])),
     # ('s', (np.float64, 0)),
-    ('imu', (np.float64, 6))
+    ('imu', (np.float64, 6)),
+    ('x_b2c', (np.float64, 7)),
+    ('x_e2n', (np.float64, 7)),
 ])
 
 

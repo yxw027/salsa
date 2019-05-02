@@ -25,6 +25,7 @@ bool XformAnchor::operator ()(const T* _x, T* _res) const
     Map<Matrix<T, 6, 1>> res(_res);
 
     res = Xi_ * x_->boxminus(x);
+    return true;
 }
 template bool XformAnchor::operator ()<double>(const double* _x, double* _res) const;
 typedef ceres::Jet<double, 7> jt1;
