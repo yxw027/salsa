@@ -71,7 +71,7 @@ TEST (Vision, NewKFRotate)
     sim.t_ = 1.0;
     sim.update_camera_meas();
 
-    int kf_condition;
+    int kf_condition = 0;
     auto kf_cb = [&kf_condition](int kf, int condition)
     {
         kf_condition = condition;

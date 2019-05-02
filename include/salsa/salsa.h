@@ -220,7 +220,7 @@ public:
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
     Features kf_feat_, current_feat_;
-    int kf_Nmatch_feat_;
+    int kf_Nmatch_feat_ = -1;
     double kf_parallax_;
     int kf_num_feat_;
     bool use_measured_depth_;
