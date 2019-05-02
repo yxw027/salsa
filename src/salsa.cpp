@@ -102,6 +102,7 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD);
     if (!estimate_origin_)
         problem.SetParameterBlockConstant(x_e2n_.data());
+    problem.AddParameterBlock(x_u2c_.data(), 7, new XformParamAD());
     int idx = xbuf_tail_;
     int prev_idx = idx;
     while (prev_idx != xbuf_head_)
@@ -226,7 +227,8 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
                                      new ceres::HuberLoss(3.0),
                                      xbuf_[ft->second.idx0].x.data(),
                                      xbuf_[func->to_idx_].x.data(),
-                                     &ft->second.rho);
+                                     &ft->second.rho,
+                                     x_u2c_.data());
             func++;
         }
         ft++;

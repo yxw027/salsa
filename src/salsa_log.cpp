@@ -78,7 +78,7 @@ void Salsa::logFeatRes()
                 if (func != ft->second.funcs.end())
                 {
                     (*func)(xbuf_[ft->second.idx0].x.data(), xbuf_[func->to_idx_].x.data(),
-                            &ft->second.rho, res.data());
+                            &ft->second.rho, x_u2c_.data(), res.data());
                     logs_[log::FeatRes]->log(xbuf_[func->to_idx_].node, xbuf_[func->to_idx_].t);
                     logs_[log::FeatRes]->logVectors(res);
                     func++;

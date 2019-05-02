@@ -60,11 +60,11 @@ Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_tru
     kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho), rho_true(_rho_true), slide_count(0)
 {}
 
-void Feat::addMeas(int to_idx, const Xformd &x_b2c, const Matrix2d &cov, const Vector3d &zj)
+void Feat::addMeas(int to_idx, const Matrix2d &cov, const Vector3d &zj)
 {
     assert (to_idx != idx0);
     assert (funcs.size() > 0 ? funcs.back().to_idx_ != to_idx : true);
-    funcs.emplace_back(x_b2c, cov, z0, zj, to_idx);
+    funcs.emplace_back(cov, z0, zj, to_idx);
 }
 
 void Feat::moveMeas(int to_idx, const Vector3d &zj)

@@ -60,8 +60,7 @@ struct Feat
 
     Feat(int _idx, int _kf0, const Eigen::Vector3d& _z0, double _rho, double _rho_true=NAN);
 
-    void addMeas(int to_idx, const xform::Xformd& x_b2c,
-                 const Eigen::Matrix2d& cov, const Eigen::Vector3d& zj);
+    void addMeas(int to_idx, const Eigen::Matrix2d& cov, const Eigen::Vector3d& zj);
     void moveMeas(int to_idx, const Eigen::Vector3d& zj);
     bool slideAnchor(int new_from_idx, const StateVec& xbuf, const xform::Xformd& x_b2c);
     Eigen::Vector3d pos(const StateVec& xbuf, const xform::Xformd& x_b2c);

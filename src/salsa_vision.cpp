@@ -78,7 +78,7 @@ void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_
         {
             Feat& ft(xfeat_.at(z.feat_ids[i]));
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
-                ft.addMeas(xbuf_head_, x_u2c_, R_pix, z.zetas[i]);
+                ft.addMeas(xbuf_head_, R_pix, z.zetas[i]);
             else
                 ft.moveMeas(xbuf_head_, z.zetas[i]);
             ft.updated_in_last_image_ = true;

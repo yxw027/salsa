@@ -170,7 +170,7 @@ TEST (Vision, SlideAnchor)
         if (!feat)
             feat = new Feat(idx, kf, zeta, 1.0/z.depths[0]);
         else
-            feat->addMeas(idx, salsa.x_u2c_, R_pix, zeta);
+            feat->addMeas(idx, R_pix, zeta);
         xbuf[idx].x = sim.state().X;
         xbuf[idx].v = sim.state().v;
         xbuf[idx].t = sim.t_;
@@ -193,13 +193,13 @@ TEST (Vision, SlideAnchor)
     Vector2d res;
     feat->funcs.front()(xbuf[feat->idx0].x.data(),
                         xbuf[feat->funcs.front().to_idx_].x.data(),
-                        &feat->rho, res.data());
+                        &feat->rho, salsa.x_u2c_.data(), res.data());
     for (int i = 1; i < 9; i++)
     {
         EXPECT_TRUE(feat->slideAnchor(i, xbuf, salsa.x_u2c_));
         feat->funcs.front()(xbuf[feat->idx0].x.data(),
                             xbuf[feat->funcs.front().to_idx_].x.data(),
-                            &feat->rho, res.data());
+                            &feat->rho, salsa.x_u2c_.data(), res.data());
         EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-5);
         EXPECT_NEAR(feat->rho, rho[i], 1e-5);
         EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_u2c_), 1e-5);

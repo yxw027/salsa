@@ -27,10 +27,10 @@ TEST (FeatFactor, InitZeroResidual)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), zi, zj, 0);
 
     Vector2d res;
-    f(xi.data(), xj.data(), &rho, res.data());
+    f(xi.data(), xj.data(), &rho, xb2c.data(), res.data());
 
     EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-8);
 }
@@ -55,10 +55,10 @@ TEST (FeatFactor, Withc2bTransform)
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), zi, zj, 0);
 
     Vector2d res;
-    f(xi.data(), xj.data(), &rho, res.data());
+    f(xi.data(), xj.data(), &rho, xb2c.data(), res.data());
 
     EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-8);
 }
@@ -81,10 +81,10 @@ TEST (FeatFactor, Withc2bTransformAndNoise)
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(xb2c, Matrix2d::Identity(), zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), zi, zj, 0);
 
     Vector2d res;
-    f(xi.data(), xj.data(), &rho, res.data());
+    f(xi.data(), xj.data(), &rho, xb2c.data(), res.data());
 //    cout << res << endl;
     EXPECT_MAT_NEAR(res, Vector2d(-0.014743, -0.0186242), 1e-4);
 }
@@ -136,10 +136,10 @@ TEST (FeatFactor, SimulatedFeatures)
         Vector2d pix0 = cam.proj(test0);
         Vector2d pix1 = cam.proj(test1);
 
-        FeatFunctor f(x_b2c, Matrix2d::Identity(), zeta0, zeta1, 0);
+        FeatFunctor f(Matrix2d::Identity(), zeta0, zeta1, 0);
         double rho = 1.0/z0.depths[i];
         Vector2d res;
-        f(x0.data(), x_.data(), &rho, res.data());
+        f(x0.data(), x_.data(), &rho, x_b2c.data(), res.data());
 
         EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-8);
     }
@@ -157,21 +157,22 @@ TEST (FeatFactor, OptOnePointOneView)
     Vector3d zeta_j = x2.rotp(l - x2.t()).normalized();
     double rho = 1.0/((l-x1.t()).norm());
     double rhohat = 0.001;
-    FeatFunctor f(x_b2c, Matrix2d::Identity(), zeta_i, zeta_j, 1);
+    FeatFunctor f(Matrix2d::Identity(), zeta_i, zeta_j, 1);
 
     ceres::Problem problem;
     problem.AddParameterBlock(x1.data(), 7, new XformParamAD);
     problem.AddParameterBlock(x2.data(), 7, new XformParamAD);
+    problem.AddParameterBlock(x_b2c.data(), 7, new XformParamAD);
     problem.SetParameterBlockConstant(x1.data());
     problem.SetParameterBlockConstant(x2.data());
+    problem.SetParameterBlockConstant(x_b2c.data());
     FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&f);
     problem.AddResidualBlock(new FeatFactorAD(ptr),
-                             NULL,
-                             x1.data(), x2.data(), &rhohat);
+                             NULL, x1.data(), x2.data(), &rhohat, x_b2c.data());
 
     Vector2d res1, res2;
-    f(x1.data(), x2.data(), &rhohat, res1.data());
-    f(x1.data(), x2.data(), &rho, res2.data());
+    f(x1.data(), x2.data(), &rhohat, x_b2c.data(), res1.data());
+    f(x1.data(), x2.data(), &rho, x_b2c.data(), res2.data());
 
     ceres::Solver::Options options;
     ceres::Solver::Summary summary;
@@ -181,7 +182,7 @@ TEST (FeatFactor, OptOnePointOneView)
     options.minimizer_progress_to_stdout = false;
 
     ceres::Solve(options, &problem, &summary);
-    f(x1.data(), x2.data(), &rhohat, res2.data());
+    f(x1.data(), x2.data(), &rhohat, x_b2c.data(), res2.data());
 
     EXPECT_NEAR(rhohat, rho, 1e-8);
 }
@@ -200,21 +201,22 @@ TEST (FeatFactor, OptOnePointOneViewC2B)
     Vector3d zeta_j = x_b2c.transformp(x2.transformp(l)).normalized();
     double rho = 1.0/(x_b2c.transformp(x1.transformp(l)).norm());
     double rhohat = 0.001;
-    FeatFunctor f(x_b2c, Matrix2d::Identity(), zeta_i, zeta_j, 1);
+    FeatFunctor f(Matrix2d::Identity(), zeta_i, zeta_j, 1);
 
     ceres::Problem problem;
     problem.AddParameterBlock(x1.data(), 7, new XformParamAD);
     problem.AddParameterBlock(x2.data(), 7, new XformParamAD);
+    problem.AddParameterBlock(x_b2c.data(), 7, new XformParamAD);
     problem.SetParameterBlockConstant(x1.data());
     problem.SetParameterBlockConstant(x2.data());
+    problem.SetParameterBlockConstant(x_b2c.data());
     FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&f);
     problem.AddResidualBlock(new FeatFactorAD(ptr),
-                             NULL,
-                             x1.data(), x2.data(), &rhohat);
+                             NULL, x1.data(), x2.data(), &rhohat, x_b2c.data());
 
     Vector2d res1, res2;
-    f(x1.data(), x2.data(), &rhohat, res1.data());
-    f(x1.data(), x2.data(), &rho, res2.data());
+    f(x1.data(), x2.data(), &rhohat, x_b2c.data(), res1.data());
+    f(x1.data(), x2.data(), &rho, x_b2c.data(), res2.data());
 
 //    std::cout << "res1 " << res1.transpose() << std::endl;
 //    std::cout << "res2 " << res2.transpose() << std::endl;
@@ -227,7 +229,7 @@ TEST (FeatFactor, OptOnePointOneViewC2B)
     options.minimizer_progress_to_stdout = false;
 
     ceres::Solve(options, &problem, &summary);
-    f(x1.data(), x2.data(), &rhohat, res2.data());
+    f(x1.data(), x2.data(), &rhohat, x_b2c.data(), res2.data());
 //    std::cout << "res3 " << res2.transpose() << std::endl;
 
     EXPECT_NEAR(rhohat, rho, 1e-8);
