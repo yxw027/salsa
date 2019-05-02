@@ -206,9 +206,8 @@ public:
     xform::Xformd x_u2b_; // transform from imu to body frame
     xform::Xformd x_u2c_; // transform from imu to camera frame
     xform::Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
-    Eigen::Vector3d p_u2g_; // position of gps antenna in imu frame
-    double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
-    double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
+    double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
+    double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
     gnss_utils::GTime start_time_;
     Eigen::Matrix2d clk_bias_Xi_;
     bool disable_mocap_;
