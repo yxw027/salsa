@@ -256,12 +256,5 @@ void Salsa::logImu()
     logs_[log::Imu]->logVectors(imu_.back().u_);
 }
 
-void Salsa::logXe2n()
-{
-    logs_[log::Xe2n]->log(current_state_.t);
-    logs_[log::Xe2n]->logVectors(x_e2n_.arr());
-}
-
-
 
 }

@@ -3,17 +3,33 @@ import yaml
 
 params = yaml.load(open("../params/salsa.yaml"))
 
+XType = np.dtype([
+    ('p', (np.float64, 3)),
+    ('q', (np.float64, 4))
+])
+
 CurrentStateType = np.dtype([
 	('t', np.float64),
-    ('x', (np.float64, 7)),
+    ('x', XType),
     ('v', (np.float64, 3)),
     ('b', (np.float64, 6)),
     ('tau', (np.float64, 2))
 ])
 
+
+SimStateType = np.dtype([
+	('t', np.float64),
+    ('x', XType),
+    ('v', (np.float64, 3)),
+    ('b', (np.float64, 6)),
+    ('tau', (np.float64, 2)),
+    ('x_e2n', XType),
+    ('x_b2c', XType),
+])
+
 StateType = np.dtype([
     ('t', np.float64),
-    ('x', (np.float64, 7)),
+    ('x', XType),
     ('v', (np.float64, 3)),
     ('tau', (np.float64, 2)),
     ('kf', np.int32),
@@ -38,8 +54,8 @@ OptType = np.dtype([
     ('x', (OptStateType, params["state_buf_size"])),
     # ('s', (np.float64, 0)),
     ('imu', (np.float64, 6)),
-    ('x_b2c', (np.float64, 7)),
-    ('x_e2n', (np.float64, 7)),
+    ('x_b2c', XType),
+    ('x_e2n', XType),
 ])
 
 
@@ -124,11 +140,7 @@ ImuType = np.dtype([
     ('omega', (np.float64, 3))
 ])
 
-XType = np.dtype([
-    ('t', np.float64),
-    ('p', (np.float64, 3)),
-    ('q', (np.float64, 4))
-])
+
 
 
 

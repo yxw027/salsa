@@ -287,7 +287,6 @@ void Salsa::solve()
     logFeatures();
     logSatPos();
     logPrangeRes();
-    logXe2n();
 }
 
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)

@@ -76,7 +76,6 @@ public:
     void logPrangeRes();
     void logCurrentState();
     void logImu();
-    void logXe2n();
 
     void endInterval(double t);
     void startNewInterval(double t);

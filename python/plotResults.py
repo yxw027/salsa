@@ -51,9 +51,9 @@ def plot3DMap():
     ax.set_aspect('equal')
 
     k = [x['node'] != -1][0]
-    ax.plot(state['x'][:,1],state['x'][:,0], -state['x'][:,2], label=r'$\hat{x}$')
-    ax.plot(x['x'][k,1],x['x'][k,0], -x['x'][k,2], '*')
-    ax.plot(truth['x'][:,1],truth['x'][:,0], -truth['x'][:,2], label=r'$x$')
+    ax.plot(state['x']['p'][:,1],state['x']['p'][:,0], -state['x']['p'][:,2], label=r'$\hat{x}$')
+    ax.plot(x['x']['p'][k,1],x['x']['p'][k,0], -x['x']['p'][k,2], '*')
+    ax.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], -truth['x']['p'][:,2], label=r'$x$')
     ax.legend()
     plt.grid()
 
@@ -175,8 +175,8 @@ def plotPosition():
     for i in range(3):
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
-        plt.plot(truth['t'], truth['x'][:,i], label='x')
-        plt.plot(x['t'], x['x'][:,i], label=r'$\hat{x}$')
+        plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
+        plt.plot(x['t'], x['x']['p'][:,i], label=r'$\hat{x}$')
         if i == 0:
             plt.legend()
     pw.addPlot("Position", f)
@@ -187,8 +187,8 @@ def plotAttitude():
     for i in range(4):
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
-        plt.plot(truth['t'], truth['x'][:,i+3], label='x')
-        plt.plot(x['t'], x['x'][:,i+3], label=r'\hat{x}')
+        plt.plot(truth['t'], truth['x']['q'][:,i], label='x')
+        plt.plot(x['t'], x['x']['q'][:,i], label=r'\hat{x}')
         # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
         if i == 0:
             plt.legend()
@@ -214,17 +214,41 @@ def plotImu():
 
 def plotXe2n():
     f = plt.figure()
-    plt.suptitle("xe2n")
-    titles = ["px", "py", "pz", "~", "qw", "qx", "qy", "qz"]
+    # plt.suptitle(r"$T_{e}^{n}$")
+    plt.suptitle(r"$T_{e}^{n}$")
+    # titles = ["p_{x}", "p_{y}", "p_{z}", "~", "q_{w}", "q_{x}", "q_{y}", "q_{z}"]
+    titles = ["x", "y", "z", "~", "w", "x", "y", "z"]
     for i in range(4):
+        t = np.nanmax(opt['x']['t'], axis=1)
         if i < 3:
             plt.subplot(4,2,2*i+1)
-            plt.plot(Xe2n['t'], Xe2n['p'][:,i], label=titles[i])
+            plt.plot(t, opt['x_e2n']['p'][:,i], label=r"$\hat{p}_{"+titles[i]+"}$")
+            plt.plot(truth['t'], truth['x_e2n']['p'][:,i], label=r"$p_{"+titles[i]+"}$")
             plt.legend()
         plt.subplot(4,2, 2*i+2)
-        plt.plot(Xe2n['t'], Xe2n['q'][:,i], label=titles[i+4])
+        plt.plot(t, opt['x_e2n']['q'][:, i], label=r"$\hat{q}_{" + titles[i] + "}$")
+        plt.plot(truth['t'], truth['x_e2n']['q'][:, i], label=r"$q_{" + titles[i] + "}$")
         plt.legend()
     pw.addPlot("X_e2n", f)
+
+def plotXb2c():
+    f = plt.figure()
+    # plt.suptitle(r"$T_{e}^{n}$")
+    plt.suptitle(r"$T_{b}^{c}$")
+    # titles = ["p_{x}", "p_{y}", "p_{z}", "~", "q_{w}", "q_{x}", "q_{y}", "q_{z}"]
+    titles = ["x", "y", "z", "~", "w", "x", "y", "z"]
+    for i in range(4):
+        t = np.nanmax(opt['x']['t'], axis=1)
+        if i < 3:
+            plt.subplot(4,2,2*i+1)
+            plt.plot(t, opt['x_b2c']['p'][:,i], label=r"$\hat{p}_{"+titles[i]+"}$")
+            plt.plot(truth['t'], truth['x_b2c']['p'][:,i], label=r"$p_{"+titles[i]+"}$")
+            plt.legend()
+        plt.subplot(4,2, 2*i+2)
+        plt.plot(t, opt['x_b2c']['q'][:, i], label=r"$\hat{q}_{" + titles[i] + "}$")
+        plt.plot(truth['t'], truth['x_b2c']['q'][:, i], label=r"$q_{" + titles[i] + "}$")
+        plt.legend()
+    pw.addPlot("X_b2c", f)
 
 
 def plotVelocity():
@@ -249,12 +273,12 @@ def plotResults(prefix):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles, trueFeatPos
-    global offset, pw, mocapRes, satPos, prangeRes, Imu, Xe2n
+    global offset, pw, mocapRes, satPos, prangeRes, Imu
 
     offset = 10
-    x = fixState(np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
-    state = fixState(np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType))
-    truth = fixState(np.fromfile(os.path.join(prefix,"Truth.log"), dtype=CurrentStateType))
+    x = np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType)
+    state = np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType)
+    truth = np.fromfile(os.path.join(prefix,"Truth.log"), dtype=SimStateType)
     opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
     GnssRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=GnssResType)
     featRes = np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType)
@@ -265,7 +289,6 @@ def plotResults(prefix):
     satPos = np.fromfile(os.path.join(prefix, "SatPos.log"), dtype=SatPosType)
     prangeRes = np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType)
     Imu = np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType)
-    Xe2n = np.fromfile(os.path.join(prefix, "Xe2n.log"), dtype=XType)
     # trueFeatPos -= truth['x'][0,0:3]
     # truth['x'][:,:3] -= truth['x'][0,0:3]
 
@@ -283,6 +306,8 @@ def plotResults(prefix):
     plotImuBias()
     plotImu()
     plotXe2n()
+    plotXb2c()
+
     if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
         plotPRangeRes()
         plotClockBias()
@@ -309,4 +334,5 @@ def plotResults(prefix):
 
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
-    plotResults("/tmp/Salsa/")
+    # plotResults("/tmp/Salsa/")
+    plotResults("/tmp/Salsa/FeatSimulation/")
