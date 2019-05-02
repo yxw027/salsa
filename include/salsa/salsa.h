@@ -31,6 +31,7 @@
 
 using multirotor_sim::VecMat3;
 using multirotor_sim::VecVec3;
+using multirotor_sim::SatVec;
 using multirotor_sim::ImageFeat;
 
 namespace salsa
@@ -41,14 +42,14 @@ class Logger;
 class Salsa : public multirotor_sim::EstimatorBase
 {
 public:
-    typedef Matrix<double, 11, 1> Vector11d;
-    typedef std::deque<MocapFunctor, aligned_allocator<MocapFunctor>> MocapDeque;
-    typedef std::vector<PseudorangeFunctor, aligned_allocator<PseudorangeFunctor>> PseudorangeVec;
-    typedef std::deque<PseudorangeVec, aligned_allocator<PseudorangeVec>> PseudorangeDeque;
-    typedef std::deque<ImuFunctor, aligned_allocator<ImuFunctor>> ImuDeque;
-    typedef std::deque<ClockBiasFunctor, aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
-    typedef std::vector<gnss_utils::Satellite, aligned_allocator<gnss_utils::Satellite>> SatVec;
-    typedef std::map<int,Feat,std::less<int>,aligned_allocator<std::pair<const int,Feat>>> FeatMap;
+    typedef Eigen::Matrix<double, 11, 1> Vector11d;
+    typedef std::deque<MocapFunctor, Eigen::aligned_allocator<MocapFunctor>> MocapDeque;
+    typedef std::vector<PseudorangeFunctor, Eigen::aligned_allocator<PseudorangeFunctor>> PseudorangeVec;
+    typedef std::deque<PseudorangeVec, Eigen::aligned_allocator<PseudorangeVec>> PseudorangeDeque;
+    typedef std::deque<ImuFunctor, Eigen::aligned_allocator<ImuFunctor>> ImuDeque;
+    typedef std::deque<ClockBiasFunctor, Eigen::aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
+    typedef std::vector<gnss_utils::Satellite, Eigen::aligned_allocator<gnss_utils::Satellite>> SatVec;
+    typedef std::map<int,Feat,std::less<int>,Eigen::aligned_allocator<std::pair<const int,Feat>>> FeatMap;
 
 
     Salsa();
@@ -97,14 +98,14 @@ public:
 
 
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
-    void mocapCallback(const double &t, const Xformd &z, const Matrix6d &R) override;
+    void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
     void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
                          SatVec &sat, const std::vector<bool>& slip) override;
-    void imageCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix,
+    void imageCallback(const double& t, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
-    void imageCallback(const double& t, const Features& z, const Matrix2d& R_pix, bool new_keyframe);
+    void imageCallback(const double& t, const Features& z, const Eigen::Matrix2d& R_pix, bool new_keyframe);
 
-    void imageCallback(const double &t, const cv::Mat& img, const Matrix2d &R_pix);
+    void imageCallback(const double &t, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
     bool dropFeature(int idx);
     void setFeatureMask(const std::string& filename);
     void showImage();
@@ -201,14 +202,15 @@ public:
 
     std::string log_prefix_;
     Camera<double> cam_;
-    Xformd x_u2m_; // transform from imu to mocap frame
-    Xformd x_u2b_; // transform from imu to body frame
-    Xformd x_u2c_; // transform from imu to camera frame
-    Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
+    xform::Xformd x_u2m_; // transform from imu to mocap frame
+    xform::Xformd x_u2b_; // transform from imu to body frame
+    xform::Xformd x_u2c_; // transform from imu to camera frame
+    xform::Xformd x_e2n_; // transform from ECEF to NED (inertial) frame
+    Eigen::Vector3d p_u2g_; // position of gps antenna in imu frame
     double dt_m_; // time offset of mocap  (t(stamped) - dt_m = t(true))
     double dt_c_; // time offset of camera (t(stamped) - dt_m = t(true))
     gnss_utils::GTime start_time_;
-    Matrix2d clk_bias_Xi_;
+    Eigen::Matrix2d clk_bias_Xi_;
     bool disable_mocap_;
 
 

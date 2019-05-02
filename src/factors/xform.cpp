@@ -1,5 +1,8 @@
 #include <factors/xform.h>
 
+using namespace Eigen;
+using namespace xform;
+
 template<typename T>
 bool XformPlus::operator()(const T* x, const T* delta, T* x_plus_delta) const
 {

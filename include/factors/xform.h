@@ -3,9 +3,6 @@
 #include <ceres/ceres.h>
 #include "geometry/xform.h"
 
-using namespace Eigen;
-using namespace xform;
-
 struct XformPlus {
   template<typename T>
   bool operator()(const T* x, const T* delta, T* x_plus_delta) const;
