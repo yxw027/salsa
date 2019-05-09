@@ -11,9 +11,9 @@ log_prefix: "/tmp/Salsa/"
 
 # dt_m: 0
 # dt_c: 0
-node_window: 20
+node_window: 15
 num_sat: 15
-num_feat: 25
+num_feat: 75
 R_clock_bias: [0.01, 0.01] # nsec
 switch_weight: 1000.0
 state_buf_size: 100
@@ -32,7 +32,7 @@ image_size: [640, 480]
 cam_skew: 0.0
 distortion: [0, 0, 0, 0, 0]
 kf_parallax_thresh: 120
-kf_feature_thresh: 0.80
+kf_feature_thresh: 0.75
 
 show_matches: true
 feature_nearby_radius: 30
@@ -55,6 +55,7 @@ state_anchor_cov: [0.0001, 0.0001, 0.0001, # p
                    0.0001, 0.0001, 0.0001, # q
                    0.0005, 0.0005, 0.0005, # v
                    0.001, 0.001] # clk_bias (nsec)
+estimate_x_b2c: false
 x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
                    0.0001, 0.0001, 0.0001] # q
 x_e2n_anchor_cov: [0.1, 0.1, 0.1, # p

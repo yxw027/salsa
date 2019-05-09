@@ -46,6 +46,7 @@ void Salsa::load(const string& filename)
 {
     get_yaml_eigen("x_b2m", filename, x_b2m_.arr());
     get_yaml_eigen("x_b2c", filename, x_b2c_.arr());
+    get_yaml_node("estimate_x_b2c", filename, estimate_x_b2c_);
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
     get_yaml_node("node_window", filename, node_window_);
@@ -164,9 +165,16 @@ void Salsa::setAnchors(ceres::Problem &problem)
     FunctorShield<ImuBiasAnchor>* imu_ptr = new FunctorShield<ImuBiasAnchor>(bias_);
     problem.AddResidualBlock(new ImuBiasAnchorFactorAD(imu_ptr), NULL, imu_bias_.data());
 
-    x_u2c_anchor_->set(&x_b2c_);
-    FunctorShield<XformAnchor>* u2c_ptr = new FunctorShield<XformAnchor>(x_u2c_anchor_);
-    problem.AddResidualBlock(new XformAnchorFactorAD(u2c_ptr), NULL, x_b2c_.data());
+    if (estimate_x_b2c_)
+    {
+        x_u2c_anchor_->set(&x_b2c_);
+        FunctorShield<XformAnchor>* u2c_ptr = new FunctorShield<XformAnchor>(x_u2c_anchor_);
+        problem.AddResidualBlock(new XformAnchorFactorAD(u2c_ptr), NULL, x_b2c_.data());
+    }
+    else
+    {
+        problem.SetParameterBlockConstant(x_b2c_.data());
+    }
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)

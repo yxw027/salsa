@@ -156,7 +156,7 @@ p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
 
 ## Camera
-num_features: 50
+num_features: 100
 camera_time_offset: 0.0
 camera_transmission_time: 0.0
 camera_transmission_noise: 0.0

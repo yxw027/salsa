@@ -214,7 +214,7 @@ public:
     Eigen::Matrix2d clk_bias_Xi_;
     bool disable_mocap_;
 
-
+    bool estimate_x_b2c_;
     bool disable_gnss_;
     bool estimate_origin_;
     double doppler_cov_;
