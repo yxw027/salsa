@@ -17,16 +17,15 @@ find_package(catkin REQUIRED COMPONENTS
 	rosbag
 	roscpp
 	sensor_msgs
-        inertial_sense
+    inertial_sense
 	nav_msgs)
+find_package(geometry REQUIRED)
+find_package(gnss_utils REQUIRED)
+find_package(multirotor_sim REQUIRED)
 
-add_subdirectory(lib/geometry)
-add_subdirectory(lib/gnss_utils)
-add_subdirectory(lib/multirotor_sim)
-
-add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
+# add_definitions(-DMULTIROTOR_SIM_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/multirotor_sim")
 add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
-add_definitions(-DGNSS_UTILS_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/gnss_utils")
+# add_definitions(-DGNSS_UTILS_DIR="${CMAKE_CURRENT_LIST_DIR}/lib/gnss_utils")
 
 add_library(factors
     src/factors/xform.cpp
@@ -37,11 +36,11 @@ add_library(factors
     src/factors/clock_dynamics.cpp
     src/factors/pseudorange.cpp)
 target_link_libraries(factors
-    geometry
     gnss_utils
     ${CERES_LIBRARIES})
 target_include_directories(factors PUBLIC
     include
+    ${GEOMETRY_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
     ${CERES_INCLUDE_DIRS})
 

@@ -23,7 +23,7 @@ public:
         for (int i = 1; i < sat_ids.size(); i++)
         {
             sats.emplace_back(sat_ids[i], i);
-            sats.back().readFromRawFile(GNSS_UTILS_DIR"/sample/eph.dat");
+            sats.back().readFromRawFile(SALSA_DIR"/sample/eph.dat");
         }
     }
 
