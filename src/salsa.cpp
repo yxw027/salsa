@@ -290,6 +290,7 @@ void Salsa::solve()
         ceres::Solve(options_, &problem, &summary_);
 //    std::cout << summary_.FullReport() << std::endl;
 
+
     logState();
     logOptimizedWindow();
     logRawGNSSRes();
@@ -303,21 +304,35 @@ void Salsa::solve()
 void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 {
     current_state_.t = t;
+    if (std::isnan(current_state_integrator_.t))
+        current_state_integrator_.reset(t);
+
     if (imu_.empty())
+    {
         return;
+    }
 
-    ImuFunctor& imu(imu_.back());
+    imu_delay_buf_.push_back({t, z, R});
 
-    imu.integrate(t, z, R);
-    imu.estimateXj(xbuf_[imu.from_idx_].x.data(),
-            xbuf_[imu.from_idx_].v.data(),
-            current_state_.x.data(),
-            current_state_.v.data());
-    current_state_.tau = xbuf_[imu.from_idx_].tau;
 
+    current_state_integrator_.b_ = imu_bias_;
+    for (auto& z : imu_delay_buf_)
+    {
+        if (z.t > current_state_integrator_.t)
+            current_state_integrator_.integrateStateOnly(z.t, z.z);
+    }
+
+    current_state_integrator_.estimateXj(xbuf_[xbuf_head_].x.data(),
+                                         xbuf_[xbuf_head_].v.data(),
+                                         current_state_.x.data(),
+                                         current_state_.v.data());
+    current_state_.tau = xbuf_[xbuf_head_].tau;
     SALSA_ASSERT((current_state_.x.arr().array() == current_state_.x.arr().array()).all()
                  || (current_state_.v.array() == current_state_.v.array()).all(),
                  "NaN Detected in propagation");
+
+//    ImuFunctor& imu(imu_.back());
+//    imu.integrate(t, z, R);
 
     logCurrentState();
     logImu();
@@ -343,9 +358,16 @@ void Salsa::endInterval(double t)
     }
 
     // Finish the transition factors
+    while (imu_delay_buf_.size() > 0 && imu_delay_buf_.front().t < t)
+    {
+        auto& z(imu_delay_buf_.front());
+        imu.integrate(z.t, z.z, z.R);
+        imu_delay_buf_.pop_front();
+    }
     imu.integrate(t, imu.u_, imu.cov_);
     imu.finished(to);
     clk.finished(imu.delta_t_, to);
+    current_state_integrator_.reset(t);
 
     // Initialize the estimated state at the end of the interval
     xbuf_[to].t = t;

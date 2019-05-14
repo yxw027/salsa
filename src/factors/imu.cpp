@@ -7,12 +7,90 @@ using namespace quat;
 namespace salsa
 {
 
-Vector3d ImuFunctor::gravity_{0, 0, 9.80665};
+Vector3d ImuIntegrator::gravity_{0, 0, 9.80665};
+
+ImuIntegrator::ImuIntegrator()
+{
+    b_.setZero();
+    y_.setZero();
+    y_(Q) = 1.0;
+    t0_ = NAN;
+    t = NAN;
+}
+
+void ImuIntegrator::reset(const double &_t)
+{
+    t0_ = _t;
+    t = _t;
+    y_.setZero();
+    y_(Q) = 1.0;
+}
+
+
+void ImuIntegrator::dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot)
+{
+    VectorBlock<const Vector10d, 3> beta = y.segment<3>(BETA);
+    Quatd gamma(y.data()+GAMMA);
+    VectorBlock<Vector6d, 3> ba = b_.segment<3>(ACC);
+    VectorBlock<Vector6d, 3> bw = b_.segment<3>(OMEGA);
+    Vector3d a = u.segment<3>(ACC) - ba;
+    Vector3d w = u.segment<3>(OMEGA)- bw;
+
+    ydot.segment<3>(ALPHA) = beta;
+    ydot.segment<3>(BETA) = gamma.rota(a);
+    ydot.segment<3>(GAMMA) = w;
+}
+
+void ImuIntegrator::boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp)
+{
+    yp.segment<3>(P) = y.segment<3>(P) + dy.segment<3>(P);
+    yp.segment<3>(V) = y.segment<3>(V) + dy.segment<3>(V);
+    yp.segment<4>(Q) = (Quatd(y.segment<4>(Q)) + dy.segment<3>(Q)).elements();
+}
+
+
+void ImuIntegrator::boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d)
+{
+    d.segment<3>(P) = y1.segment<3>(P) - y2.segment<3>(P);
+    d.segment<3>(V) = y1.segment<3>(V) - y2.segment<3>(V);
+    d.segment<3>(Q) = Quatd(y1.segment<4>(Q)) - Quatd(y2.segment<4>(Q));
+}
+
+void ImuIntegrator::integrateStateOnly(const double& _t, const Vector6d& u)
+{
+    double dt = _t - t;
+    t = _t;
+    delta_t_ = t - t0_;
+    Vector9d ydot;
+    Vector10d yp;
+    dynamics(y_, u, ydot);
+    boxplus(y_, ydot * dt, yp);
+    y_ = yp;
+}
+
+void ImuIntegrator::estimateXj(const double* _xi, const double* _vi, double* _xj, double* _vj) const
+{
+    VectorBlock<const Vector10d, 3> alpha = y_.segment<3>(ALPHA);
+    VectorBlock<const Vector10d, 3> beta = y_.segment<3>(BETA);
+    Quatd gamma(y_.data()+GAMMA);
+    Xformd xi(_xi);
+    Xformd xj(_xj);
+    Map<const Vector3d> vi(_vi);
+    Map<Vector3d> vj(_vj);
+
+    xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
+    xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
+    vj = gamma.rotp(vi + xi.q_.rotp(gravity_)*delta_t_ + beta);
+    xj.q_ = xi.q_ * gamma;
+}
+
+
 
 ImuFunctor::ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node)
 {
     delta_t_ = 0.0;
     t0_ = _t0;
+    t = _t0;
     b_ = b0;
 
     n_updates_ = 0;
@@ -46,7 +124,6 @@ void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, cons
     dydot.segment<3>(GAMMA) = -skew(w - bw)*dgamma - eta_w;
 }
 
-
 // ydot = f(y, u) <-- nonlinear dynamics (reference state)
 // A = d(dydot)/d(dy) <-- error state
 // B = d(dydot)/d(eta) <-- error state
@@ -77,20 +154,6 @@ void ImuFunctor::dynamics(const Vector10d& y, const Vector6d& u,
 }
 
 
-void ImuFunctor::boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp)
-{
-    yp.segment<3>(P) = y.segment<3>(P) + dy.segment<3>(P);
-    yp.segment<3>(V) = y.segment<3>(V) + dy.segment<3>(V);
-    yp.segment<4>(Q) = (Quatd(y.segment<4>(Q)) + dy.segment<3>(Q)).elements();
-}
-
-
-void ImuFunctor::boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d)
-{
-    d.segment<3>(P) = y1.segment<3>(P) - y2.segment<3>(P);
-    d.segment<3>(V) = y1.segment<3>(V) - y2.segment<3>(V);
-    d.segment<3>(Q) = Quatd(y1.segment<4>(Q)) - Quatd(y2.segment<4>(Q));
-}
 
 
 void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& cov)
@@ -98,8 +161,9 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
     SALSA_ASSERT((cov.array() == cov.array()).all(), "NaN detected in covariance on propagation");
     SALSA_ASSERT((u.array() == u.array()).all(), "NaN detected in covariance on propagation");
     n_updates_++;
-    double dt = _t - (t0_ + delta_t_);
-    delta_t_ = _t - t0_;
+    double dt = _t - t;
+    t = _t;
+    delta_t_ = t - t0_;
     Vector9d ydot;
     Matrix9d A;
     Matrix96 B;
@@ -119,23 +183,6 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
 
     SALSA_ASSERT((A.array() == A.array()).all(), "NaN detected in covariance on propagation");
     SALSA_ASSERT((P_.array() == P_.array()).all(), "NaN detected in covariance on propagation");
-}
-
-
-void ImuFunctor::estimateXj(const double* _xi, const double* _vi, double* _xj, double* _vj) const
-{
-    VectorBlock<const Vector10d, 3> alpha = y_.segment<3>(ALPHA);
-    VectorBlock<const Vector10d, 3> beta = y_.segment<3>(BETA);
-    Quatd gamma(y_.data()+GAMMA);
-    Xformd xi(_xi);
-    Xformd xj(_xj);
-    Map<const Vector3d> vi(_vi);
-    Map<Vector3d> vj(_vj);
-
-    xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
-    xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
-    vj = gamma.rotp(vi + xi.q_.rotp(gravity_)*delta_t_ + beta);
-    xj.q_ = xi.q_ * gamma;
 }
 
 

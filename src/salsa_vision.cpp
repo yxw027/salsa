@@ -16,7 +16,7 @@ bool Salsa::isTrackedFeature(int id) const
     return it != xfeat_.end();
 }
 
-void Salsa::imageCallback(const double& t, const ImageFeat& z,
+void Salsa::imageCallback(const double& tc, const ImageFeat& z,
                           const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
   if (sim_KLT_)
@@ -34,7 +34,7 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
         cv::line(current_img_, xp, xm, 255);
         cv::line(current_img_, yp, ym, 255);
     }
-    imageCallback(t, current_img_, R_pix);
+    imageCallback(tc, current_img_, R_pix);
   }
   else
   {
@@ -51,13 +51,14 @@ void Salsa::imageCallback(const double& t, const ImageFeat& z,
       zfeat.pix.emplace_back(pix.x(), pix.y());
     }
     bool new_keyframe = calcNewKeyframeCondition(zfeat);
-    imageCallback(t, zfeat, R_pix, new_keyframe);
+    imageCallback(tc, zfeat, R_pix, new_keyframe);
   }
 }
 
-void Salsa::imageCallback(const double& t, const Features& z, const Matrix2d& R_pix,
+void Salsa::imageCallback(const double& tc, const Features& z, const Matrix2d& R_pix,
                           bool new_keyframe)
 {
+    double t = tc - dt_c_;
     last_callback_ = IMG;
 
     if (current_node_ == -1)

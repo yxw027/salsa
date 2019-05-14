@@ -100,11 +100,11 @@ public:
     void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
     void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
                          SatVec &sat, const std::vector<bool>& slip) override;
-    void imageCallback(const double& t, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
+    void imageCallback(const double& tc, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
-    void imageCallback(const double& t, const Features& z, const Eigen::Matrix2d& R_pix, bool new_keyframe);
+    void imageCallback(const double& tc, const Features& z, const Eigen::Matrix2d& R_pix, bool new_keyframe);
 
-    void imageCallback(const double &t, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
+    void imageCallback(const double &tc, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
     bool dropFeature(int idx);
     void setFeatureMask(const std::string& filename);
     void showImage();
@@ -160,6 +160,16 @@ public:
     State::dxMat state_anchor_xi_;
     Matrix6d x_e2n_anchor_xi_;
     Matrix6d x_b2c_anchor_xi_;
+
+    struct Imu
+    {
+        double t;
+        Vector6d z;
+        Matrix6d R;
+    };
+    ImuIntegrator current_state_integrator_;
+    std::deque<Imu, Eigen::aligned_allocator<Imu>> imu_delay_buf_;
+    double optimization_time_;
 
     ImuDeque imu_;
     ImuBiasAnchor* bias_;

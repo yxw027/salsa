@@ -56,7 +56,7 @@ void Salsa::setFeatureMask(const std::string& filename)
     cv::threshold(cv::imread(filename, IMREAD_GRAYSCALE), mask_, 1, 255, CV_8UC1);
 }
 
-void Salsa::imageCallback(const double& t, const Mat& img, const Eigen::Matrix2d& R_pix)
+void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2d& R_pix)
 {
     if (img.channels() > 1)
         cvtColor(img, current_img_, COLOR_BGR2GRAY);
@@ -89,11 +89,11 @@ void Salsa::imageCallback(const double& t, const Mat& img, const Eigen::Matrix2d
         showImage();
     if (std::isnan(t_next_klt_output_))
     {
-        t_next_klt_output_ = t - 0.01;
+        t_next_klt_output_ = tc - 0.01;
     }
-    if (t > t_next_klt_output_)
+    if (tc > t_next_klt_output_)
     {
-        imageCallback(t, current_feat_, R_pix, new_keyframe);
+        imageCallback(tc, current_feat_, R_pix, new_keyframe);
         t_next_klt_output_ += 1.0/tracker_freq_;
     }
 }
