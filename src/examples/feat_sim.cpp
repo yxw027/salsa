@@ -14,7 +14,7 @@ int main()
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_b2c_ = sim.x_b2c_+ 0.1 * Vector6d::Random();
+    salsa.x_b2c_ = sim.x_b2c_;
     salsa.cam_ = sim.cam_;
 
     sim.register_estimator(&salsa);

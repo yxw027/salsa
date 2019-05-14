@@ -11,9 +11,9 @@ log_prefix: "/tmp/Salsa/"
 
 # dt_m: 0
 # dt_c: 0
-node_window: 20
+node_window: 15
 num_sat: 15
-num_feat: 50
+num_feat: 75
 R_clock_bias: [0.01, 0.01] # nsec
 switch_weight: 1000.0
 state_buf_size: 100
@@ -35,7 +35,7 @@ cam_center: [320, 240]
 image_size: [640, 480]
 cam_skew: 0.0
 distortion: [0, 0, 0, 0, 0]
-kf_parallax_thresh: 30
+kf_parallax_thresh: 120
 kf_feature_thresh: 0.75
 
 show_matches: true

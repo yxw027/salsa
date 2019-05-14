@@ -358,7 +358,7 @@ void Salsa::endInterval(double t)
     }
 
     // Finish the transition factors
-    while (imu_delay_buf_.size() > 0 && imu_delay_buf_.front().t < t)
+    while (imu_delay_buf_.size() > 0 && imu_delay_buf_.front().t <= t)
     {
         auto& z(imu_delay_buf_.front());
         imu.integrate(z.t, z.z, z.R);
