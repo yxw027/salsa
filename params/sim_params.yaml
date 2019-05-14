@@ -1,0 +1,227 @@
+tmax: 60.0 # Simulation total time, time step is determined by IMU rate
+dt: 0.004
+log_filename: ""
+seed: 15 # 0 initializes seed with time
+
+# Path type:
+#   0 : waypoints
+#   1 : random waypoints
+#   2 : circular trajectory
+#   3 : constant velocity, randomly varying heading
+path_type: 2
+
+# User-defined waypoints
+waypoints: [    
+            10, 0, -5, .705,
+            10, 10, -4, 3.0,
+            -10, 10, -5.5, -1.5,
+            -10, -7, -5, .80,
+            -8, -12, -4.5, -2.3,
+            8, -5, -4, 1.7
+            ]
+
+# Random waypoints parameters
+num_random_waypoints: 30
+altitude: -5.0
+altitude_variance: 1.0
+heading_walk: 0.5
+waypoint_separation: 1.0
+waypoint_sep_variance: 2.0 # uniformly random number between zero and this to add to separation
+
+# Constant velocity trajectory parameters
+velocity_magnitude: 1.0
+traj_altitude: -5.0
+traj_heading_walk: 10.0
+traj_heading_straight_gain: 0.01
+
+# Follow the carrot trajectory parameters
+traj_delta_north: 10
+traj_delta_east: 10
+traj_delta_alt: -4
+traj_delta_yaw: 1.5
+traj_nom_north: 0
+traj_nom_east: 0
+traj_nom_alt: 4
+traj_nom_yaw: 0
+traj_north_period: 20
+traj_east_period: 20
+traj_alt_period: 20
+traj_yaw_period: 20
+
+
+# Controller Configuration
+throttle_eq: 0.5
+mass: 1.0
+max_thrust: 19.6133
+max_torque: [0.30625, 0.30625, 0.1] # N-m
+kp_w: [1.0, 1.0, 1.0] # Inner loop controller gains
+kd_w: [0.0, 0.0, 0.0] # Inner loop controller gains
+
+waypoint_threshold: 0.3
+waypoint_velocity_threshold: 0.7
+drag_constant: 0.1
+angular_drag_constant: 0.01
+
+Kp: [1, 1, 1]
+Kd: [0, 0, 0]
+Kv: [2, 2, 2]
+sh_kv: 50 # Hover throttle velocity gain
+sh_ks: 0.1 # Hover throttle gain
+
+lqr_max_pos_error: 0.5
+lqr_max_vel_error: 0.5
+lqr_max_yaw_error: 0.1
+lqr_Q: [1, 1, 10, 100, 100, 100]
+lqr_R: [10000, 1000, 1000, 1000]
+
+roll_kp: 10.0
+roll_ki: 0.0
+roll_kd: 1.0
+pitch_kp: 10.0
+pitch_ki: 0.0
+pitch_kd: 1.0
+yaw_rate_kp: 1.0
+yaw_rate_ki: 0.0
+yaw_rate_kd: 0.0
+max_roll: 1.0
+max_pitch: 1.0
+max_yaw_rate: 1.0
+max_throttle: 1.0
+max_vel: 5.0
+max_tau_x: 1.0
+max_tau_y: 1.0
+max_tau_z: 1.0
+
+inertia: [0.1, 0.1, 0.1]
+
+
+x0: [0, 0, -3,   # POS
+     1, 0, 0, 0, # ATT 
+     0, 0, 0,    # VEL
+     0, 0, 0]    # OMEGA
+
+# Control type
+# 0: Nonlinear controller
+# 1: LQR controller
+control_type: 0
+
+
+# Environment Setup
+wall_max_offset: 1.0 # Points are distributed normally about the wall
+
+
+# Wind Setup
+enable_wind: false # Turn wind on and off
+wind_init_stdev: 0.1 # Variation on the initial wind direction components
+wind_walk_stdev: 0.1 # Amount of random walk in wind components
+
+enable_dynamics_noise: false
+dyn_noise: [0, 0, 0, # POS
+            0, 0, 0, # ATT
+            0.02, 0.02, 0.02, # VEL
+            0.01, 0.01, 0.01] # OMEGA
+
+
+# Truth Configuration
+use_accel_truth: false
+use_gyro_truth: false
+use_camera_truth: false
+use_altimeter_truth: false
+use_baro_truth: false
+use_depth_truth: true
+use_vo_truth: false
+use_mocap_truth: false
+
+RK4: true
+
+# Sensor Configuration
+imu_enabled: true
+alt_enabled: true
+baro_enabled: true
+mocap_enabled: true
+vo_enabled: true
+camera_enabled: true
+gnss_enabled: true
+raw_gnss_enabled: true
+
+## IMU
+imu_update_rate: 250
+accel_init_stdev: 0.0
+accel_noise_stdev: 0.2
+accel_bias_walk: 0.05
+gyro_init_stdev: 0.0
+gyro_noise_stdev: 0.1
+gyro_bias_walk: 0.01
+p_b_u: [0.0, 0.0, 0.0 ]
+q_b_u: [1.0, 0.0, 0.0, 0.0]
+
+## Camera
+num_features: 50
+camera_time_offset: 0.0
+camera_transmission_time: 0.0
+camera_transmission_noise: 0.0
+camera_update_rate: 20
+pixel_noise_stdev: 0.1
+focal_len: [250.0, 250.0]
+cam_center: [320, 240]
+image_size: [640, 480]
+loop_closure: false
+q_b_c: [1, 0, 0, 0]
+#q_b_c: [ 0.923879659447, 0.0, 0.382683125915, 0.0 ] # Pitch down 45 deg
+# q_b_c: [0.712301460669, -0.00770717975554, 0.0104993233706, 0.701752800292]
+# p_b_c: [1.0, 0.0, 0.0 ]
+p_b_c: [0.0, 0.0, 0.0 ]
+#p_b_c: [-0.0216401454975, -0.064676986768, 0.00981073058949 ]
+#
+# Visual Odometry
+vo_delta_position: 1.0
+vo_delta_attitude: 0.1
+vo_translation_noise_stdev: 0.1
+vo_rotation_noise_stdev: 0.01
+
+## Altimeter
+altimeter_update_rate: 25
+altimeter_noise_stdev: 0.1
+
+## Barometer
+baro_update_rate: 25
+baro_noise_stdev: 3.0
+baro_init_stdev: 300.0
+baro_bias_walk: 1.0
+
+## Depth
+depth_update_rate: 30
+depth_noise_stdev: 0.1
+
+## Motion Capture
+p_b_m: [0.0, 0.0, 0.0]
+q_b_m: [1.0, 0.0, 0.0, 0.0]
+mocap_update_rate: 10
+attitude_noise_stdev: 0.01
+position_noise_stdev: 0.01
+mocap_time_offset: 0
+mocap_transmission_noise: 0
+mocap_transmission_time: 0
+
+
+## GNSS
+ref_LLA: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)
+gnss_update_rate: 5
+use_gnss_truth: false
+gnss_horizontal_position_stdev: 1.0
+gnss_vertical_position_stdev: 3.0
+gnss_velocity_stdev: 0.1
+
+## Raw GNSS
+use_raw_gnss_truth: false
+pseudorange_stdev: 1.0
+pseudorange_rate_stdev: 0.05
+carrier_phase_stdev: 0.01
+ephemeris_filename: "../sample/eph.dat"
+start_time_week: 2026
+start_time_tow_sec: 165029
+clock_init_stdev: 1e-9
+clock_walk_stdev: 1e-9
+multipath_prob: 0.00
+multipath_error_range: 25
+cycle_slip_prob: 0.00

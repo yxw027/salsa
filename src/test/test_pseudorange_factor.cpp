@@ -15,7 +15,7 @@ TEST (PrangeFactor, InitZeroResidual)
     PseudorangeFunctor func;
 
     Satellite sat(3, 0);
-    sat.readFromRawFile(GNSS_UTILS_DIR"/sample/eph.dat");
+    sat.readFromRawFile(SALSA_DIR"/sample/eph.dat");
 
     GTime log_start = GTime::fromUTC(1541454646,  0.993);
     Vector3d rec_pos {-1798904.13, -4532227.1 ,  4099781.95};

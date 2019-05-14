@@ -85,7 +85,7 @@ inline std::string imu_only()
 {
     std::string filename = "/tmp/Salsa.imu_only.yaml";
     std::ofstream tmp(filename);
-    YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+    YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/sim_params.yaml");
     node["imu_enabled"] =  true;
     node["alt_enabled"] =  false;
     node["baro_enabled"] =  false;
@@ -104,7 +104,7 @@ inline std::string imu_mocap()
 {
   std::string filename = "/tmp/Salsa.imu_only.yaml";
   std::ofstream tmp(filename);
-  YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+  YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/sim_params.yaml");
   node["imu_enabled"] =  true;
   node["alt_enabled"] =  false;
   node["baro_enabled"] =  false;
@@ -123,7 +123,7 @@ inline std::string imu_feat(bool noise=false, double tmax=-1.0)
 {
     std::string filename = "/tmp/Salsa.imu_only.yaml";
     std::ofstream tmp(filename);
-    YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+    YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/sim_params.yaml");
     if (tmax > 0)
         node["tmax"] = tmax;
     node["imu_enabled"] =  true;
@@ -147,7 +147,7 @@ inline std::string imu_raw_gnss()
 {
     std::string filename = "/tmp/Salsa.imu_raw_gnss.yaml";
     std::ofstream tmp(filename);
-    YAML::Node node = YAML::LoadFile(MULTIROTOR_SIM_DIR"/params/sim_params.yaml");
+    YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/sim_params.yaml");
     node["imu_enabled"] =  true;
     node["alt_enabled"] =  false;
     node["baro_enabled"] =  false;
@@ -156,7 +156,7 @@ inline std::string imu_raw_gnss()
     node["camera_enabled"] =  false;
     node["gnss_enabled"] =  false;
     node["raw_gnss_enabled"] =  true;
-    node["ephemeris_filename"] = MULTIROTOR_SIM_DIR"/sample/eph.dat";
+    node["ephemeris_filename"] = SALSA_DIR"/sample/eph.dat";
 
     tmp << node;
     tmp.close();
