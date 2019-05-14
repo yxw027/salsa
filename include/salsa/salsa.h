@@ -230,6 +230,8 @@ public:
     bool sim_KLT_;
 
     // KLT Tracker
+    double t_next_klt_output_;
+    double tracker_freq_;
     int got_first_img_;
     bool show_matches_;
     int feature_nearby_radius_;
@@ -249,6 +251,10 @@ public:
     SatVec sats_;
     ObsVec filtered_obs_;
     int n_obs_;
+
+    // Solver Config
+    int max_iter_;
+    double max_solver_time_;
 
 
 };

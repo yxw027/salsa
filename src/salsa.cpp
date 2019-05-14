@@ -50,6 +50,8 @@ void Salsa::load(const string& filename)
     get_yaml_node("use_measured_depth", filename, use_measured_depth_);
     get_yaml_node("disable_solver", filename, disable_solver_);
     get_yaml_node("disable_mocap", filename, disable_mocap_);
+    get_yaml_node("max_solver_time", filename, max_solver_time_);
+    get_yaml_node("max_iter", filename, max_iter_);
 
     xbuf_.resize(STATE_BUF_SIZE);
     s_.reserve(ns_);
@@ -235,7 +237,8 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
 
 void Salsa::initSolverOptions()
 {
-    options_.max_num_iterations = 100;
+    options_.max_num_iterations = max_iter_;
+    options_.max_solver_time_in_seconds = max_solver_time_;
     options_.num_threads = 6;
     options_.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options_.minimizer_progress_to_stdout = false;
