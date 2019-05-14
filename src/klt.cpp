@@ -16,6 +16,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("simulate_klt", filename, sim_KLT_);
     get_yaml_node("show_matches", filename, show_matches_);
     get_yaml_node("feature_nearby_radius", filename, feature_nearby_radius_);
+    get_yaml_node("tracker_freq", filename, tracker_freq_);
 
     got_first_img_ = false;
     next_feature_id_ = 0;
@@ -40,6 +41,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
         mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
         mask_ = 255;
     }
+    t_next_klt_output_ = NAN;
 }
 
 bool Salsa::dropFeature(int idx)
@@ -85,7 +87,15 @@ void Salsa::imageCallback(const double& t, const Mat& img, const Eigen::Matrix2d
 
     if (show_matches_)
         showImage();
-    imageCallback(t, current_feat_, R_pix, new_keyframe);
+    if (std::isnan(t_next_klt_output_))
+    {
+        t_next_klt_output_ = t - 0.01;
+    }
+    if (t > t_next_klt_output_)
+    {
+        imageCallback(t, current_feat_, R_pix, new_keyframe);
+        t_next_klt_output_ += 1.0/tracker_freq_;
+    }
 }
 
 void Salsa::trackFeatures()

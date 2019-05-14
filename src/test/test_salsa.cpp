@@ -317,6 +317,7 @@ public:
         // N    |  0    1    1    2    |  2    3    3    4    | 4     5    5    6    |  6
         // head |  0    1    1    2    |  2    3    3    4    | 4     5    5    6    |  6
         //      | KF -- F -- G -- F -- | KF -- F -- G -- F -- | KF -- F -- G -- F -- | KF ...
+        salsa.node_window_ = 16;
         for (int i = 0; i < salsa.node_window_; i += 2)
         {
             simulateIMU(); createNewKeyframe();
@@ -355,11 +356,11 @@ public:
         for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
         {
             EXPECT_GT(ft.first, 1);
-            if (ft.first == 14 )
+            if (ft.first == 12 )
                 EXPECT_EQ(ft.second.funcs.size(), 0);
-            else if (ft.first == 2 || ft.first == 13)
+            else if (ft.first == 2 || ft.first == 11)
                 EXPECT_EQ(ft.second.funcs.size(), 1);
-            else if (ft.first == 3 || ft.first == 12)
+            else if (ft.first == 3 || ft.first == 10)
                 EXPECT_EQ(ft.second.funcs.size(), 2);
             else
                 EXPECT_EQ(ft.second.funcs.size(), 3);
@@ -376,11 +377,11 @@ public:
         for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
         {
             EXPECT_GT(ft.first, 2);
-            if (ft.first == 15 )
+            if (ft.first == 13 )
                 EXPECT_EQ(ft.second.funcs.size(), 0);
-            else if (ft.first == 3 || ft.first == 14)
+            else if (ft.first == 3 || ft.first == 12)
                 EXPECT_EQ(ft.second.funcs.size(), 1);
-            else if (ft.first == 4 || ft.first == 13)
+            else if (ft.first == 4 || ft.first == 11)
                 EXPECT_EQ(ft.second.funcs.size(), 2);
             else
                 EXPECT_EQ(ft.second.funcs.size(), 3);

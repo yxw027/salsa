@@ -19,6 +19,10 @@ switch_weight: 1000.0
 state_buf_size: 100
 disable_solver: false
 
+tracker_freq: 15
+max_iter: 8
+max_solver_time: 0.04
+
 accel_noise_stdev:  3.0
 gyro_noise_stdev: 0.5
 position_noise_stdev: 0.001
