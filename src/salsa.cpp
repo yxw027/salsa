@@ -145,23 +145,26 @@ void Salsa::setAnchors(ceres::Problem &problem)
     if (xbuf_tail_ == xbuf_head_)
         return;
 
-    if (!estimate_origin_)
-    {
-        problem.SetParameterBlockConstant(x_e2n_.data());
-        state_anchor_->set(&xbuf_[xbuf_tail_]);
-        FunctorShield<StateAnchor>* ptr = new FunctorShield<StateAnchor>(state_anchor_);
-        problem.AddResidualBlock(new StateAnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
-                                 xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
-    }
-    else
-    {
-        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].x.data());
-        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].v.data());
-        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].tau.data());
+//    if (!estimate_origin_)
+//    {
+//        problem.SetParameterBlockConstant(x_e2n_.data());
         x_e2n_anchor_->set(&x_e2n_);
-        FunctorShield<XformAnchor>* ptr = new FunctorShield<XformAnchor>(x_e2n_anchor_);
-        problem.AddResidualBlock(new XformAnchorFactorAD(ptr), NULL, x_e2n_.data());
-    }
+        FunctorShield<XformAnchor>* ptr1 = new FunctorShield<XformAnchor>(x_e2n_anchor_);
+        problem.AddResidualBlock(new XformAnchorFactorAD(ptr1), NULL, x_e2n_.data());
+        state_anchor_->set(&xbuf_[xbuf_tail_]);
+        FunctorShield<StateAnchor>* ptr2 = new FunctorShield<StateAnchor>(state_anchor_);
+        problem.AddResidualBlock(new StateAnchorFactorAD(ptr2), NULL, xbuf_[xbuf_tail_].x.data(),
+                                 xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
+//    }
+//    else
+//    {
+//        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].x.data());
+//        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].v.data());
+//        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].tau.data());
+//        x_e2n_anchor_->set(&x_e2n_);
+//        FunctorShield<XformAnchor>* ptr = new FunctorShield<XformAnchor>(x_e2n_anchor_);
+//        problem.AddResidualBlock(new XformAnchorFactorAD(ptr), NULL, x_e2n_.data());
+//    }
 
     bias_->setBias(imu_bias_);
     FunctorShield<ImuBiasAnchor>* imu_ptr = new FunctorShield<ImuBiasAnchor>(bias_);
@@ -272,7 +275,7 @@ void Salsa::initSolverOptions()
     options_.max_solver_time_in_seconds = max_solver_time_;
     options_.num_threads = 6;
     options_.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-    options_.minimizer_progress_to_stdout = false;
+    options_.minimizer_progress_to_stdout = false ;
 }
 
 void Salsa::solve()
@@ -391,6 +394,19 @@ void Salsa::startNewInterval(double t)
 {
     imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
+
+    // The following makes sure that we don't plot uninitialized memory
+    if (imu_.size() >= 2)
+    {
+        imu_.back().u_ = imu_[imu_.size() -2].u_;
+        imu_.back().cov_ = imu_[imu_.size() -2].cov_;
+    }
+    else
+    {
+        imu_.back().u_.setZero();
+        imu_.back().u_[2] = -9.80665;
+        imu_.back().cov_ = Matrix6d::Identity();
+    }
 }
 
 void Salsa::cleanUpSlidingWindow()

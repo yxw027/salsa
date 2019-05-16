@@ -19,9 +19,9 @@ switch_weight: 1000.0
 state_buf_size: 100
 disable_solver: false
 
-tracker_freq: 15
-max_iter: 8
-max_solver_time: 0.04
+tracker_freq: 10
+max_iter: 100
+max_solver_time: 0.1
 
 accel_noise_stdev:  3.0
 gyro_noise_stdev: 0.5
@@ -41,11 +41,11 @@ kf_feature_thresh: 0.75
 show_matches: true
 feature_nearby_radius: 30
 feature_mask: ""
-simulate_klt: true
+simulate_klt: false
 
 
-doppler_cov: 0.0025
-estimate_origin: true
+doppler_cov: 0.005
+estimate_origin: false
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
@@ -55,15 +55,17 @@ q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
 disable_mocap: false
 
-state_anchor_cov: [0.0001, 0.0001, 0.0001, # p
-                   0.0001, 0.0001, 0.0001, # q
-                   0.0005, 0.0005, 0.0005, # v
+state_anchor_cov: [0.00001, 0.00001, 0.00001, # p
+                   0.00001, 0.00001, 0.00001, # q
+                   0.00005, 0.00005, 0.00005, # v
                    0.001, 0.001] # clk_bias (nsec)
 estimate_x_b2c: false
 x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
                    0.00001, 0.00001, 0.00001] # q
-x_e2n_anchor_cov: [0.1, 0.1, 0.1, # p
-                   0.001, 0.001, 0.001] # q
+#x_e2n_anchor_cov: [0.1, 0.1, 0.1, # p
+#                   0.001, 0.001, 0.001] # q
+x_e2n_anchor_cov: [0.00001, 0.00001, 0.00001, # p
+                   0.000001, 0.000001, 0.000001] # q
 bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
                  0.0000001, 0.0000001, 0.0000001] # gyro
 

@@ -157,10 +157,10 @@ q_b_u: [1.0, 0.0, 0.0, 0.0]
 
 ## Camera
 num_features: 100
-camera_time_offset: -0.03
+camera_time_offset: 0.0
 camera_transmission_time: 0.0
 camera_transmission_noise: 0.0
-camera_update_rate: 20
+camera_update_rate: 10
 pixel_noise_stdev: 0.1
 focal_len: [250.0, 250.0]
 cam_center: [320, 240]
