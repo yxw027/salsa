@@ -258,8 +258,10 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     Vector3d v = Vector3d::Ones() * NAN;
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
+    Vector7d x_e2n = Vector7d::Ones() * NAN;
+    Vector7d x_b2c = Vector7d::Ones() * NAN;
     truth_log_.log(t);
-    truth_log_.logVectors(z.arr(), v, b, tau);
+    truth_log_.logVectors(z.arr(), v, b, tau, x_e2n, x_b2c);
 }
 
 void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
@@ -280,30 +282,25 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
     if (salsa_.current_node_ < 0)
         salsa_.setInitialState(z);
 
-    double t = (m.getTime() - bag_start_).toSec();
-    if (imu_count_between_nodes_ > 20)
-    {
-        salsa_.mocapCallback(t, z, mocap_R_);
-        imu_count_between_nodes_ = 0;
-    }
+//    double t = (m.getTime() - bag_start_).toSec();
+//    if (imu_count_between_nodes_ > 20)
+//    {
+//        salsa_.mocapCallback(t, z, mocap_R_);
+//        imu_count_between_nodes_ = 0;
+//    }
 
 
-    truth_log_.log(
-                   (odom->header.stamp - bag_start_).toSec(),
-//                   (m.getTime() - bag_start_).toSec(),
-                   odom->pose.pose.position.x,
-                   odom->pose.pose.position.y,
-                   odom->pose.pose.position.z,
-                   odom->pose.pose.orientation.w,
-                   odom->pose.pose.orientation.x,
-                   odom->pose.pose.orientation.y,
-                   odom->pose.pose.orientation.z,
-                   odom->twist.twist.linear.x,
-                   odom->twist.twist.linear.y,
-                   odom->twist.twist.linear.z,
-                   (double)NAN, (double)NAN, (double)NAN,
-                   (double)NAN, (double)NAN, (double)NAN,
-                   (double)NAN, (double)NAN);
+//    truth_log_.log((m.getTime() - bag_start_).toSec());
+    Vector3d v;
+    v << odom->twist.twist.linear.x,
+         odom->twist.twist.linear.y,
+         odom->twist.twist.linear.z;
+    Vector6d b = Vector6d::Ones() * NAN;
+    Vector2d tau = Vector2d::Ones() * NAN;
+    Vector7d x_e2n = Vector7d::Ones() * NAN;
+    Vector7d x_b2c = Vector7d::Ones() * NAN;
+    truth_log_.log((odom->header.stamp - bag_start_).toSec());
+    truth_log_.logVectors(z.arr(), v, b, tau, x_e2n, x_b2c);
 }
 
 }

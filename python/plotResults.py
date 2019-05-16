@@ -101,12 +101,15 @@ def plotAzel():
 
 def plotPRangeRes():
     f = plt.figure()
-    for sat in np.unique(prangeRes['sats']['id']):
+    for s, sat in enumerate(np.unique(prangeRes['sats']['id'])):
         if sat < 0: continue
         idx = prangeRes['sats']['id'] == sat
         for i in range(2):
             plt.subplot(2,1,i+1)
-            plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['res'][idx][:,i], label=str(sat))
+            try:
+                plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(bool)], prangeRes['sats']['res'][idx][:,i], label=str(sat))
+            except:
+                debug = 1
             if i == 0:
                 plt.legend()
     plt.grid()

@@ -109,4 +109,6 @@ add_executable(gnssSim src/examples/gnss_sim.cpp)
 target_link_libraries(gnssSim salsa geometry ${multirotor_sim_LIBRARIES})
 add_executable(mocapSim src/examples/mocap_sim.cpp)
 target_link_libraries(mocapSim salsa geometry ${multirotor_sim_LIBRARIES})
+add_executable(mixedSim src/examples/mixed_sim.cpp)
+target_link_libraries(mixedSim salsa geometry ${multirotor_sim_LIBRARIES})
 

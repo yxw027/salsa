@@ -189,7 +189,7 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
 void ImuFunctor::finished(int to_idx)
 {
   to_idx_ = to_idx;
-  if (n_updates_ < 2)
+  if (n_updates_ <= 2)
   {
     P_ = P_ + Matrix9d::Identity() * 1e-10;
   }

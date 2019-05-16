@@ -45,7 +45,7 @@ simulate_klt: true
 
 
 doppler_cov: 0.0025
-estimate_origin: false
+estimate_origin: true
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
@@ -61,7 +61,7 @@ state_anchor_cov: [0.0001, 0.0001, 0.0001, # p
                    0.001, 0.001] # clk_bias (nsec)
 estimate_x_b2c: false
 x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
-                   0.0001, 0.0001, 0.0001] # q
+                   0.00001, 0.00001, 0.00001] # q
 x_e2n_anchor_cov: [0.1, 0.1, 0.1, # p
                    0.001, 0.001, 0.001] # q
 bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc

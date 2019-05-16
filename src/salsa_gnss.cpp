@@ -22,6 +22,9 @@ void Salsa::initGNSS(const std::string& filename)
 
 void Salsa::ephCallback(const GTime& t, const eph_t &eph)
 {
+    if (eph.sat > 90)
+        return;
+
     auto s = sats_.begin();
     while (s != sats_.end())
     {
@@ -125,13 +128,13 @@ void Salsa::obsCallback(const ObsVec &obs)
 
     if (sats_.size() < 8)
     {
-        SD(3, "Waiting for Ephemeris\n");
+        SD(5, "Waiting for Ephemeris, got %d sats\n", sats_.size());
         return;
     }
 
     if (current_node_ == -1)
     {
-        SD(3, "Initialized Raw GNSS\n");
+        SD(5, "Initialized Raw GNSS\n");
 
         Vector8d pp_sol = Vector8d::Zero();
         pp_sol.topRows<3>() = x_e2n_.t();
