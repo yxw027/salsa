@@ -14,10 +14,12 @@ PseudorangeFunctor::PseudorangeFunctor()
 
 void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& sat,
                               const Vector3d& _rec_pos_ecef, const Matrix2d& cov,
-                              int node, int idx)
+                              const Vector3d &_p_b2g, int node, int idx)
 {
     node_ = node;
     idx_ = idx;
+    p_b2g = _p_b2g;
+
     // We don't have ephemeris for this satellite, we can't do anything with it yet
     if (sat.eph_.A == 0)
         return;
@@ -67,8 +69,8 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
     Map<Vec2> res(_res);
 
 
-    Vec3 v_ECEF = x_e2n.q().rota(x.q().rota(v_b));
-    Vec3 p_ECEF = x_e2n.transforma(x.t());
+    Vec3 v_ECEF = x_e2n.rota(x.rota(v_b));
+    Vec3 p_ECEF = x_e2n.transforma(x.t()+x.rota(p_b2g));
     Vec3 los_to_sat = sat_pos - p_ECEF;
 
     Vec2 rho_hat;

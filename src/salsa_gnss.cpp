@@ -164,7 +164,7 @@ void Salsa::obsCallback(const ObsVec &obs)
         {
             Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
             prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-                    current_node_, xbuf_head_);
+                                     p_b2g_, current_node_, xbuf_head_);
         }
         return;
     }
@@ -200,7 +200,7 @@ void Salsa::obsCallback(const ObsVec &obs)
             {
                 Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
                 prange_.back()[i++].init(t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-                        current_node_, xbuf_head_);
+                                         p_b2g_, current_node_, xbuf_head_);
             }
             solve();
         }

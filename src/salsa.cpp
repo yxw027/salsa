@@ -40,12 +40,15 @@ void Salsa::init(const string& filename)
     initFactors();
     initSolverOptions();
     x0_ = Xformd::Identity();
+    current_state_.x = x0_;
+    current_state_.v = Vector3d::Zero();
 }
 
 void Salsa::load(const string& filename)
 {
     get_yaml_eigen("x_b2m", filename, x_b2m_.arr());
     get_yaml_eigen("x_b2c", filename, x_b2c_.arr());
+    get_yaml_eigen("p_b2g", filename, p_b2g_);
     get_yaml_node("estimate_x_b2c", filename, estimate_x_b2c_);
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);

@@ -220,6 +220,7 @@ public:
     xform::Xformd x_e2n_, x_e2n0; // transform from ECEF to inertial frame
     double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
     double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
+    Eigen::Vector3d p_b2g_; // Position of gps antenna wrt body
     gnss_utils::GTime start_time_;
     Eigen::Matrix2d clk_bias_Xi_;
     bool disable_mocap_;

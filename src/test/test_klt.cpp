@@ -24,7 +24,8 @@ TEST (KLT, TrackVideo)
     Vector6d z;
     z << 0, 0, -9.80665, 0, 0, 0;
     Matrix6d R = Matrix6d::Identity();
-    double t;
+    double t = 0;
+    salsa.imuCallback(t, z, R);
     while(1)
     {
         cv::Mat frame;

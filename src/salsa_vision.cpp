@@ -63,7 +63,7 @@ void Salsa::imageCallback(const double& tc, const Features& z, const Matrix2d& R
 
     if (current_node_ == -1)
     {
-        initialize(t, current_state_.x, current_state_.v, Vector2d::Zero());
+        initialize(t, x0_, Vector3d::Zero(), Vector2d::Zero());
     }
     else
     {
