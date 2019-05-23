@@ -44,6 +44,7 @@ TEST (Salsa, PointPositioningInit)
   sim.init_raw_gnss();
   sim.register_estimator(&salsa);
   sim.t_ = 0.0;
+  salsa.x_e2n_ = sim.X_e2n_;
 
   multirotor_sim::State x;
   x.p << 16, 4, 8;
@@ -54,21 +55,8 @@ TEST (Salsa, PointPositioningInit)
   sim.t_ = 0.3;
   sim.update_raw_gnss_meas();
 
-  Vector3d p_ecef_true = WGS84::ned2ecef(sim.X_e2n_, x.p);
-  Vector3d v_ecef_true = sim.X_e2n_.q().rota(x.v);
-  Vector2d tau_true(sim.clock_bias_, sim.clock_bias_rate_);
-  Vector3d p_ecef_hat = WGS84::ned2ecef(salsa.x_e2n_, salsa.xbuf_[0].x.t());
-  Vector3d v_ecef_hat = salsa.x_e2n_.q().rota(salsa.xbuf_[0].v);
-  Vector2d tau_hat = salsa.xbuf_[0].tau;
-
-  EXPECT_MAT_NEAR(p_ecef_hat, p_ecef_true, 1e-5);
-  EXPECT_MAT_NEAR(v_ecef_hat, v_ecef_true, 1e-5);
-  EXPECT_MAT_NEAR(tau_hat, tau_true, 1e-5);
-
-//  cout << "ptrue " << p_ecef_true.transpose() << endl;
-//  cout << "phat  " << p_ecef_hat.transpose() << endl;
-//  cout << "vtrue " << v_ecef_true.transpose() << endl;
-//  cout << "vhat  " << v_ecef_hat.transpose() << endl;
-//  cout << "tautrue " << tau_true.transpose() << endl;
-//  cout << "tauhat  " << tau_hat.transpose() << endl;
+  EXPECT_MAT_NEAR(x.p, salsa.xbuf_[0].x.t(), 1e-5);
+  EXPECT_MAT_NEAR(x.v, salsa.xbuf_[0].v, 1e-5);
+  EXPECT_NEAR(sim.clock_bias_, salsa.xbuf_[0].tau[0], 1e-5);
+  EXPECT_NEAR(sim.clock_bias_rate_, salsa.xbuf_[0].tau[1], 1e-5);
 }

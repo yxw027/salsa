@@ -148,7 +148,10 @@ void Salsa::obsCallback(const ObsVec &obs)
             xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
             initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
         }
-        initialize(current_state_.t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        else
+        {
+            initialize(current_state_.t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        }
 
         //        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
         startNewInterval(current_state_.t);
