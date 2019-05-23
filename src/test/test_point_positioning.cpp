@@ -24,6 +24,7 @@ TEST (Salsa, PointPositioningInit)
   ofstream tmp_file(filename);
   YAML::Node node;
   node["ref_LLA"] = std::vector<double>{40.247082 * DEG2RAD, -111.647776 * DEG2RAD, 1387.998309};
+  node["p_b2g"] = std::vector<double>{0, 0, -0.3};
   node["gnss_update_rate"] = 5;
   node["use_raw_gnss_truth"] = true;
   node["pseudorange_stdev"] = 3.0;

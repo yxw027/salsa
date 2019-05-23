@@ -211,6 +211,7 @@ use_gnss_truth: false
 gnss_horizontal_position_stdev: 1.0
 gnss_vertical_position_stdev: 3.0
 gnss_velocity_stdev: 0.1
+p_b2g: [0, 0, -0.3]
 
 ## Raw GNSS
 use_raw_gnss_truth: false
