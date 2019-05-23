@@ -157,6 +157,10 @@ TEST (Vision, SlideAnchor)
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
     salsa.x_b2c_ = sim.x_b2c_;
+    salsa.tracker_freq_ = 100;
+    salsa.sim_KLT_ = false;
+    salsa.dt_c_ = sim.camera_time_offset_ = 0.0;
+    sim.camera_update_rate_ = 20;
     Camera<double> cam = salsa.cam_;
 
     StateVec xbuf(10);
