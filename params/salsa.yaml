@@ -1,32 +1,26 @@
 log_prefix: "/tmp/Salsa/"
 
-# x_u2m: [0, 0, 0,
-#         1, 0, 0, 0]
-
-# x_u2c: [0, 0, 0,
-#         1, 0, 0, 0]
-
-# x_u2b: [0, 0, 0,
-#         1, 0, 0, 0]
-
-# dt_m: 0
-# dt_c: 0
+######################################
+### OPT SETUP
+######################################
 node_window: 15
 state_buf_size: 200
 num_feat: 75
 num_sat: 15
-R_clock_bias: [0.01, 0.01] # nsec
-switch_weight: 1000.0
 disable_solver: false
-
-tracker_freq: 10
 max_iter: 100
 max_solver_time: 0.1
 
+#####################################
+### IMU
+#####################################
 accel_noise_stdev:  3.0
 gyro_noise_stdev: 0.5
-position_noise_stdev: 0.001
-attitude_noise_stdev: 0.001
+
+#####################################
+### Camera
+#####################################
+tracker_freq: 10
 min_depth: 0.5
 use_measured_depth: false
 
@@ -42,18 +36,36 @@ show_matches: true
 feature_nearby_radius: 30
 feature_mask: ""
 simulate_klt: false
+tc: 0.0
+x_b2c: [0, 0, 0, 1, 0, 0, 0]
 
-
+#####################################
+### GNSS
+#####################################
+switch_weight: 1000.0
+R_clock_bias: [0.01, 0.01] # nsec
 doppler_cov: 0.005
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
-x_e2n: [ -1798298, -4531280, 4098905, 0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
+x_e2n: [ -1798298, -4531280, 4098905,
+         0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 
+
+#####################################
+### Mocap
+#####################################
+position_noise_stdev: 0.001
+attitude_noise_stdev: 0.001
 q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
 q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
 disable_mocap: false
+tm: -0.000605557781538751
+x_b2m: [0, 0, 0, 1, 0, 0, 0]
 
+#####################################
+### Anchors
+#####################################
 state_anchor_cov: [0.00001, 0.00001, 0.00001, # p
                    0.00001, 0.00001, 0.00001, # q
                    0.00005, 0.00005, 0.00005, # v
@@ -61,14 +73,7 @@ state_anchor_cov: [0.00001, 0.00001, 0.00001, # p
 estimate_x_b2c: false
 x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
                    0.00001, 0.00001, 0.00001] # q
-#x_e2n_anchor_cov: [0.1, 0.1, 0.1, # p
-#                   0.001, 0.001, 0.001] # q
 x_e2n_anchor_cov: [0.001, 0.001, 0.001, # p
                    0.001, 0.001, 0.001] # q
 bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
                  0.0000001, 0.0000001, 0.0000001] # gyro
-
-tm: -0.000605557781538751
-tc: 0.0
-x_b2c: [0, 0, 0, 1, 0, 0, 0]
-x_b2m: [0, 0, 0, 1, 0, 0, 0]
