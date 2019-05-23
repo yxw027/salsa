@@ -191,7 +191,8 @@ void ImuFunctor::finished(int to_idx)
   to_idx_ = to_idx;
   if (n_updates_ <= 2)
   {
-    P_ = P_ + Matrix9d::Identity() * 1e-10;
+    std::cout << "too few IMU measurements" << std::endl;
+    P_ = P_ + Matrix9d::Identity() * 1e-15;
   }
   Xi_ = P_.inverse().llt().matrixL().transpose();
   SALSA_ASSERT((Xi_.array() == Xi_.array()).all(), "NaN detected in IMU information matrix");

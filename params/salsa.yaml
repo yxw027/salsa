@@ -12,11 +12,11 @@ log_prefix: "/tmp/Salsa/"
 # dt_m: 0
 # dt_c: 0
 node_window: 15
-num_sat: 15
+state_buf_size: 200
 num_feat: 75
+num_sat: 15
 R_clock_bias: [0.01, 0.01] # nsec
 switch_weight: 1000.0
-state_buf_size: 100
 disable_solver: false
 
 tracker_freq: 10
@@ -45,7 +45,6 @@ simulate_klt: false
 
 
 doppler_cov: 0.005
-estimate_origin: false
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
@@ -64,8 +63,8 @@ x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
                    0.00001, 0.00001, 0.00001] # q
 #x_e2n_anchor_cov: [0.1, 0.1, 0.1, # p
 #                   0.001, 0.001, 0.001] # q
-x_e2n_anchor_cov: [0.00001, 0.00001, 0.00001, # p
-                   0.000001, 0.000001, 0.000001] # q
+x_e2n_anchor_cov: [0.001, 0.001, 0.001, # p
+                   0.001, 0.001, 0.001] # q
 bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
                  0.0000001, 0.0000001, 0.0000001] # gyro
 

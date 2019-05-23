@@ -17,6 +17,7 @@ int main()
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));
+    salsa.x0_ = sim.state().X;
 
     sim.register_estimator(&salsa);
 

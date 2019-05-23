@@ -108,7 +108,7 @@ void Salsa::initFactors()
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
-    problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD);
+    problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD());
     problem.AddParameterBlock(x_b2c_.data(), 7, new XformParamAD());
     problem.AddParameterBlock(imu_bias_.data(), 6);
 
@@ -147,14 +147,15 @@ void Salsa::setAnchors(ceres::Problem &problem)
 
 //    if (!estimate_origin_)
 //    {
-//        problem.SetParameterBlockConstant(x_e2n_.data());
-        x_e2n_anchor_->set(&x_e2n_);
-        FunctorShield<XformAnchor>* ptr1 = new FunctorShield<XformAnchor>(x_e2n_anchor_);
-        problem.AddResidualBlock(new XformAnchorFactorAD(ptr1), NULL, x_e2n_.data());
-        state_anchor_->set(&xbuf_[xbuf_tail_]);
-        FunctorShield<StateAnchor>* ptr2 = new FunctorShield<StateAnchor>(state_anchor_);
-        problem.AddResidualBlock(new StateAnchorFactorAD(ptr2), NULL, xbuf_[xbuf_tail_].x.data(),
-                                 xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
+
+    x_e2n_anchor_->set(x_e2n_);
+    FunctorShield<XformAnchor>* ptr1 = new FunctorShield<XformAnchor>(x_e2n_anchor_);
+    problem.AddResidualBlock(new XformAnchorFactorAD(ptr1), NULL, x_e2n_.data());
+//            problem.SetParameterBlockConstant(x_e2n_.data());
+    state_anchor_->set(xbuf_[xbuf_tail_]);
+    FunctorShield<StateAnchor>* ptr = new FunctorShield<StateAnchor>(state_anchor_);
+    problem.AddResidualBlock(new StateAnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
+                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
 //    }
 //    else
 //    {
@@ -172,7 +173,7 @@ void Salsa::setAnchors(ceres::Problem &problem)
 
     if (estimate_x_b2c_)
     {
-        x_u2c_anchor_->set(&x_b2c_);
+        x_u2c_anchor_->set(x_b2c_);
         FunctorShield<XformAnchor>* u2c_ptr = new FunctorShield<XformAnchor>(x_u2c_anchor_);
         problem.AddResidualBlock(new XformAnchorFactorAD(u2c_ptr), NULL, x_b2c_.data());
     }

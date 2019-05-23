@@ -12,7 +12,6 @@ namespace salsa
 void Salsa::initGNSS(const std::string& filename)
 {
     get_yaml_node("doppler_cov", filename, doppler_cov_);
-    get_yaml_node("estimate_origin", filename, estimate_origin_);
     get_yaml_eigen("x_e2n", filename, x_e2n_.arr_);
     get_yaml_node("min_satellite_elevation", filename, min_satellite_elevation_);
     get_yaml_node("switch_weight", filename, switch_weight_);
@@ -128,7 +127,7 @@ void Salsa::obsCallback(const ObsVec &obs)
 
     if (sats_.size() < 8)
     {
-        SD(5, "Waiting for Ephemeris, got %d sats\n", sats_.size());
+        SD(5, "Waiting for Ephemeris, got %lu sats\n", sats_.size());
         return;
     }
 
@@ -136,21 +135,22 @@ void Salsa::obsCallback(const ObsVec &obs)
     {
         SD(5, "Initialized Raw GNSS\n");
 
-        Vector8d pp_sol = Vector8d::Zero();
-        pp_sol.topRows<3>() = x_e2n_.t();
-        pointPositioning(t, filtered_obs_, sats_, pp_sol);
-        auto phat = pp_sol.segment<3>(0);
-        auto vhat = pp_sol.segment<3>(3);
-        auto that = pp_sol.segment<2>(6);
+        if (use_point_positioning_)
+        {
+            Xformd xhat = x0_;
+            Vector8d pp_sol = Vector8d::Zero();
+            pp_sol.topRows<3>() = x_e2n_.t();
+            pointPositioning(t, filtered_obs_, sats_, pp_sol);
+            auto phat = pp_sol.segment<3>(0);
+            auto vhat = pp_sol.segment<3>(3);
+            auto that = pp_sol.segment<2>(6);
 
-        Xformd xhat = x0_;
-        if (estimate_origin_)
-            x_e2n_ = WGS84::x_ecef2ned(phat);
-        else
             xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
+            initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        }
+        initialize(current_state_.t, x0_, Vector3d::Zero(), Vector2d::Zero());
 
-//        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
-        initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        //        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
         startNewInterval(current_state_.t);
 
 
@@ -167,22 +167,28 @@ void Salsa::obsCallback(const ObsVec &obs)
     }
     else
     {
-//        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, false);
+        //        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, false);
         double tt = (filtered_obs_[0].t-start_time_).toSec();
         endInterval(tt);
-        startNewInterval(tt);
+        if (imu_.back().n_updates_ >= 2)
+            startNewInterval(tt);
+        else
+            return;
 
         if (filtered_obs_.size() > 7)
         {
-            Vector8d pp_sol = Vector8d::Zero();
-            pp_sol.topRows<3>() = x_e2n_.t();
-            pointPositioning(t, filtered_obs_, sats_, pp_sol);
-            auto phat = pp_sol.segment<3>(0);
-            auto vhat = pp_sol.segment<3>(3);
-            auto that = pp_sol.segment<2>(6);
-            xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
-            xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
-            xbuf_[xbuf_head_].tau = that;
+            if (use_point_positioning_)
+            {
+                Vector8d pp_sol = Vector8d::Zero();
+                pp_sol.topRows<3>() = x_e2n_.t();
+                pointPositioning(t, filtered_obs_, sats_, pp_sol);
+                auto phat = pp_sol.segment<3>(0);
+                auto vhat = pp_sol.segment<3>(3);
+                auto that = pp_sol.segment<2>(6);
+                xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
+                xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
+                xbuf_[xbuf_head_].tau = that;
+            }
 
             Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
             prange_.emplace_back(filtered_obs_.size());

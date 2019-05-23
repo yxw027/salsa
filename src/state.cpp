@@ -19,6 +19,16 @@ State::State() :
     kf = -1;
 }
 
+State& State::operator=(const State& other)
+{
+    t = other.t;
+    x = other.x;
+    v = other.v;
+    tau = other.tau;
+    kf = other.kf;
+    node = other.node;
+}
+
 void Features::reserve(const int &N)
 {
     zetas.reserve(N);

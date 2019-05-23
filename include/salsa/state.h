@@ -28,6 +28,7 @@ public:
     Eigen::Map<Eigen::Vector2d> tau;
 
     State();
+    State& operator=(const State& other);
 };
 typedef std::vector<salsa::State, Eigen::aligned_allocator<salsa::State>> StateVec;
 

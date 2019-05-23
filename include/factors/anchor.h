@@ -12,12 +12,12 @@ struct XformAnchor
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     XformAnchor(const Matrix6d& Xi);
-    void set(const xform::Xformd* x);
+    void set(const xform::Xformd &x);
 
     template <typename T>
     bool operator()(const T* _x, T* _res) const;
 
-    const xform::Xformd* x_;
+    xform::Xformd x_;
     const Matrix6d& Xi_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<XformAnchor>, 6, 7> XformAnchorFactorAD;
@@ -26,12 +26,12 @@ struct StateAnchor
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   StateAnchor(const State::dxMat& Xi);
-  void set(const State *x);
+  void set(const State &x);
 
   template<typename T>
   bool operator()(const T* _x, const T* _v, const T* _tau, T* _res) const;
 
-  const salsa::State* x_;
+  salsa::State x_;
   const State::dxMat& Xi_;
 
 };

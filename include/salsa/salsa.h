@@ -217,7 +217,7 @@ public:
     Camera<double> cam_;
     xform::Xformd x_b2m_; // transform from imu to mocap frame
     xform::Xformd x_b2c_; // transform from imu to camera frame
-    xform::Xformd x_e2n_; // transform from ECEF to inertial frame
+    xform::Xformd x_e2n_, x_e2n0; // transform from ECEF to inertial frame
     double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
     double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
     gnss_utils::GTime start_time_;
@@ -226,7 +226,6 @@ public:
 
     bool estimate_x_b2c_;
     bool disable_gnss_;
-    bool estimate_origin_;
     double doppler_cov_;
     bool use_point_positioning_;
     double min_satellite_elevation_;

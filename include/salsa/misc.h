@@ -16,7 +16,7 @@
             fprintf(stderr, __VA_ARGS__);\
             std::cerr << std::endl; \
             assert(condition); \
-            exit(-1); \
+            throw std::runtime_error("ERROR:"); \
         } \
     } while (false)
 //#else
