@@ -51,15 +51,15 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
       zfeat.pix.emplace_back(pix.x(), pix.y());
     }
     bool new_keyframe = calcNewKeyframeCondition(zfeat);
-    imageCallback(tc, zfeat, R_pix, new_keyframe);
+    imageUpdate(tc, zfeat, R_pix, new_keyframe);
   }
 }
 
-void Salsa::imageCallback(const double& tc, const Features& z, const Matrix2d& R_pix,
+void Salsa::imageUpdate(const double& tc, const Features& z, const Matrix2d& R_pix,
                           bool new_keyframe)
 {
     double t = tc - dt_c_;
-    last_callback_ = IMG;
+    last_callback_ = LAST_CALLBACK_IMG;
 
     if (current_node_ == -1)
     {

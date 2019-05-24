@@ -319,11 +319,11 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
         return;
     }
 
-    imu_delay_buf_.push_back({t, z, R});
+    imu_meas_buf_.push_back({t, z, R});
 
 
     current_state_integrator_.b_ = imu_bias_;
-    for (auto& z : imu_delay_buf_)
+    for (auto& z : imu_meas_buf_)
     {
         if (z.t > current_state_integrator_.t)
             current_state_integrator_.integrateStateOnly(z.t, z.z);
@@ -365,11 +365,11 @@ void Salsa::endInterval(double t)
     }
 
     // Finish the transition factors
-    while (imu_delay_buf_.size() > 0 && imu_delay_buf_.front().t <= t)
+    while (imu_meas_buf_.size() > 0 && imu_meas_buf_.front().t <= t)
     {
-        auto& z(imu_delay_buf_.front());
+        auto& z(imu_meas_buf_.front());
         imu.integrate(z.t, z.z, z.R);
-        imu_delay_buf_.pop_front();
+        imu_meas_buf_.pop_front();
     }
     imu.integrate(t, imu.u_, imu.cov_);
     imu.finished(to);

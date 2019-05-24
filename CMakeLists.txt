@@ -34,6 +34,7 @@ target_include_directories(factors PUBLIC
 
 add_library(salsa
     src/state.cpp
+    src/meas.cpp
     src/salsa.cpp
     src/salsa_mocap.cpp
     src/salsa_gnss.cpp

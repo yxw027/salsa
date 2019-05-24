@@ -26,6 +26,7 @@
 
 #include "salsa/logger.h"
 #include "salsa/state.h"
+#include "salsa/meas.h"
 
 #include "opencv2/opencv.hpp"
 
@@ -100,11 +101,14 @@ public:
     void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
     void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
                          SatVec &sat, const std::vector<bool>& slip) override;
+
+    // This version is the one that the simulator calls
+    void imageCallback(const double &tc, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
     void imageCallback(const double& tc, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
                        const Matrix1d& R_depth) override;
-    void imageCallback(const double& tc, const Features& z, const Eigen::Matrix2d& R_pix, bool new_keyframe);
+    // This is the actual image callback
+    void imageUpdate(const double& tc, const Features& z, const Eigen::Matrix2d& R_pix, bool new_keyframe);
 
-    void imageCallback(const double &tc, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
     bool dropFeature(int idx);
     void setFeatureMask(const std::string& filename);
     void showImage();
@@ -161,14 +165,13 @@ public:
     Matrix6d x_e2n_anchor_xi_;
     Matrix6d x_b2c_anchor_xi_;
 
-    struct Imu
-    {
-        double t;
-        Vector6d z;
-        Matrix6d R;
-    };
+    std::deque<meas::Base*> meas_buf_;
+    std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> imu_meas_buf_;
+    std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
+    std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;
+    std::deque<meas::Gnss, Eigen::aligned_allocator<meas::Gnss>> gnss_meas_buf_;
+
     ImuIntegrator current_state_integrator_;
-    std::deque<Imu, Eigen::aligned_allocator<Imu>> imu_delay_buf_;
     double optimization_time_;
 
     ImuDeque imu_;
@@ -186,9 +189,9 @@ public:
 
     enum{
         NONE,
-        IMG,
-        GNSS,
-        MOCAP
+        LAST_CALLBACK_IMG,
+        LAST_CALLBACK_GNSS,
+        LAST_CALLBACK_MOCAP
     };
     int last_callback_;
 
