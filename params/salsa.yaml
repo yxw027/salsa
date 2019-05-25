@@ -10,7 +10,6 @@ num_sat: 15
 disable_solver: false
 max_iter: 100
 max_solver_time: 0.1
-enable_out_of_order: true
 
 #####################################
 ### IMU
@@ -32,6 +31,7 @@ cam_skew: 0.0
 distortion: [0, 0, 0, 0, 0]
 kf_parallax_thresh: 120
 kf_feature_thresh: 0.75
+update_on_camera: true
 
 show_matches: true
 feature_nearby_radius: 30
@@ -49,6 +49,7 @@ doppler_cov: 0.005
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
+update_on_gnss: false
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, -0.3]
@@ -64,6 +65,7 @@ q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
 disable_mocap: false
 tm: -0.000605557781538751
 x_b2m: [0, 0, 0, 1, 0, 0, 0]
+update_on_mocap: false
 
 #####################################
 ### Anchors

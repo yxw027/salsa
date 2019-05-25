@@ -182,6 +182,7 @@ public:
     /************************************/
     void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
     void mocapUpdate(const meas::Mocap& m);
+    bool update_on_mocap_;
 
     /************************************/
     /*               GNSS               */
@@ -198,6 +199,7 @@ public:
     void gnssUpdate(const meas::Gnss& m);
     void initializeStateGnss(const meas::Gnss& m);
     int ns_;
+    bool update_on_gnss_;
     double switch_weight_;
     double doppler_cov_;
     bool use_point_positioning_;
@@ -228,6 +230,7 @@ public:
     int kf_num_feat_;
     bool use_measured_depth_;
     int kf_condition_;
+    bool update_on_camera_;
     std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
 
     /************************************/
@@ -275,7 +278,6 @@ public:
     void addMeas(const meas::Mocap&& mocap);
     void addMeas(const meas::Gnss&& gnss);
     void addMeas(const meas::Img&& img);
-    bool enable_out_of_order_;
     std::multiset<meas::Base*, std::function<bool(const meas::Base*, const meas::Base*)>> new_meas_;
     std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> imu_meas_buf_;
     std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;

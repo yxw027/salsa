@@ -77,7 +77,9 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
     clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
-    get_yaml_node("enable_out_of_order", filename, enable_out_of_order_);
+    get_yaml_node("update_on_camera", filename, update_on_camera_);
+    get_yaml_node("update_on_gnss", filename, update_on_gnss_);
+    get_yaml_node("update_on_mocap", filename, update_on_mocap_);
 }
 
 void Salsa::initState()
@@ -607,41 +609,26 @@ void Salsa::initializeNodeWithImu()
 
 void Salsa::addMeas(const meas::Mocap &&mocap)
 {
-    if (enable_out_of_order_)
-    {
-        mocap_meas_buf_.push_back(mocap);
-        new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
-    }
-    else
-    {
-        mocapUpdate(mocap);
-    }
+    mocap_meas_buf_.push_back(mocap);
+    new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
+    if (update_on_mocap_)
+        handleMeas();
 }
 
 void Salsa::addMeas(const meas::Gnss &&gnss)
 {
-//    if (enable_out_of_order_)
-//    {
-        gnss_meas_buf_.push_back(gnss);
-        new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
-//    }
-//    else
-//    {
-//        gnssUpdate(gnss);
-//    }
+    gnss_meas_buf_.push_back(gnss);
+    new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
+    if (update_on_gnss_)
+        handleMeas();
 }
 
 void Salsa::addMeas(const meas::Img &&img)
 {
-//    if (enable_out_of_order_)
-//    {
-        img_meas_buf_.push_back(img);
-        new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
-//    }
-//    else
-//    {
-//        imageUpdate(img);
-//    }
+    img_meas_buf_.push_back(img);
+    new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
+    if (update_on_camera_)
+        handleMeas();
 }
 
 

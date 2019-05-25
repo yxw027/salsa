@@ -62,6 +62,9 @@ public:
         Vector3d provo_ecef = WGS84::lla2ecef(provo_lla);
         salsa.x_e2n_ = WGS84::x_ecef2ned(provo_ecef);
         salsa.new_kf_cb_ = [this](int kf_id, int kf_cond) {this->new_kf_cb(kf_id, kf_cond);};
+        salsa.update_on_camera_ = true;
+        salsa.update_on_gnss_ = true;
+        salsa.update_on_mocap_ = true;
     }
 
     void initIMU()
@@ -106,7 +109,6 @@ public:
             feat.depths[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).norm();
         }
         salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
-        salsa.handleMeas();
     }
 
     void createNewKeyframe()
@@ -156,7 +158,6 @@ public:
             Rvec.push_back(Matrix3d::Identity());
         }
         salsa.rawGnssCallback(gtime, zvec, Rvec, sats, slip);
-        salsa.handleMeas();
     }
 
     void runGNSSFirst()

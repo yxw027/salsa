@@ -141,17 +141,21 @@ inline std::string imu_feat(bool noise=false, double tmax=-1.0)
 
     node["use_camera_truth"] = !noise;
     node["use_depth_truth"] = !noise;
+    node["use_gnss_truth"] = !noise;
+    node["use_raw_gnss_truth"] = !noise;
 
     tmp << node;
     tmp.close();
     return filename;
 }
 
-inline std::string imu_raw_gnss()
+inline std::string imu_raw_gnss(bool noise=true, double tmax=-1.0)
 {
     std::string filename = "/tmp/Salsa.imu_raw_gnss.yaml";
     std::ofstream tmp(filename);
     YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/sim_params.yaml");
+    if (tmax > 0)
+        node["tmax"] = tmax;
     node["imu_enabled"] =  true;
     node["alt_enabled"] =  false;
     node["baro_enabled"] =  false;
@@ -162,6 +166,11 @@ inline std::string imu_raw_gnss()
     node["raw_gnss_enabled"] =  true;
     node["ephemeris_filename"] = SALSA_DIR"/sample/eph.dat";
     node["enable_out_of_order"] = false;
+
+    node["use_camera_truth"] = !noise;
+    node["use_depth_truth"] = !noise;
+    node["use_gnss_truth"] = !noise;
+    node["use_raw_gnss_truth"] = !noise;
 
     tmp << node;
     tmp.close();
@@ -188,6 +197,8 @@ inline std::string imu_feat_gnss(bool noise=false, double tmax=-1.0)
 
     node["use_camera_truth"] = !noise;
     node["use_depth_truth"] = !noise;
+    node["use_gnss_truth"] = !noise;
+    node["use_raw_gnss_truth"] = !noise;
 
     tmp << node;
     tmp.close();

@@ -238,6 +238,7 @@ TEST (Vision, HandleFeatureHandoff)
 {
     Salsa salsa;
     salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
+    salsa.update_on_camera_ = true;
     salsa.x_b2c_.q() = quat::Quatd::Identity();
     salsa.x_b2c_.t() = Vector3d::Zero();
 
@@ -271,7 +272,7 @@ TEST (Vision, HandleFeatureHandoff)
     double t = 0.0;
     double dt = 0.02;
 
-    salsa.imageUpdate(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
+    salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
     EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
     EXPECT_EQ(salsa.xbuf_head_, 0);
@@ -304,7 +305,7 @@ TEST (Vision, HandleFeatureHandoff)
             feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
             feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
         }
-        salsa.imageUpdate(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
+        salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
         EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
         EXPECT_EQ(salsa.xbuf_head_, 1);
@@ -344,7 +345,7 @@ TEST (Vision, HandleFeatureHandoff)
         feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
         feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
     }
-    salsa.imageUpdate(meas::Img(t, std::move(feat), R_pix, salsa.calcNewKeyframeCondition(feat)));
+    salsa.addMeas(meas::Img(t, std::move(feat), R_pix, salsa.calcNewKeyframeCondition(feat)));
     EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
     EXPECT_EQ(salsa.xbuf_head_, 1);
@@ -431,7 +432,7 @@ TEST (Vision, HandleWindowSlide)
         {
             if (i == 0)
                 expected_kf = true;
-            salsa.imageUpdate(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
+            salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
             EXPECT_FALSE(expected_kf);
             EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
             if (i == 0)
