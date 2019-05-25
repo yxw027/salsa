@@ -10,6 +10,7 @@ num_sat: 15
 disable_solver: false
 max_iter: 100
 max_solver_time: 0.1
+enable_out_of_order: true
 
 #####################################
 ### IMU
@@ -71,9 +72,6 @@ state_anchor_cov: [0.00001, 0.00001, 0.00001, # p
                    0.00001, 0.00001, 0.00001, # q
                    0.00005, 0.00005, 0.00005, # v
                    0.001, 0.001] # clk_bias (nsec)
-estimate_x_b2c: false
-x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
-                   0.00001, 0.00001, 0.00001] # q
 x_e2n_anchor_cov: [0.001, 0.001, 0.001, # p
                    0.001, 0.001, 0.001] # q
 bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc

@@ -16,7 +16,6 @@ int main()
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
     salsa.x_b2c_ = sim.x_b2c_;
     salsa.x_e2n_ = sim.X_e2n_;
-    salsa.x_e2n0 = sim.X_e2n_;
     salsa.cam_ = sim.cam_;
 
     sim.register_estimator(&salsa);

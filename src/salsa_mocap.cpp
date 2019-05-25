@@ -10,7 +10,6 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
     if (disable_mocap_)
         return;
 
-    last_callback_ = LAST_CALLBACK_MOCAP;
     if (current_node_ == -1)
     {
         SD(3, "Initialized Mocap\n");

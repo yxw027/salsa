@@ -13,7 +13,6 @@ Salsa::Salsa()
     bias_ = nullptr;
     state_anchor_ = nullptr;
     x_e2n_anchor_ = nullptr;
-    x_u2c_anchor_ = nullptr;
     disable_solver_ = false;
     start_time_.tow_sec = -1.0;  // flags as uninitialized
     x_e2n_ = xform::Xformd::Identity();
@@ -25,7 +24,6 @@ Salsa::~Salsa()
     if (bias_) delete bias_;
     if (state_anchor_) delete state_anchor_;
     if (x_e2n_anchor_) delete x_e2n_anchor_;
-    if (x_u2c_anchor_) delete x_u2c_anchor_;
 
     for (auto&& ptr : logs_) delete ptr;
 }
@@ -49,7 +47,6 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("x_b2m", filename, x_b2m_.arr());
     get_yaml_eigen("x_b2c", filename, x_b2c_.arr());
     get_yaml_eigen("p_b2g", filename, p_b2g_);
-    get_yaml_node("estimate_x_b2c", filename, estimate_x_b2c_);
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
     get_yaml_node("node_window", filename, node_window_);
@@ -59,29 +56,27 @@ void Salsa::load(const string& filename)
     get_yaml_node("use_measured_depth", filename, use_measured_depth_);
     get_yaml_node("disable_solver", filename, disable_solver_);
     get_yaml_node("disable_mocap", filename, disable_mocap_);
-    get_yaml_node("max_solver_time", filename, max_solver_time_);
-    get_yaml_node("max_iter", filename, max_iter_);
+    get_yaml_node("max_solver_time", filename, options_.max_solver_time_in_seconds);
+    get_yaml_node("max_iter", filename, options_.max_num_iterations);
 
     xbuf_.resize(STATE_BUF_SIZE);
-    s_.reserve(ns_);
 
     Vector11d state_anchor_cov;
     get_yaml_eigen("state_anchor_cov", filename, state_anchor_cov);
     state_anchor_xi_ = state_anchor_cov.cwiseInverse().cwiseSqrt().asDiagonal();
 
     Vector6d cov_diag;
-    get_yaml_eigen("x_b2c_anchor_cov", filename, cov_diag);
-    x_b2c_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
-
     get_yaml_eigen("x_e2n_anchor_cov", filename, cov_diag);
     x_e2n_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
     get_yaml_eigen("bias_anchor_cov", filename, cov_diag);
-    acc_bias_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
+    imu_bias_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
     Vector2d clk_bias_diag;
     get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
     clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
+
+    get_yaml_node("enable_out_of_order", filename, enable_out_of_order_);
 }
 
 void Salsa::initState()
@@ -103,10 +98,9 @@ void Salsa::setInitialState(const Xformd &x0)
 
 void Salsa::initFactors()
 {
-    bias_ = new ImuBiasAnchor(imu_bias_, acc_bias_xi_);
+    bias_ = new ImuBiasAnchor(imu_bias_, imu_bias_xi_);
     state_anchor_ = new StateAnchor(state_anchor_xi_);
     x_e2n_anchor_ = new XformAnchor(x_e2n_anchor_xi_);
-    x_u2c_anchor_ = new XformAnchor(x_b2c_anchor_xi_);
 }
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
@@ -126,12 +120,6 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
         idx = (idx+1) % STATE_BUF_SIZE;
     }
 
-    for (int s = 0; s < s_.size(); s++)
-    {
-        problem.AddParameterBlock(s_.data() + s, 1);
-        problem.SetParameterBlockConstant(s_.data() + s);
-    }
-
     for (auto& feat : xfeat_)
     {
         Feat& ft(feat.second);
@@ -148,42 +136,18 @@ void Salsa::setAnchors(ceres::Problem &problem)
     if (xbuf_tail_ == xbuf_head_)
         return;
 
-//    if (!estimate_origin_)
-//    {
-
     x_e2n_anchor_->set(x_e2n_);
-    FunctorShield<XformAnchor>* ptr1 = new FunctorShield<XformAnchor>(x_e2n_anchor_);
-    problem.AddResidualBlock(new XformAnchorFactorAD(ptr1), NULL, x_e2n_.data());
-//            problem.SetParameterBlockConstant(x_e2n_.data());
+    FunctorShield<XformAnchor>* xe2n_ptr = new FunctorShield<XformAnchor>(x_e2n_anchor_);
+    problem.AddResidualBlock(new XformAnchorFactorAD(xe2n_ptr), NULL, x_e2n_.data());
+
     state_anchor_->set(xbuf_[xbuf_tail_]);
-    FunctorShield<StateAnchor>* ptr = new FunctorShield<StateAnchor>(state_anchor_);
-    problem.AddResidualBlock(new StateAnchorFactorAD(ptr), NULL, xbuf_[xbuf_tail_].x.data(),
+    FunctorShield<StateAnchor>* state_ptr = new FunctorShield<StateAnchor>(state_anchor_);
+    problem.AddResidualBlock(new StateAnchorFactorAD(state_ptr), NULL, xbuf_[xbuf_tail_].x.data(),
                              xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
-//    }
-//    else
-//    {
-//        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].x.data());
-//        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].v.data());
-//        problem.SetParameterBlockConstant(xbuf_[xbuf_tail_].tau.data());
-//        x_e2n_anchor_->set(&x_e2n_);
-//        FunctorShield<XformAnchor>* ptr = new FunctorShield<XformAnchor>(x_e2n_anchor_);
-//        problem.AddResidualBlock(new XformAnchorFactorAD(ptr), NULL, x_e2n_.data());
-//    }
 
     bias_->setBias(imu_bias_);
     FunctorShield<ImuBiasAnchor>* imu_ptr = new FunctorShield<ImuBiasAnchor>(bias_);
     problem.AddResidualBlock(new ImuBiasAnchorFactorAD(imu_ptr), NULL, imu_bias_.data());
-
-    if (estimate_x_b2c_)
-    {
-        x_u2c_anchor_->set(x_b2c_);
-        FunctorShield<XformAnchor>* u2c_ptr = new FunctorShield<XformAnchor>(x_u2c_anchor_);
-        problem.AddResidualBlock(new XformAnchorFactorAD(u2c_ptr), NULL, x_b2c_.data());
-    }
-    else
-    {
-        problem.SetParameterBlockConstant(x_b2c_.data());
-    }
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)
@@ -275,8 +239,6 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
 
 void Salsa::initSolverOptions()
 {
-    options_.max_num_iterations = max_iter_;
-    options_.max_solver_time_in_seconds = max_solver_time_;
     options_.num_threads = 6;
     options_.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options_.minimizer_progress_to_stdout = false ;
@@ -471,6 +433,36 @@ const State& Salsa::lastKfState()
     while (xbuf_[it].kf < 0)
         it = (it - 1 + STATE_BUF_SIZE) % STATE_BUF_SIZE;
     return xbuf_[it];
+}
+
+void Salsa::handleMeas()
+{
+    std::multiset<meas::Base*>::const_iterator mit = new_meas_.begin();
+    SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_head_].t, \
+                 "Unable to handle stale %d measurement", (*mit)->type);
+
+
+
+
+
+}
+
+void Salsa::addMeas(const meas::Imu &&imu)
+{
+    imu_meas_buf_.push_back(imu);
+    new_meas_.insert(new_meas_.end(), &imu_meas_buf_.back());
+}
+
+void Salsa::addMeas(const meas::Mocap &&mocap)
+{
+    mocap_meas_buf_.push_back(mocap);
+    new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
+}
+
+void Salsa::addMeas(const meas::Gnss &&gnss)
+{
+    gnss_meas_buf_.push_back(gnss);
+    new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
 }
 
 

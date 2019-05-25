@@ -51,53 +51,49 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
       zfeat.pix.emplace_back(pix.x(), pix.y());
     }
     bool new_keyframe = calcNewKeyframeCondition(zfeat);
-    imageUpdate(tc, zfeat, R_pix, new_keyframe);
+    imageUpdate(meas::Img(tc, std::move(zfeat), R_pix, new_keyframe));
   }
 }
 
-void Salsa::imageUpdate(const double& tc, const Features& z, const Matrix2d& R_pix,
-                          bool new_keyframe)
+void Salsa::imageUpdate(const meas::Img &m)
 {
-    double t = tc - dt_c_;
-    last_callback_ = LAST_CALLBACK_IMG;
-
     if (current_node_ == -1)
     {
-        initialize(t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
     }
     else
     {
-        endInterval(t);
+        endInterval(m.t);
     }
 
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
 
-    for (int i = 0; i < z.zetas.size(); i++)
+    for (int i = 0; i < m.z.zetas.size(); i++)
     {
-        if (isTrackedFeature(z.feat_ids[i]))
+        if (isTrackedFeature(m.z.feat_ids[i]))
         {
-            Feat& ft(xfeat_.at(z.feat_ids[i]));
+            Feat& ft(xfeat_.at(m.z.feat_ids[i]));
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
-                ft.addMeas(xbuf_head_, R_pix, z.zetas[i]);
+                ft.addMeas(xbuf_head_, m.R_pix, m.z.zetas[i]);
             else
-                ft.moveMeas(xbuf_head_, z.zetas[i]);
+                ft.moveMeas(xbuf_head_, m.z.zetas[i]);
             ft.updated_in_last_image_ = true;
-            ft.funcs.back().rho_true_ = 1.0/z.depths[i];
+            ft.funcs.back().rho_true_ = 1.0/m.z.depths[i];
         }
-        else if (new_keyframe)
+        else if (m.new_keyframe)
         {
             double rho0 = 0.1;
             if (use_measured_depth_)
-                rho0 = 1.0/z.depths[i];
-            xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, z.zetas[i], rho0, 1.0/z.depths[i])});
+                rho0 = 1.0/m.z.depths[i];
+            xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});
         }
     }
 
-    if (new_keyframe)
+    if (m.new_keyframe)
     {
         setNewKeyframe();
-        startNewInterval(t);
+        startNewInterval(m.t);
     }
     rmLostFeatFromKf();
     solve();

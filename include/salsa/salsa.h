@@ -52,12 +52,13 @@ public:
     typedef std::vector<gnss_utils::Satellite, Eigen::aligned_allocator<gnss_utils::Satellite>> SatVec;
     typedef std::map<int,Feat,std::less<int>,Eigen::aligned_allocator<std::pair<const int,Feat>>> FeatMap;
 
-
     Salsa();
     ~Salsa();
 
+    /************************************/
+    /*          Initialization          */
+    /************************************/
     void init(const std::string& filename);
-
     void load(const std::string& filename);
     void initImg(const std::string& filename);
     void initState();
@@ -65,7 +66,19 @@ public:
     void initialize(const double& t, const xform::Xformd &x0, const Eigen::Vector3d& v0, const Eigen::Vector2d& tau0);
     void initSolverOptions();
     void setInitialState(const xform::Xformd& x0);
+    // Constants
+    xform::Xformd x0_;
+    Camera<double> cam_;
+    xform::Xformd x_b2m_; // transform from imu to mocap frame
+    xform::Xformd x_b2c_; // transform from imu to camera frame
+    double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
+    double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
+    Eigen::Vector3d p_b2g_; // Position of gps antenna wrt body
+    gnss_utils::GTime start_time_;
 
+    /************************************/
+    /*             Logging              */
+    /************************************/
     void initLog(const std::string &filename);
     void logRawGNSSRes();
     void logFeatRes();
@@ -77,124 +90,6 @@ public:
     void logPrangeRes();
     void logCurrentState();
     void logImu();
-
-    void endInterval(double t);
-    void startNewInterval(double t);
-    void cleanUpSlidingWindow();
-    void setNewKeyframe();
-    const State& lastKfState();
-    bool calcNewKeyframeCondition(const Features& z);
-    void cleanUpFeatureTracking();
-    void rmLostFeatFromKf();
-
-    void solve();
-    void addParameterBlocks(ceres::Problem& problem);
-    void addImuFactors(ceres::Problem& problem);
-    void addMocapFactors(ceres::Problem& problem);
-    void setAnchors(ceres::Problem& problem);
-    void addRawGnssFactors(ceres::Problem& problem);
-    void addFeatFactors(ceres::Problem& problem);
-
-
-
-    void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
-    void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
-    void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
-                         SatVec &sat, const std::vector<bool>& slip) override;
-
-    // This version is the one that the simulator calls
-    void imageCallback(const double &tc, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
-    void imageCallback(const double& tc, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
-                       const Matrix1d& R_depth) override;
-    // This is the actual image callback
-    void imageUpdate(const double& tc, const Features& z, const Eigen::Matrix2d& R_pix, bool new_keyframe);
-
-    bool dropFeature(int idx);
-    void setFeatureMask(const std::string& filename);
-    void showImage();
-    void collectNewfeatures();
-    void trackFeatures();
-    void filterFeaturesRANSAC();
-    void filterFeaturesOutOfBounds();
-    void filterFeaturesTooClose();
-    void createNewKeyframe();
-    int calcNewKeyframeConditionKLT();
-    void calcCurrentZetas();
-    bool isTrackedFeature(int id) const;
-
-    void initGNSS(const std::string& filename);
-    int getSatIdx(int sat_id) const;
-    void ephCallback(const gnss_utils::GTime &t, const gnss_utils::eph_t& eph);
-    void refreshSatIdx();
-    void obsCallback(const ObsVec& obs);
-    void filterObs(const ObsVec& obs);
-    void pointPositioning(const gnss_utils::GTime& t, const ObsVec &obs, SatVec &sat, Vector8d &xhat) const;
-
-    enum {
-        NOT_NEW_KEYFRAME = 0,
-        FIRST_KEYFRAME = 1,
-        TOO_MUCH_PARALLAX = 2,
-        INSUFFICIENT_MATCHES = 3
-    };
-    int kf_condition_;
-    std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
-
-    State current_state_;
-    xform::Xformd x0_;
-
-    int xbuf_head_, xbuf_tail_;
-
-    bool disable_solver_;
-
-    StateVec xbuf_;
-    std::vector<double> s_; int ns_;
-    Vector6d imu_bias_;
-    int current_node_;
-    int oldest_node_;
-    int current_kf_;
-
-
-
-    int STATE_BUF_SIZE;
-
-    double switch_weight_;
-    double acc_wander_weight_;
-    double gyro_wander_weight_;
-    Matrix6d acc_bias_xi_;
-    State::dxMat state_anchor_xi_;
-    Matrix6d x_e2n_anchor_xi_;
-    Matrix6d x_b2c_anchor_xi_;
-
-    std::deque<meas::Base*> meas_buf_;
-    std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> imu_meas_buf_;
-    std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
-    std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;
-    std::deque<meas::Gnss, Eigen::aligned_allocator<meas::Gnss>> gnss_meas_buf_;
-
-    ImuIntegrator current_state_integrator_;
-    double optimization_time_;
-
-    ImuDeque imu_;
-    ImuBiasAnchor* bias_;
-    StateAnchor* state_anchor_;
-    XformAnchor* x_e2n_anchor_;
-    XformAnchor* x_u2c_anchor_;
-    MocapDeque mocap_;
-    PseudorangeDeque prange_;
-    ClockBiasDeque clk_;
-    FeatMap xfeat_; int nf_;
-
-    ceres::Solver::Options options_;
-    ceres::Solver::Summary summary_;
-
-    enum{
-        NONE,
-        LAST_CALLBACK_IMG,
-        LAST_CALLBACK_GNSS,
-        LAST_CALLBACK_MOCAP
-    };
-    int last_callback_;
-
     struct log
     {
         enum
@@ -215,24 +110,115 @@ public:
         };
     };
     std::vector<Logger*> logs_;
-
     std::string log_prefix_;
-    Camera<double> cam_;
-    xform::Xformd x_b2m_; // transform from imu to mocap frame
-    xform::Xformd x_b2c_; // transform from imu to camera frame
-    xform::Xformd x_e2n_, x_e2n0; // transform from ECEF to inertial frame
-    double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
-    double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
-    Eigen::Vector3d p_b2g_; // Position of gps antenna wrt body
-    gnss_utils::GTime start_time_;
-    Eigen::Matrix2d clk_bias_Xi_;
-    bool disable_mocap_;
 
-    bool estimate_x_b2c_;
+
+    /************************************/
+    /*         Graph Management         */
+    /************************************/
+    void endInterval(double t);
+    void startNewInterval(double t);
+    void cleanUpSlidingWindow();
+    void setNewKeyframe();
+    const State& lastKfState();
+    bool calcNewKeyframeCondition(const Features& z);
+    void cleanUpFeatureTracking();
+    void rmLostFeatFromKf();
+    ImuIntegrator current_state_integrator_;
+    State current_state_;
+    int current_node_;
+    int oldest_node_;
+    int current_kf_;
+    int STATE_BUF_SIZE;
+    int node_window_;
+
+    // Estimated variables
+    int xbuf_head_, xbuf_tail_;
+    StateVec xbuf_;
+    ClockBiasDeque clk_;
+    xform::Xformd x_e2n_; // transform from ECEF to inertial frame
+    Vector6d imu_bias_;
+
+    // Factors
+    ImuDeque imu_;
+    ImuBiasAnchor* bias_;
+    FeatMap xfeat_; int nf_;
+    StateAnchor* state_anchor_;
+    State::dxMat state_anchor_xi_;
+    XformAnchor* x_e2n_anchor_;
+    Matrix6d x_e2n_anchor_xi_;
+    Eigen::Matrix2d clk_bias_Xi_;
+    Matrix6d imu_bias_xi_;
+    MocapDeque mocap_;
+    PseudorangeDeque prange_;
+
+
+    /************************************/
+    /*           Optimization           */
+    /************************************/
+    void solve();
+    void addParameterBlocks(ceres::Problem& problem);
+    void addImuFactors(ceres::Problem& problem);
+    void addMocapFactors(ceres::Problem& problem);
+    void setAnchors(ceres::Problem& problem);
+    void addRawGnssFactors(ceres::Problem& problem);
+    void addFeatFactors(ceres::Problem& problem);
+    bool disable_solver_;
+    bool disable_mocap_;
     bool disable_gnss_;
+    ceres::Solver::Options options_;
+    ceres::Solver::Summary summary_;
+
+    /************************************/
+    /*               IMU                */
+    /************************************/
+    void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
+    double acc_wander_weight_;
+    double gyro_wander_weight_;
+
+
+    /************************************/
+    /*               Mocap              */
+    /************************************/
+    void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
+    void mocapUpdate(const meas::Mocap& m);
+
+    /************************************/
+    /*               GNSS               */
+    /************************************/
+    void initGNSS(const std::string& filename);
+    int getSatIdx(int sat_id) const;
+    void ephCallback(const gnss_utils::GTime &t, const gnss_utils::eph_t& eph);
+    void refreshSatIdx();
+    void obsCallback(const ObsVec& obs);
+    void filterObs(const ObsVec& obs);
+    void pointPositioning(const gnss_utils::GTime& t, const ObsVec &obs, SatVec &sat, Vector8d &xhat) const;
+    void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
+                         SatVec &sat, const std::vector<bool>& slip) override;
+    void gnssUpdate(const meas::Gnss& m);
+    int ns_;
+    double switch_weight_;
     double doppler_cov_;
     bool use_point_positioning_;
     double min_satellite_elevation_;
+    SatVec sats_;
+    ObsVec filtered_obs_;
+    int n_obs_;
+
+    /************************************/
+    /*              Image               */
+    /************************************/
+    void imageCallback(const double &tc, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
+    void imageCallback(const double& tc, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
+                       const Matrix1d& R_depth) override; // bindings for simulator image
+    void imageUpdate(const meas::Img& m);
+
+    enum {
+        NOT_NEW_KEYFRAME = 0,
+        FIRST_KEYFRAME = 1,
+        TOO_MUCH_PARALLAX = 2,
+        INSUFFICIENT_MATCHES = 3
+    };
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
     Features kf_feat_, current_feat_;
@@ -240,12 +226,25 @@ public:
     double kf_parallax_;
     int kf_num_feat_;
     bool use_measured_depth_;
+    int kf_condition_;
+    std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
 
-    int node_window_;
-
+    /************************************/
+    /*               KLT                */
+    /************************************/
+    bool dropFeature(int idx);
+    void setFeatureMask(const std::string& filename);
+    void showImage();
+    void collectNewfeatures();
+    void trackFeatures();
+    void filterFeaturesRANSAC();
+    void filterFeaturesOutOfBounds();
+    void filterFeaturesTooClose();
+    void createNewKeyframe();
+    int calcNewKeyframeConditionKLT();
+    void calcCurrentZetas();
+    bool isTrackedFeature(int id) const;
     bool sim_KLT_;
-
-    // KLT Tracker
     double t_next_klt_output_;
     double tracker_freq_;
     int got_first_img_;
@@ -263,35 +262,18 @@ public:
     cv::Mat mask_;
     cv::Mat point_mask_;
 
-    // Satellite Manager
-    SatVec sats_;
-    ObsVec filtered_obs_;
-    int n_obs_;
-
-    // Solver Config
-    int max_iter_;
-    double max_solver_time_;
-
-
+    /************************************/
+    /*            Meas Buffer           */
+    /************************************/
+    void handleMeas();
+    void addMeas(const meas::Imu&& imu);
+    void addMeas(const meas::Mocap&& mocap);
+    void addMeas(const meas::Gnss&& gnss);
+    bool enable_out_of_order_;
+    std::multiset<meas::Base*> new_meas_;
+    std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> imu_meas_buf_;
+    std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;
+    std::deque<meas::Gnss, Eigen::aligned_allocator<meas::Gnss>> gnss_meas_buf_;
+//    std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
 };
 }
-//typedef struct
-//{
-//    gnss_utils::GTime g;
-//    double range; // pseudorange
-//    double rate;
-//    double d; // geometric distance
-//    double azel[2];
-//    double iono_delay;
-//} range_t;
-//typedef struct
-//{
-//    int enable;
-//    int vflg;
-//    double alpha0,alpha1,alpha2,alpha3;
-//    double beta0,beta1,beta2,beta3;
-//} ionoutc_t;
-//void eph2pos(const gnss_utils::GTime& t, const gnss_utils::eph_t *eph, Eigen::Vector3d& pos, double *dts);
-//double ionmodel(const gnss_utils::GTime& t, const double *pos, const double *azel);
-//double ionosphericDelay(const ionoutc_t *ionoutc, GTime g, double *llh, double *azel);
-//void computeRange(range_t *rho, gnss_utils::Satellite &eph, ionoutc_t *ionoutc, gnss_utils::GTime g, Vector3d& xyz);

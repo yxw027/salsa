@@ -105,7 +105,7 @@ public:
             feat.zetas[j] = salsa.current_state_.x.transformp(l.row(j).transpose()).normalized();
             feat.depths[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).norm();
         }
-        salsa.imageUpdate(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
+        salsa.imageUpdate(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
     }
 
     void createNewKeyframe()

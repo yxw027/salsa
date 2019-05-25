@@ -93,7 +93,7 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
     }
     if (tc > t_next_klt_output_)
     {
-        imageUpdate(tc, current_feat_, R_pix, new_keyframe);
+        imageUpdate(meas::Img(tc, current_feat_, R_pix, new_keyframe));
         t_next_klt_output_ += 1.0/tracker_freq_;
     }
 }

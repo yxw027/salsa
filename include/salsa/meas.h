@@ -54,7 +54,8 @@ struct Mocap : public Base
 struct Img : public Base
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Img();
+    Img(double _t, Features &&_z, const Eigen::Matrix2d& _R, bool _new_keyframe);
+    Img(double _t, const Features &_z, const Eigen::Matrix2d& _R, bool _new_keyframe);
     Features z;
     Eigen::Matrix2d R_pix;
     bool new_keyframe;

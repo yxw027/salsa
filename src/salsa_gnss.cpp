@@ -117,8 +117,6 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
 
 void Salsa::obsCallback(const ObsVec &obs)
 {
-    last_callback_ = LAST_CALLBACK_GNSS;
-
     if (start_time_.tow_sec < 0)
         start_time_ = obs[0].t - current_state_.t;
 

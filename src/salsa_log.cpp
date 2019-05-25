@@ -40,8 +40,6 @@ void Salsa::logState()
     logs_[log::State]->logVectors(xbuf_[xbuf_head_].tau);
     logs_[log::State]->log(xbuf_[xbuf_head_].kf);
     logs_[log::State]->log(xbuf_[xbuf_head_].node);
-
-    logs_[log::CB]->log(current_state_.t, last_callback_);
 }
 
 void Salsa::logOptimizedWindow()
