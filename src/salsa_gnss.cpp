@@ -304,7 +304,6 @@ void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Ve
             i++;
         }
 
-
         solver.compute(A);
         dx = solver.solve(b);
 

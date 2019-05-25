@@ -93,8 +93,8 @@ def plotAzel():
     azel = satPos['sats']['azel'][-1]*180.0/np.pi
     dist = np.sqrt(np.sum(np.square(satPos['sats']['p'][-1]), axis=1))/1000
     ids = satPos['sats']['id'][-1]
-    for i in range(len(ids)):
-        print ids[i], ", ", dist[i], ", ", azel[i,:]
+    # for i in range(len(ids)):
+    #     print ids[i], ", ", dist[i], ", ", azel[i,:]
 
     pw.addPlot("AzEl", f)
 
@@ -191,7 +191,7 @@ def plotAttitude():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x']['q'][:,i], label='x')
-        plt.plot(x['t'], x['x']['q'][:,i], label=r'\hat{x}')
+        plt.plot(x['t'], x['x']['q'][:,i]*np.sign(x['x']['q'][:,0]), label=r'\hat{x}')
         # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
         if i == 0:
             plt.legend()

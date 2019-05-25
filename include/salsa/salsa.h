@@ -68,6 +68,7 @@ public:
     void setInitialState(const xform::Xformd& x0);
     // Constants
     xform::Xformd x0_;
+    Eigen::Vector3d v0_;
     Camera<double> cam_;
     xform::Xformd x_b2m_; // transform from imu to mocap frame
     xform::Xformd x_b2c_; // transform from imu to camera frame
@@ -124,6 +125,7 @@ public:
     bool calcNewKeyframeCondition(const Features& z);
     void cleanUpFeatureTracking();
     void rmLostFeatFromKf();
+    bool inWindow(int idx);
     ImuIntegrator current_state_integrator_;
     State current_state_;
     int current_node_;

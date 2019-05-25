@@ -24,6 +24,7 @@ TEST (Salsa, PointPositioningInit)
   sim.register_estimator(&salsa);
   salsa.x_e2n_ = sim.X_e2n_;
   salsa.update_on_gnss_ = true;
+  salsa.disable_solver_ = true;
 
   multirotor_sim::State x;
   x.p << 16, 4, 8;

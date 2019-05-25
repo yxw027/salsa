@@ -122,7 +122,7 @@ inline std::string imu_mocap()
   return filename;
 }
 
-inline std::string imu_feat(bool noise=false, double tmax=-1.0)
+inline std::string imu_feat(bool noise=true, double tmax=-1.0)
 {
     std::string filename = "/tmp/Salsa.imu_only.yaml";
     std::ofstream tmp(filename);
@@ -139,10 +139,15 @@ inline std::string imu_feat(bool noise=false, double tmax=-1.0)
     node["raw_gnss_enabled"] =  false;
     node["enable_out_of_order"] = false;
 
-    node["use_camera_truth"] = !noise;
-    node["use_depth_truth"] = !noise;
-    node["use_gnss_truth"] = !noise;
-    node["use_raw_gnss_truth"] = !noise;
+    if (!noise)
+    {
+        node["use_accel_truth"] = !noise;
+        node["use_gyro_truth"] = !noise;
+        node["use_camera_truth"] = !noise;
+        node["use_depth_truth"] = !noise;
+        node["use_gnss_truth"] = !noise;
+        node["use_raw_gnss_truth"] = !noise;
+    }
 
     tmp << node;
     tmp.close();
@@ -167,10 +172,15 @@ inline std::string imu_raw_gnss(bool noise=true, double tmax=-1.0)
     node["ephemeris_filename"] = SALSA_DIR"/sample/eph.dat";
     node["enable_out_of_order"] = false;
 
-    node["use_camera_truth"] = !noise;
-    node["use_depth_truth"] = !noise;
-    node["use_gnss_truth"] = !noise;
-    node["use_raw_gnss_truth"] = !noise;
+    if (!noise)
+    {
+        node["use_accel_truth"] = !noise;
+        node["use_gyro_truth"] = !noise;
+        node["use_camera_truth"] = !noise;
+        node["use_depth_truth"] = !noise;
+        node["use_gnss_truth"] = !noise;
+        node["use_raw_gnss_truth"] = !noise;
+    }
 
     tmp << node;
     tmp.close();
@@ -195,10 +205,15 @@ inline std::string imu_feat_gnss(bool noise=false, double tmax=-1.0)
     node["ephemeris_filename"] = SALSA_DIR"/sample/eph.dat";
     node["enable_out_of_order"] = false;
 
-    node["use_camera_truth"] = !noise;
-    node["use_depth_truth"] = !noise;
-    node["use_gnss_truth"] = !noise;
-    node["use_raw_gnss_truth"] = !noise;
+    if (!noise)
+    {
+        node["use_accel_truth"] = !noise;
+        node["use_gyro_truth"] = !noise;
+        node["use_camera_truth"] = !noise;
+        node["use_depth_truth"] = !noise;
+        node["use_gnss_truth"] = !noise;
+        node["use_raw_gnss_truth"] = !noise;
+    }
 
     tmp << node;
     tmp.close();

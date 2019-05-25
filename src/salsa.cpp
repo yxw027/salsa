@@ -39,8 +39,9 @@ void Salsa::init(const string& filename)
     initFactors();
     initSolverOptions();
     x0_ = Xformd::Identity();
+    v0_ = Vector3d::Zero();
     current_state_.x = x0_;
-    current_state_.v = Vector3d::Zero();
+    current_state_.v = v0_;
 }
 
 void Salsa::load(const string& filename)
@@ -161,6 +162,8 @@ void Salsa::addImuFactors(ceres::Problem &problem)
         if (it->to_idx_ < 0)
             continue;
 
+        SALSA_ASSERT(inWindow(it->to_idx_), "Trying to add factor to node outside of window");
+        SALSA_ASSERT(inWindow(it->from_idx_), "Trying to add factor to node outside of window");
         FunctorShield<ImuFunctor>* ptr = new FunctorShield<ImuFunctor>(&*it);
         problem.AddResidualBlock(new ImuFactorAD(ptr),
                                  NULL,
@@ -176,6 +179,7 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
 {
     for (auto it = mocap_.begin(); it != mocap_.end(); it++)
     {
+        SALSA_ASSERT(inWindow(it->idx_), "Trying to add factor to node outside of window");
         FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&*it);
         problem.AddResidualBlock(new MocapFactorAD(ptr),
                                  NULL,
@@ -192,6 +196,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
     {
         for (auto it = pvec->begin(); it != pvec->end(); it++)
         {
+            SALSA_ASSERT(inWindow(it->idx_), "Trying to add factor to node outside of window");
             FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&*it);
             problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
                                      new ceres::HuberLoss(2.0),
@@ -227,6 +232,8 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
         FeatDeque::iterator func = ft->second.funcs.begin();
         while (func != ft->second.funcs.end())
         {
+            SALSA_ASSERT(inWindow(ft->second.idx0), "Trying to add factor to node outside of window");
+            SALSA_ASSERT(inWindow(func->to_idx_), "Trying to add factor to node outside of window");
             FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
             problem.AddResidualBlock(new FeatFactorAD(ptr),
                                      new ceres::HuberLoss(3.0),
@@ -468,6 +475,7 @@ void Salsa::handleMeas()
         }
         mit = new_meas_.erase(mit); // The measurement has been handled, we don't need it anymore
     }
+    solve();
 }
 
 void Salsa::initialize(const meas::Base *m)
@@ -477,7 +485,7 @@ void Salsa::initialize(const meas::Base *m)
     case meas::Base::IMG:
     {
         SD(3, "Initialized Image\n");
-        initialize(m->t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        initialize(m->t, x0_, v0_, Vector2d::Zero());
         startNewInterval(m->t);
         break;
     }
@@ -631,7 +639,15 @@ void Salsa::addMeas(const meas::Img &&img)
         handleMeas();
 }
 
-
+bool Salsa::inWindow(int idx)
+{
+    if (idx < 0 || idx >= STATE_BUF_SIZE)
+        return false;
+    else if (xbuf_head_ > xbuf_tail_)
+        return (idx <= xbuf_head_ && idx >= xbuf_tail_);
+    else
+        return (idx <= xbuf_head_ || idx >= xbuf_tail_);
+}
 
 
 }
