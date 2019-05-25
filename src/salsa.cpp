@@ -8,7 +8,8 @@ namespace fs = experimental::filesystem;
 namespace salsa
 {
 
-Salsa::Salsa()
+Salsa::Salsa() :
+    new_meas_(meas::basecmp)
 {
     bias_ = nullptr;
     state_anchor_ = nullptr;
@@ -193,9 +194,9 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
             problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
                                      new ceres::HuberLoss(2.0),
                                      xbuf_[it->idx_].x.data(),
-                                     xbuf_[it->idx_].v.data(),
-                                     xbuf_[it->idx_].tau.data(),
-                                     x_e2n_.data());
+                    xbuf_[it->idx_].v.data(),
+                    xbuf_[it->idx_].tau.data(),
+                    x_e2n_.data());
         }
     }
     for (auto it = clk_.begin(); it != clk_.end(); it++)
@@ -206,7 +207,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
         problem.AddResidualBlock(new ClockBiasFactorAD(ptr),
                                  NULL,
                                  xbuf_[it->from_idx_].tau.data(),
-                                 xbuf_[it->to_idx_].tau.data());
+                xbuf_[it->to_idx_].tau.data());
     }
 
 }
@@ -228,9 +229,9 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
             problem.AddResidualBlock(new FeatFactorAD(ptr),
                                      new ceres::HuberLoss(3.0),
                                      xbuf_[ft->second.idx0].x.data(),
-                                     xbuf_[func->to_idx_].x.data(),
-                                     &ft->second.rho,
-                                     x_b2c_.data());
+                    xbuf_[func->to_idx_].x.data(),
+                    &ft->second.rho,
+                    x_b2c_.data());
             func++;
         }
         ft++;
@@ -257,7 +258,7 @@ void Salsa::solve()
 
     if (!disable_solver_)
         ceres::Solve(options_, &problem, &summary_);
-//    std::cout << summary_.FullReport() << std::endl;
+    //    std::cout << summary_.FullReport() << std::endl;
 
 
     logState();
@@ -300,8 +301,8 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
                  || (current_state_.v.array() == current_state_.v.array()).all(),
                  "NaN Detected in propagation");
 
-//    ImuFunctor& imu(imu_.back());
-//    imu.integrate(t, z, R);
+    //    ImuFunctor& imu(imu_.back());
+    //    imu.integrate(t, z, R);
 
     logCurrentState();
     logImu();
@@ -356,25 +357,6 @@ void Salsa::endInterval(double t)
 }
 
 
-void Salsa::startNewInterval(double t)
-{
-    imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
-    clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
-
-    // The following makes sure that we don't plot uninitialized memory
-    if (imu_.size() >= 2)
-    {
-        imu_.back().u_ = imu_[imu_.size() -2].u_;
-        imu_.back().cov_ = imu_[imu_.size() -2].cov_;
-    }
-    else
-    {
-        imu_.back().u_.setZero();
-        imu_.back().u_[2] = -9.80665;
-        imu_.back().cov_ = Matrix6d::Identity();
-    }
-}
-
 void Salsa::cleanUpSlidingWindow()
 {
     if (current_node_ < node_window_)
@@ -413,7 +395,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     oldest_node_ = 0;
 
     assert((current_state_.x.arr().array() == current_state_.x.arr().array()).all()
-            && (current_state_.v.array() == current_state_.v.array()).all());
+           && (current_state_.v.array() == current_state_.v.array()).all());
 }
 
 void Salsa::setNewKeyframe()
@@ -437,32 +419,229 @@ const State& Salsa::lastKfState()
 
 void Salsa::handleMeas()
 {
-    std::multiset<meas::Base*>::const_iterator mit = new_meas_.begin();
+    std::multiset<meas::Base*>::iterator mit = new_meas_.begin();
+
+    if (current_node_ == -1)
+    {
+        initialize(*mit);
+    }
+
     SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_head_].t, \
                  "Unable to handle stale %d measurement", (*mit)->type);
 
+    while (mit != new_meas_.end())
+    {
+        integrateTransition((*mit)->t);
 
-
-
-
+        switch ((*mit)->type)
+        {
+        case meas::Base::IMG:
+        {
+            initializeNodeWithImu();
+            meas::Img* z = dynamic_cast<meas::Img*>(*mit);
+            imageUpdate(*z);
+            if (z->new_keyframe)
+                startNewInterval(z->t);
+            break;
+        }
+        case meas::Base::GNSS:
+        {
+            meas::Gnss* z = dynamic_cast<meas::Gnss*>(*mit);
+            initializeNodeWithGnss(*z);
+            gnssUpdate(*z);
+            startNewInterval(z->t);
+            break;
+        }
+        case meas::Base::MOCAP:
+        {
+            meas::Mocap* z = dynamic_cast<meas::Mocap*>(*mit);
+            initializeNodeWithMocap(*z);
+            mocapUpdate(*z);
+            startNewInterval(z->t);
+            break;
+        }
+        default:
+            SALSA_ASSERT(false, "Unknown Measurement Type");
+            break;
+        }
+        mit = new_meas_.erase(mit); // The measurement has been handled, we don't need it anymore
+    }
 }
 
-void Salsa::addMeas(const meas::Imu &&imu)
+void Salsa::initialize(const meas::Base *m)
 {
-    imu_meas_buf_.push_back(imu);
-    new_meas_.insert(new_meas_.end(), &imu_meas_buf_.back());
+    switch (m->type)
+    {
+    case meas::Base::IMG:
+    {
+        SD(3, "Initialized Image\n");
+        initialize(m->t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        startNewInterval(m->t);
+        break;
+    }
+    case meas::Base::GNSS:
+    {
+        const meas::Gnss* z = dynamic_cast<const meas::Gnss*>(m);
+        initializeStateGnss(*z);
+        startNewInterval(z->t);
+        break;
+    }
+    case meas::Base::MOCAP:
+    {
+        SD(3, "Initialized Mocap\n");
+        const meas::Mocap* z = dynamic_cast<const meas::Mocap*>(m);
+        initialize(z->t, z->z, Vector3d::Zero(), Vector2d::Zero());
+        break;
+    }
+    default:
+        SALSA_ASSERT(false, "Unkown Measurement Type");
+        break;
+    }
 }
+
+void Salsa::integrateTransition(double t)
+{
+    ImuFunctor& imu(imu_.back());
+    int num_imu = 0;
+    while (imu_meas_buf_.size() > 0 && imu_meas_buf_.front().t-1e-6 <= t)
+    {
+        num_imu++;
+        auto& z(imu_meas_buf_.front());
+        imu.integrate(z.t, z.z, z.R);
+        imu_meas_buf_.pop_front();
+    }
+
+    // If the transition factors are done, then finish them
+    if (num_imu >= 2)
+    {
+        bool do_cleanup = false;
+        const int from = imu.from_idx_;
+        int to = imu.to_idx_;
+
+        if (to < 0)
+        {
+            assert(from == xbuf_head_);
+            // if it's not, then set up a new node
+            to = (xbuf_head_+1) % STATE_BUF_SIZE;
+            xbuf_head_ = to;
+            ++current_node_;
+            do_cleanup = true;
+        }
+
+        imu.integrate(t, imu.u_, imu.cov_);
+        imu.finished(to);
+        ClockBiasFunctor& clk(clk_.back());
+        clk.finished(imu.delta_t_, to);
+        current_state_integrator_.reset(t);
+
+        if (do_cleanup)
+            cleanUpSlidingWindow();
+
+        assert(xbuf_head_ < xbuf_.size());
+        assert(xbuf_head_ != xbuf_tail_);
+    }
+    else // otherwise we gotta remove this transition, because we are going to double-up this node
+    {
+        if (imu.n_updates_ == 1)
+            imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
+        imu_.pop_back();
+        clk_.pop_back();
+    }
+}
+
+void Salsa::startNewInterval(double t)
+{
+    imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
+    clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
+
+    // The following makes sure that we don't plot uninitialized memory
+    if (imu_.size() >= 2)
+    {
+        imu_.back().u_ = imu_[imu_.size() -2].u_;
+        imu_.back().cov_ = imu_[imu_.size() -2].cov_;
+    }
+    else
+    {
+        imu_.back().u_.setZero();
+        imu_.back().u_[2] = -9.80665;
+        imu_.back().cov_ = Matrix6d::Identity();
+    }
+}
+
+void Salsa::initializeNodeWithImu()
+{
+    if (imu_.size() == 0)
+        return;
+
+    ImuFunctor& imu(imu_.back());
+    const int from = imu.from_idx_;
+    int to = imu.to_idx_;
+
+    SALSA_ASSERT(to > 0, "Need to have a valid destination");
+
+    xbuf_[to].t = imu.t;
+    imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
+                   xbuf_[to].x.data(), xbuf_[to].v.data());
+    xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
+    xbuf_[to].tau(1) = xbuf_[from].tau(1);
+    xbuf_[to].kf = -1;
+    xbuf_[to].node = current_node_;
+}
+
+
+
+
+
+//void Salsa::addMeas(const meas::Imu &&imu)
+//{
+//    if (enable_out_of_order_)
+//    {
+//        imu_meas_buf_.push_back(imu);
+//        new_meas_.insert(new_meas_.end(), &imu_meas_buf_.back());
+//    }
+//    else
+//    {
+
+//    }
+//}
 
 void Salsa::addMeas(const meas::Mocap &&mocap)
 {
-    mocap_meas_buf_.push_back(mocap);
-    new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
+    if (enable_out_of_order_)
+    {
+        mocap_meas_buf_.push_back(mocap);
+        new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
+    }
+    else
+    {
+        mocapUpdate(mocap);
+    }
 }
 
 void Salsa::addMeas(const meas::Gnss &&gnss)
 {
-    gnss_meas_buf_.push_back(gnss);
-    new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
+//    if (enable_out_of_order_)
+//    {
+        gnss_meas_buf_.push_back(gnss);
+        new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
+//    }
+//    else
+//    {
+//        gnssUpdate(gnss);
+//    }
+}
+
+void Salsa::addMeas(const meas::Img &&img)
+{
+//    if (enable_out_of_order_)
+//    {
+        img_meas_buf_.push_back(img);
+        new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
+//    }
+//    else
+//    {
+//        imageUpdate(img);
+//    }
 }
 
 

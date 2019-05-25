@@ -51,20 +51,20 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
       zfeat.pix.emplace_back(pix.x(), pix.y());
     }
     bool new_keyframe = calcNewKeyframeCondition(zfeat);
-    imageUpdate(meas::Img(tc, std::move(zfeat), R_pix, new_keyframe));
+    addMeas(meas::Img(tc, std::move(zfeat), R_pix, new_keyframe));
   }
 }
 
 void Salsa::imageUpdate(const meas::Img &m)
 {
-    if (current_node_ == -1)
-    {
-        initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
-    }
-    else
-    {
-        endInterval(m.t);
-    }
+//    if (current_node_ == -1)
+//    {
+//        initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
+//    }
+//    else
+//    {
+//        endInterval(m.t);
+//    }
 
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
@@ -93,10 +93,8 @@ void Salsa::imageUpdate(const meas::Img &m)
     if (m.new_keyframe)
     {
         setNewKeyframe();
-        startNewInterval(m.t);
     }
     rmLostFeatFromKf();
-    solve();
 }
 
 bool Salsa::calcNewKeyframeCondition(const Features &z)

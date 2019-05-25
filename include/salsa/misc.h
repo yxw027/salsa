@@ -55,6 +55,7 @@ inline std::string default_params(const std::string& prefix)
     node["tm"] = 0.0;
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;
+    node["enable_out_of_order"] = false;
     tmp << node;
     tmp.close();
     return filename;
@@ -75,6 +76,7 @@ inline std::string small_feat_test(const std::string& prefix, bool init_depth=tr
     node["kf_parallax_thresh"] = 500;
     node["num_feat"] = 4;
     node["use_measured_depth"] = init_depth;
+    node["enable_out_of_order"] = false;
     tmp << node;
     tmp.close();
     return filename;
@@ -93,6 +95,7 @@ inline std::string imu_only()
     node["camera_enabled"] =  false;
     node["gnss_enabled"] =  false;
     node["raw_gnss_enabled"] =  false;
+    node["enable_out_of_order"] = false;
 
     tmp << node;
     tmp.close();
@@ -112,6 +115,7 @@ inline std::string imu_mocap()
   node["camera_enabled"] =  false;
   node["gnss_enabled"] =  false;
   node["raw_gnss_enabled"] =  false;
+  node["enable_out_of_order"] = false;
 
   tmp << node;
   tmp.close();
@@ -133,6 +137,7 @@ inline std::string imu_feat(bool noise=false, double tmax=-1.0)
     node["camera_enabled"] =  true;
     node["gnss_enabled"] =  false;
     node["raw_gnss_enabled"] =  false;
+    node["enable_out_of_order"] = false;
 
     node["use_camera_truth"] = !noise;
     node["use_depth_truth"] = !noise;
@@ -156,6 +161,7 @@ inline std::string imu_raw_gnss()
     node["gnss_enabled"] =  false;
     node["raw_gnss_enabled"] =  true;
     node["ephemeris_filename"] = SALSA_DIR"/sample/eph.dat";
+    node["enable_out_of_order"] = false;
 
     tmp << node;
     tmp.close();
@@ -178,6 +184,7 @@ inline std::string imu_feat_gnss(bool noise=false, double tmax=-1.0)
     node["gnss_enabled"] =  false;
     node["raw_gnss_enabled"] =  true;
     node["ephemeris_filename"] = SALSA_DIR"/sample/eph.dat";
+    node["enable_out_of_order"] = false;
 
     node["use_camera_truth"] = !noise;
     node["use_depth_truth"] = !noise;

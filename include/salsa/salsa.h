@@ -196,6 +196,7 @@ public:
     void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
                          SatVec &sat, const std::vector<bool>& slip) override;
     void gnssUpdate(const meas::Gnss& m);
+    void initializeStateGnss(const meas::Gnss& m);
     int ns_;
     double switch_weight_;
     double doppler_cov_;
@@ -266,14 +267,19 @@ public:
     /*            Meas Buffer           */
     /************************************/
     void handleMeas();
-    void addMeas(const meas::Imu&& imu);
+    void integrateTransition(double t);
+    void initializeNodeWithImu();
+    void initializeNodeWithGnss(const meas::Gnss& m);
+    void initializeNodeWithMocap(const meas::Mocap& mocap);
+    void initialize(const meas::Base* m);
     void addMeas(const meas::Mocap&& mocap);
     void addMeas(const meas::Gnss&& gnss);
+    void addMeas(const meas::Img&& img);
     bool enable_out_of_order_;
-    std::multiset<meas::Base*> new_meas_;
+    std::multiset<meas::Base*, std::function<bool(const meas::Base*, const meas::Base*)>> new_meas_;
     std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> imu_meas_buf_;
     std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;
     std::deque<meas::Gnss, Eigen::aligned_allocator<meas::Gnss>> gnss_meas_buf_;
-//    std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
+    std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
 };
 }

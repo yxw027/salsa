@@ -105,7 +105,8 @@ public:
             feat.zetas[j] = salsa.current_state_.x.transformp(l.row(j).transpose()).normalized();
             feat.depths[j] = (l.row(j).transpose() - salsa.current_state_.x.t()).norm();
         }
-        salsa.imageUpdate(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
+        salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
+        salsa.handleMeas();
     }
 
     void createNewKeyframe()
@@ -155,6 +156,7 @@ public:
             Rvec.push_back(Matrix3d::Identity());
         }
         salsa.rawGnssCallback(gtime, zvec, Rvec, sats, slip);
+        salsa.handleMeas();
     }
 
     void runGNSSFirst()

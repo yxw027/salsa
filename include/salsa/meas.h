@@ -13,6 +13,7 @@ namespace meas
 struct Base
 {
     Base();
+    virtual ~Base() = default;
     enum
     {
         BASE,
@@ -23,16 +24,16 @@ struct Base
     };
     double t;
     int type;
-    bool operator < (const Base& other);
 };
+
+bool basecmp(const Base *a, const Base *b);
 
 struct Gnss : public Base
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Gnss();
-    gnss_utils::GTime gtime;
-    Eigen::Vector3d z;
-    Eigen::Matrix3d R;
+    Gnss(double _t, const ObsVec& _z);
+    Gnss(double _t, ObsVec&& _z);
+    ObsVec obs;
 };
 
 struct Imu : public Base

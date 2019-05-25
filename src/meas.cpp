@@ -8,9 +8,9 @@ Base::Base()
     type = BASE;
 }
 
-bool Base::operator <(const Base& other)
+bool basecmp(const Base* a, const Base* b)
 {
-    return t < other.t;
+    return a->t < b->t;
 }
 
 Imu::Imu(double _t, const Vector6d &_z, const Matrix6d &_R)
@@ -21,8 +21,17 @@ Imu::Imu(double _t, const Vector6d &_z, const Matrix6d &_R)
     type = IMU;
 }
 
-Gnss::Gnss()
+Gnss::Gnss(double _t, const ObsVec& _z)
 {
+    t = _t;
+    type = GNSS;
+    obs = _z;
+}
+
+Gnss::Gnss(double _t, ObsVec&& _z) :
+    obs(std::move(_z))
+{
+    t = _t;
     type = GNSS;
 }
 
