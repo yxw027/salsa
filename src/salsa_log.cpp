@@ -258,7 +258,7 @@ void Salsa::logImu()
 
 void Salsa::printGraph()
 {
-    // head: 10   tail: 5
+    // head: 10   tail: 5   kf_condition: 1  nkf_feat: 50   nft_window: 150  nfeat_meas_window: 250 nfeat_tot:
     // t -- 000.2 -- 000.4 -- 000.5 --
     // K --   0   --       --   1   --
     // N --   0   --   1   --   2   --
@@ -266,6 +266,8 @@ void Salsa::printGraph()
     // F --   X   --       --   X   --
     // M --       --       --       --
     logs_[log::Graph]->file_ << "\n\nhead: " << xbuf_head_ << "\ttail: " << xbuf_tail_;
+    logs_[log::Graph]->file_ << "\tkf_cond: " << kf_condition_ << "\tft_kf: " << current_feat_.size();
+    logs_[log::Graph]->file_ << "\tft_win: " << xfeat_.size() << "\t  ft_ms_win: " << numTotalFeat() << "\t   ft_tot: " << next_feature_id_;
 
     logs_[log::Graph]->file_ << "\nt -- ";
     int tmp = xbuf_tail_;

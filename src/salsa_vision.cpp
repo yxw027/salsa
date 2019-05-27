@@ -206,6 +206,16 @@ void Salsa::rmLostFeatFromKf()
     }
 }
 
+int Salsa::numTotalFeat() const
+{
+    int n_feat_meas = 0;
+    for (auto& ft : xfeat_)
+    {
+        n_feat_meas += 1 + ft.second.funcs.size();
+    }
+    return n_feat_meas;
+}
+
 
 
 }
