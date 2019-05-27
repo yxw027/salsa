@@ -270,6 +270,8 @@ void Salsa::printGraph()
     logs_[log::Graph]->file_ << "\n\nhead: " << xbuf_head_ << "\ttail: " << xbuf_tail_;
     logs_[log::Graph]->file_ << "\tkf_cond: " << kf_condition_ << "\tft_kf: " << current_feat_.size();
     logs_[log::Graph]->file_ << "\tft_win: " << xfeat_.size() << "\t  ft_ms_win: " << numTotalFeat() << "\t   ft_tot: " << next_feature_id_;
+    logs_[log::Graph]->file_ << "\tparallax: " << kf_parallax_ << "\t  kf_match: " << kf_Nmatch_feat_;
+
 
     logs_[log::Graph]->file_ << "\nt -- ";
     int tmp = xbuf_tail_;
