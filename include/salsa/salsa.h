@@ -142,6 +142,7 @@ public:
     int calcNewKeyframeConditionKLT();
     void calcCurrentZetas();
     bool isTrackedFeature(int id) const;
+    int numTotalFeat() const;
 
     void initGNSS(const std::string& filename);
     int getSatIdx(int sat_id) const;
