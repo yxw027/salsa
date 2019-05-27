@@ -238,9 +238,8 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
             problem.AddResidualBlock(new FeatFactorAD(ptr),
                                      new ceres::HuberLoss(3.0),
                                      xbuf_[ft->second.idx0].x.data(),
-                    xbuf_[func->to_idx_].x.data(),
-                    &ft->second.rho,
-                    x_b2c_.data());
+                                     xbuf_[func->to_idx_].x.data(),
+                                     &ft->second.rho);
             func++;
         }
         ft++;
@@ -398,7 +397,7 @@ void Salsa::cleanUpSlidingWindow()
 
     while (prange_.size() > 0 && prange_.front().front().node_ < oldest_node_)
     {
-        SD(1, "removing %d prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
+        SD(1, "removing %lu prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
         prange_.pop_front();
     }
 
@@ -670,7 +669,7 @@ void Salsa::addMeas(const meas::Gnss &&gnss)
 
 void Salsa::addMeas(const meas::Img &&img)
 {
-    SD(1, "Got new IMG measurement t: ", img.t);
+    SD(1, "Got new IMG measurement t: %.2f", img.t);
     img_meas_buf_.push_back(img);
     new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
     if (update_on_camera_)

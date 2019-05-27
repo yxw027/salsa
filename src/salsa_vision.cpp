@@ -72,7 +72,7 @@ void Salsa::imageUpdate(const meas::Img &m)
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
             {
                 SD(1, "Adding new measurement to feature %d", m.z.feat_ids[i]);
-                ft.addMeas(xbuf_head_, m.R_pix, m.z.zetas[i]);
+                ft.addMeas(xbuf_head_, m.R_pix, x_b2c_, m.z.zetas[i]);
             }
             else
             {

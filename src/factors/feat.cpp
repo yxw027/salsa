@@ -7,11 +7,12 @@ using namespace xform;
 namespace salsa
 {
 
-FeatFunctor::FeatFunctor(const Matrix2d& cov, const Vector3d &zetai,
+FeatFunctor::FeatFunctor(const Matrix2d& cov, const xform::Xformd& x_b2c, const Vector3d &zetai,
                          const Vector3d &zetaj, int to_idx) :
   to_idx_(to_idx),
   zetai_(zetai),
-  zetaj_(zetaj)
+  zetaj_(zetaj),
+  x_b2c_(x_b2c)
 {
   Xi_ = cov.inverse().llt().matrixL().transpose();
   Pz_.block<1,3>(0,0) = zetaj_.cross(e_x).transpose().normalized();
@@ -19,18 +20,16 @@ FeatFunctor::FeatFunctor(const Matrix2d& cov, const Vector3d &zetai,
 }
 
 template <typename T>
-bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho,
-                              const T* _xb2c, T* _res) const
+bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho, T* _res) const
 {
     typedef Matrix<T,2,1> Vec2;
     typedef Matrix<T,3,1> Vec3;
     Map<Vec2> res(_res);
     Xform<T> xi(_xi);
     Xform<T> xj(_xj);
-    Xform<T> x_b2c(_xb2c);
     const T& rho(*_rho);
     Vec3 zi = 1.0/rho * zetai_;
-    Vec3 zj_hat = x_b2c.rotp(xj.rotp(xi.transforma(x_b2c.transforma(zi)) - xj.transforma(x_b2c.t_)));
+    Vec3 zj_hat = x_b2c_.rotp<T>(xj.rotp(xi.transforma(x_b2c_.transforma<T>(zi)) - xj.transforma(x_b2c_.t_)));
     zj_hat.normalize();
 
 
@@ -39,12 +38,10 @@ bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho,
 }
 
 template bool FeatFunctor::operator ()<double>(const double* _xi, const double* _xj,
-                                               const double* _rho, const double* _xb2c,
-                                               double* _res) const;
-typedef ceres::Jet<double, 22> jactype;
+                                               const double* _rho, double* _res) const;
+typedef ceres::Jet<double, 15> jactype;
 template bool FeatFunctor::operator ()<jactype>(const jactype* _xi, const jactype* _xj,
-                                                const jactype* _rho, const jactype* _xb2c,
-                                                jactype* _res) const;
+                                                const jactype* _rho, jactype* _res) const;
 
 #define Tr transpose()
 bool FeatFactor::Evaluate(double * const * parameters, double *residuals, double **jacobians) const
