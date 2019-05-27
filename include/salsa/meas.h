@@ -24,6 +24,7 @@ struct Base
     };
     double t;
     int type;
+    std::string Type() const;
 };
 
 bool basecmp(const Base *a, const Base *b);

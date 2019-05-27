@@ -145,7 +145,7 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
 
 void Salsa::gnssUpdate(const meas::Gnss &m)
 {
-    SD(1, "Gnss Update, t=%.2f", m.t);
+    SD(2, "Gnss Update, t=%.2f", m.t);
     Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
     prange_.emplace_back(m.obs.size());
     int i = 0;
@@ -167,8 +167,6 @@ void Salsa::initializeStateGnss(const meas::Gnss &m)
         return;
     }
 
-    SD(3, "Initialized Raw GNSS\n");
-
     if (use_point_positioning_)
     {
         Xformd xhat = x0_;
@@ -187,75 +185,6 @@ void Salsa::initializeStateGnss(const meas::Gnss &m)
         initialize(current_state_.t, x0_, Vector3d::Zero(), Vector2d::Zero());
     }
 }
-
-
-//    if (current_node_ == -1)
-//    {
-//        SD(5, "Initialized Raw GNSS\n");
-
-//        if (use_point_positioning_)
-//        {
-//            Xformd xhat = x0_;
-//            Vector8d pp_sol = Vector8d::Zero();
-//            pp_sol.topRows<3>() = x_e2n_.t();
-//            pointPositioning(m.obs[0].t, m.obs, sats_, pp_sol);
-//            auto phat = pp_sol.segment<3>(0);
-//            auto vhat = pp_sol.segment<3>(3);
-//            auto that = pp_sol.segment<2>(6);
-
-//            xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
-//            initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
-//        }
-//        else
-//        {
-//            initialize(current_state_.t, x0_, Vector3d::Zero(), Vector2d::Zero());
-//        }
-
-//        //        std::cout << DateTime(start_time_ + current_state_.t) << std::endl;
-//        startNewInterval(current_state_.t);
-
-
-//        Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
-//        prange_.emplace_back(m.obs.size());
-//        int i = 0;
-//        for (auto& ob : m.obs)
-//        {
-//            Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
-//            prange_.back()[i++].init(m.obs[0].t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-//                                     p_b2g_, current_node_, xbuf_head_);
-//        }
-//        return;
-//    }
-//    else
-//    {
-//        finishNode((filtered_obs_[0].t-start_time_).toSec(), true, false);
-//        double tt = (m.obs[0].t-start_time_).toSec();
-//        endInterval(tt);
-//        if (imu_.back().n_updates_ >= 2)
-//            startNewInterval(tt);
-//        else
-//            return;
-
-//        if (filtered_obs_.size() > 7)
-//        {
-//            if (use_point_positioning_)
-//            {
-//                Vector8d pp_sol = Vector8d::Zero();
-//                pp_sol.topRows<3>() = x_e2n_.t();
-//                pointPositioning(m.obs[0].t, m.obs, sats_, pp_sol);
-//                auto phat = pp_sol.segment<3>(0);
-//                auto vhat = pp_sol.segment<3>(3);
-//                auto that = pp_sol.segment<2>(6);
-//                xbuf_[xbuf_head_].x.t() = WGS84::ecef2ned(x_e2n_, phat);
-//                xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
-//                xbuf_[xbuf_head_].tau = that;
-//            }
-
-
-//            solve();
-//        }
-//    }
-//}
 
 void Salsa::obsCallback(const ObsVec &obs)
 {

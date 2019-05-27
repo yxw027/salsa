@@ -8,10 +8,34 @@ Base::Base()
     type = BASE;
 }
 
+std::string Base::Type() const
+{
+    switch (type)
+    {
+    case BASE:
+        return "Base";
+        break;
+    case GNSS:
+        return "Gnss";
+        break;
+    case IMU:
+        return "Imu";
+        break;
+    case MOCAP:
+        return "Mocap";
+        break;
+    case IMG:
+        return "Img";
+        break;
+    }
+}
+
 bool basecmp(const Base* a, const Base* b)
 {
     return a->t < b->t;
 }
+
+
 
 Imu::Imu(double _t, const Vector6d &_z, const Matrix6d &_R)
 {

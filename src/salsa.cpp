@@ -372,7 +372,7 @@ void Salsa::cleanUpSlidingWindow()
         return;
 
     oldest_node_ = current_node_ - node_window_;
-    SD(1, "Clean Up Sliding Window, oldest_node = %d", oldest_node_);
+    SD(2, "Clean Up Sliding Window, oldest_node = %d", oldest_node_);
     while (xbuf_[xbuf_tail_].node < oldest_node_)
         xbuf_tail_ = (xbuf_tail_ + 1) % STATE_BUF_SIZE;
 
@@ -397,7 +397,7 @@ void Salsa::cleanUpSlidingWindow()
 
     while (prange_.size() > 0 && prange_.front().front().node_ < oldest_node_)
     {
-        SD(1, "removing %lu prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
+            SD(1, "removing %lu prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
         prange_.pop_front();
     }
 
@@ -425,7 +425,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
 void Salsa::setNewKeyframe()
 {
     current_kf_++;
-    SD(1, "Creating new keyframe %d", current_kf_);
+    SD(2, "Creating new keyframe %d", current_kf_);
     xbuf_[xbuf_head_].kf = current_kf_;
     current_state_.kf = current_kf_;
     if (new_kf_cb_)
@@ -452,8 +452,9 @@ void Salsa::handleMeas()
         initialize(*mit);
     }
 
-    SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_head_].t, \
-                 "Unable to handle stale %d measurement", (*mit)->type);
+    SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_head_].t - 1e-6, \
+                 "Unable to handle stale %s measurement.  State Time: %.3f, Meas Time: %.3f", \
+                 (*mit)->Type().c_str(), xbuf_[xbuf_head_].t, (*mit)->t);
 
     while (mit != new_meas_.end())
     {
@@ -579,7 +580,7 @@ void Salsa::integrateTransition(double t)
     }
     else // otherwise we gotta remove this transition, because we are going to double-up this node
     {
-        SD(1, "Remove Imu interval");
+        SD(2, "Remove Imu interval");
         if (imu.n_updates_ == 1)
         {
             SD(3, "Push singleton IMU measurement back onto queue");
@@ -592,7 +593,7 @@ void Salsa::integrateTransition(double t)
 
 void Salsa::startNewInterval(double t)
 {
-    SD(1, "Starting a new interval. imu_.size()=%lu and xbuf_head=%d", imu_.size(), xbuf_head_);
+    SD(2, "Starting a new interval. imu_.size()=%lu and xbuf_head=%d", imu_.size(), xbuf_head_);
     imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 
@@ -624,7 +625,7 @@ void Salsa::initializeNodeWithImu()
 
     SALSA_ASSERT(to > 0, "Need to have a valid destination");
 
-    SD(1, "Initialize Node %d with IMU factor %lu by integrating from %d", to, imu_.size(), from);
+    SD(2, "Initialize Node %d with IMU factor %lu by integrating from %d", to, imu_.size(), from);
     xbuf_[to].t = imu.t;
     imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
                    xbuf_[to].x.data(), xbuf_[to].v.data());
@@ -632,26 +633,9 @@ void Salsa::initializeNodeWithImu()
     xbuf_[to].tau(1) = xbuf_[from].tau(1);
 }
 
-
-
-
-
-//void Salsa::addMeas(const meas::Imu &&imu)
-//{
-//    if (enable_out_of_order_)
-//    {
-//        imu_meas_buf_.push_back(imu);
-//        new_meas_.insert(new_meas_.end(), &imu_meas_buf_.back());
-//    }
-//    else
-//    {
-
-//    }
-//}
-
 void Salsa::addMeas(const meas::Mocap &&mocap)
 {
-    SD(1, "Got new Mocap measurement");
+    SD(2, "Got new Mocap measurement t: %.2f", mocap.t);
     mocap_meas_buf_.push_back(mocap);
     new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
     if (update_on_mocap_)
@@ -660,7 +644,7 @@ void Salsa::addMeas(const meas::Mocap &&mocap)
 
 void Salsa::addMeas(const meas::Gnss &&gnss)
 {
-    SD(1, "Got new GNSS measurement");
+    SD(2, "Got new GNSS measurement t: %.2f", gnss.t);
     gnss_meas_buf_.push_back(gnss);
     new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
     if (update_on_gnss_)
@@ -669,7 +653,7 @@ void Salsa::addMeas(const meas::Gnss &&gnss)
 
 void Salsa::addMeas(const meas::Img &&img)
 {
-    SD(1, "Got new IMG measurement t: %.2f", img.t);
+    SD(2, "Got new IMG measurement t: %.2f", img.t);
     img_meas_buf_.push_back(img);
     new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
     if (update_on_camera_)

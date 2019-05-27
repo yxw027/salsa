@@ -63,7 +63,7 @@ void Salsa::imageUpdate(const meas::Img &m)
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
 
-    SD(1, "Image Update, t=%.2f", m.t);
+    SD(2, "Image Update, t=%.2f", m.t);
     for (int i = 0; i < m.z.zetas.size(); i++)
     {
         if (isTrackedFeature(m.z.feat_ids[i]))
@@ -192,7 +192,7 @@ void Salsa::createNewKeyframe()
     collectNewfeatures();
     kf_feat_ = current_feat_;
     kf_num_feat_ = kf_feat_.size();
-    SD(1, "Creating new Keyframe with %d features", kf_feat_.size());
+    SD(2, "Creating new Keyframe with %d features", kf_feat_.size());
     current_img_.copyTo(kf_img_);
 }
 
