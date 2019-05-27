@@ -91,6 +91,7 @@ public:
     void logPrangeRes();
     void logCurrentState();
     void logImu();
+    void printGraph();
     struct log
     {
         enum
@@ -107,6 +108,7 @@ public:
             PRangeRes,
             Imu,
             Xe2n,
+            Graph,
             NumLogs,
         };
     };

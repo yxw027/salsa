@@ -29,6 +29,7 @@ void Salsa::initLog(const std::string& filename)
     logs_[log::PRangeRes] = new Logger(log_prefix_ + "PRangeRes.log");
     logs_[log::Imu] = new Logger(log_prefix_ + "Imu.log");
     logs_[log::Xe2n] = new Logger(log_prefix_ + "Xe2n.log");
+    logs_[log::Graph] = new Logger(log_prefix_ + "Graph.log");
 }
 
 
@@ -51,6 +52,7 @@ void Salsa::logOptimizedWindow()
         logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
     }
     logs_[log::Opt]->logVectors(imu_bias_, x_b2c_.arr(), x_e2n_.arr());
+    printGraph();
 }
 
 void Salsa::logCurrentState()
@@ -252,6 +254,79 @@ void Salsa::logImu()
 {
     logs_[log::Imu]->log(current_state_.t);
     logs_[log::Imu]->logVectors(imu_.back().u_);
+}
+
+void Salsa::printGraph()
+{
+    // head: 10   tail: 5
+    // t -- 000.2 -- 000.4 -- 000.5 --
+    // K --   0   --       --   1   --
+    // N --   0   --   1   --   2   --
+    // G --       --   X   --       --
+    // F --   X   --       --   X   --
+    // M --       --       --       --
+    logs_[log::Graph]->file_ << "\n\nhead: " << xbuf_head_ << "\ttail: " << xbuf_tail_;
+
+    logs_[log::Graph]->file_ << "\nt -- ";
+    int tmp = xbuf_tail_;
+    int end = (xbuf_head_+1)%STATE_BUF_SIZE;
+    while (tmp != end)
+    {
+        logs_[log::Graph]->file_ << std::fixed << std::setw(5) << std::setprecision(1) << xbuf_[tmp].t << " -- ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
+    logs_[log::Graph]->file_ << "\nK -- ";
+    tmp = xbuf_tail_;
+    while (tmp != end)
+    {
+        if (xbuf_[tmp].kf >= 0)
+            logs_[log::Graph]->file_ << std::fixed << std::setw(5) << xbuf_[tmp].kf << " -- ";
+        else
+            logs_[log::Graph]->file_ << "     " << " -- ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
+    logs_[log::Graph]->file_ << "\nN -- ";
+    tmp = xbuf_tail_;
+    while (tmp != end)
+    {
+        logs_[log::Graph]->file_ << std::fixed << std::setw(5) << xbuf_[tmp].node << " -- ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
+    logs_[log::Graph]->file_ << "\nG -- ";
+    tmp = xbuf_tail_;
+    while (tmp != end)
+    {
+        if (xbuf_[tmp].type & State::Gnss)
+            logs_[log::Graph]->file_ << "  X   -- ";
+        else
+            logs_[log::Graph]->file_ << "      -- ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
+    logs_[log::Graph]->file_ << "\nF -- ";
+    tmp = xbuf_tail_;
+    while (tmp != end)
+    {
+        if (xbuf_[tmp].type & State::Camera)
+            logs_[log::Graph]->file_ << std::fixed << std::setw(5) << (int)xbuf_[tmp].n_cam << " -- ";
+        else
+            logs_[log::Graph]->file_ << "      -- ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
+    logs_[log::Graph]->file_ << "\nM -- ";
+    tmp = xbuf_tail_;
+    while (tmp != end)
+    {
+        if (xbuf_[tmp].type & State::Mocap)
+            logs_[log::Graph]->file_ << "  X   -- ";
+        else
+            logs_[log::Graph]->file_ << "      -- ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
 }
 
 

@@ -57,15 +57,6 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
 
 void Salsa::imageUpdate(const meas::Img &m)
 {
-//    if (current_node_ == -1)
-//    {
-//        initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
-//    }
-//    else
-//    {
-//        endInterval(m.t);
-//    }
-
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
 
@@ -89,6 +80,9 @@ void Salsa::imageUpdate(const meas::Img &m)
             xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});
         }
     }
+//    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Camera) == 0, "Cannot double-up with Camera nodes");
+    xbuf_[xbuf_head_].type |= State::Camera;
+    xbuf_[xbuf_head_].n_cam++;;
 
     if (m.new_keyframe)
     {

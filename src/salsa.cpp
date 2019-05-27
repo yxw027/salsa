@@ -536,6 +536,10 @@ void Salsa::integrateTransition(double t)
             xbuf_head_ = to;
             ++current_node_;
             do_cleanup = true;
+            xbuf_[xbuf_head_].type = State::None;
+            xbuf_[xbuf_head_].n_cam = 0;
+            xbuf_[xbuf_head_].node = current_node_;
+            xbuf_[xbuf_head_].kf = -1;
         }
 
         imu.integrate(t, imu.u_, imu.cov_);
@@ -594,8 +598,6 @@ void Salsa::initializeNodeWithImu()
                    xbuf_[to].x.data(), xbuf_[to].v.data());
     xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
     xbuf_[to].tau(1) = xbuf_[from].tau(1);
-    xbuf_[to].kf = -1;
-    xbuf_[to].node = current_node_;
 }
 
 

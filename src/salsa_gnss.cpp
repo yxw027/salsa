@@ -154,6 +154,8 @@ void Salsa::gnssUpdate(const meas::Gnss &m)
         prange_.back()[i++].init(m.obs[0].t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
                 p_b2g_, current_node_, xbuf_head_);
     }
+    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Gnss) == 0, "Cannot double-up with Gnss nodes");
+    xbuf_[xbuf_head_].type |= State::Gnss;
 }
 
 void Salsa::initializeStateGnss(const meas::Gnss &m)
