@@ -52,7 +52,10 @@ void Salsa::logOptimizedWindow()
         logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
     }
     logs_[log::Opt]->logVectors(imu_bias_, x_b2c_.arr(), x_e2n_.arr());
-    printGraph();
+    if (DEBUGLOGLEVEL <= 4)
+        printGraph();
+    if (DEBUGLOGLEVEL <= 2)
+        printFeat();
 }
 
 void Salsa::logCurrentState()
@@ -330,6 +333,61 @@ void Salsa::printGraph()
         else
             logs_[log::Graph]->file_ << "      -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+    logs_[log::Graph]->file_ << "\n";
+}
+
+void Salsa::printFeat()
+{
+    // idx:   65   66   67   68   69   70   71  ...
+    // 0    |  O |  X |  X |  X |    |    |    |
+    // 1    |  O |  X |  X |    |    |    |    |
+    // 2    |    |  O |  X |  X |  X |  X |    |
+    // 3    |    |    |    |    |  O |  X |    |
+    // 4    |    |    |    |    |    |  O |  X |
+    // 5    |    |    |    |    |    |  O |  X |
+    // 6    |    |    |    |    |    |  O |  X |
+
+    logs_[log::Graph]->file_ << "idx:  ";
+    int tmp = xbuf_tail_;
+    int end = (xbuf_head_+1)%STATE_BUF_SIZE;
+    while (tmp != end)
+    {
+        logs_[log::Graph]->file_ << std::fixed << std::setw(4) << tmp << " ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
+    logs_[log::Graph]->file_ << "\n";
+    for (FeatMap::iterator f = xfeat_.begin(); f != xfeat_.end(); f++)
+    {
+        logs_[log::Graph]->file_ << std::fixed << std::setw(4) << f->first << " |";
+        tmp = xbuf_tail_;
+        while (tmp != end)
+        {
+            if (tmp == f->second.idx0)
+            {
+                logs_[log::Graph]->file_ << "  O |";
+            }
+            else
+            {
+                bool is_to = false;
+                for (auto& func : f->second.funcs)
+                {
+                    if (func.to_idx_ == tmp)
+                    {
+                        logs_[log::Graph]->file_ << "  X |";
+                        is_to = true;
+                        break;
+                    }
+                }
+                if (!is_to)
+                {
+                    logs_[log::Graph]->file_ << "    |";
+                }
+            }
+            tmp = (tmp + 1) % STATE_BUF_SIZE;
+        }
+        logs_[log::Graph]->file_ << "\n";
     }
 }
 

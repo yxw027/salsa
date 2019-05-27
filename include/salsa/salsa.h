@@ -92,6 +92,7 @@ public:
     void logCurrentState();
     void logImu();
     void printGraph();
+    void printFeat();
     struct log
     {
         enum
@@ -119,7 +120,7 @@ public:
     /************************************/
     /*         Graph Management         */
     /************************************/
-    void endInterval(double t);
+//    void endInterval(double t);
     void startNewInterval(double t);
     void cleanUpSlidingWindow();
     void setNewKeyframe();

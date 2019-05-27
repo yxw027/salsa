@@ -145,6 +145,7 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
 
 void Salsa::gnssUpdate(const meas::Gnss &m)
 {
+    SD(1, "Gnss Update, t=%.2f", m.t);
     Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
     prange_.emplace_back(m.obs.size());
     int i = 0;

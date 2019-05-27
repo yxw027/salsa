@@ -28,16 +28,16 @@
 #endif
 
 #define DEBUGPRINTLEVEL 3
-#define DEBUGLOGLEVEL 0
+#define DEBUGLOGLEVEL 2
 
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl
 #define SD(level, f_, ...) do{ \
-    if ((level) > DEBUGPRINTLEVEL) {\
+    if ((level) >= DEBUGPRINTLEVEL) {\
         printf((f_), ##__VA_ARGS__);\
         printf("\n");\
     }\
-    if ((level) > DEBUGLOGLEVEL) {\
+    if ((level) >= DEBUGLOGLEVEL) {\
         char buf[100];\
         int n = sprintf(buf, (f_), ##__VA_ARGS__);\
         logs_[log::Graph]->file_.write(buf, n);\

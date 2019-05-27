@@ -345,7 +345,7 @@ TEST (Vision, HandleFeatureHandoff)
         feat.zetas[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).normalized();
         feat.depths[k] = (l.row(k).transpose() - salsa.current_state_.x.t()).norm();
     }
-    salsa.addMeas(meas::Img(t, std::move(feat), R_pix, salsa.calcNewKeyframeCondition(feat)));
+    salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
     EXPECT_LT(salsa.summary_.initial_cost, 1e-18);
 
     EXPECT_EQ(salsa.xbuf_head_, 1);

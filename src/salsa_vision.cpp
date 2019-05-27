@@ -21,8 +21,11 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
 {
   if (sim_KLT_)
   {
+    SD(1, "Simulating KLT");
     if (current_img_.empty())
+    {
         current_img_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), 0);
+    }
     current_img_ = 0;
     for (auto pix : z.pixs)
     {
@@ -51,7 +54,7 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
       zfeat.pix.emplace_back(pix.x(), pix.y());
     }
     bool new_keyframe = calcNewKeyframeCondition(zfeat);
-    addMeas(meas::Img(tc, std::move(zfeat), R_pix, new_keyframe));
+    addMeas(meas::Img(tc, zfeat, R_pix, new_keyframe));
   }
 }
 
@@ -60,15 +63,22 @@ void Salsa::imageUpdate(const meas::Img &m)
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
 
+    SD(1, "Image Update, t=%.2f", m.t);
     for (int i = 0; i < m.z.zetas.size(); i++)
     {
         if (isTrackedFeature(m.z.feat_ids[i]))
         {
             Feat& ft(xfeat_.at(m.z.feat_ids[i]));
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
+            {
+                SD(1, "Adding new measurement to feature %d", m.z.feat_ids[i]);
                 ft.addMeas(xbuf_head_, m.R_pix, m.z.zetas[i]);
+            }
             else
+            {
+                SD(1, "Moving feature measurement %d", m.z.feat_ids[i]);
                 ft.moveMeas(xbuf_head_, m.z.zetas[i]);
+            }
             ft.updated_in_last_image_ = true;
             ft.funcs.back().rho_true_ = 1.0/m.z.depths[i];
         }
@@ -77,6 +87,7 @@ void Salsa::imageUpdate(const meas::Img &m)
             double rho0 = 0.1;
             if (use_measured_depth_)
                 rho0 = 1.0/m.z.depths[i];
+            SD(1, "Adding new feature %d", m.z.feat_ids[i]);
             xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});
         }
     }
@@ -138,8 +149,8 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
         kf_condition_ = TOO_MUCH_PARALLAX;
         kf_feat_ = z;
         kf_num_feat_ = z.feat_ids.size();
-        return true;
         SD(2, "new keyframe, too much parallax: = %f", kf_parallax_);
+        return true;
     }
     else if(kf_Nmatch_feat_ <= std::round(kf_feature_thresh_ * kf_num_feat_) + 0.001)
     {
@@ -164,8 +175,12 @@ void Salsa::cleanUpFeatureTracking()
     FeatMap::iterator fit = xfeat_.begin();
     while (fit != xfeat_.end())
     {
+        SD(1, "Attempting to Slide anchor for Feature %d, %d->%d", fit->first, fit->second.idx0, tmp);
         if (!fit->second.slideAnchor(tmp, xbuf_, x_b2c_))
+        {
+            SD(1, "Unable to slide, removing feature %d", fit->first);
             fit = xfeat_.erase(fit);
+        }
         else
             fit++;
     }
@@ -177,6 +192,7 @@ void Salsa::createNewKeyframe()
     collectNewfeatures();
     kf_feat_ = current_feat_;
     kf_num_feat_ = kf_feat_.size();
+    SD(1, "Creating new Keyframe with %d features", kf_feat_.size());
     current_img_.copyTo(kf_img_);
 }
 
@@ -194,6 +210,7 @@ void Salsa::rmLostFeatFromKf()
         else if (!ft.updated_in_last_image_
            && (ft.funcs.back().to_idx_ == xbuf_head_ || xbuf_[ft.funcs.back().to_idx_].kf < 0))
         {
+            SD(1, "Feature %d not tracked", ftpair->first);
             ft.funcs.pop_back();
             if (ft.funcs.size() == 0)
             {

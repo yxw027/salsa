@@ -78,7 +78,7 @@ void Feat::addMeas(int to_idx, const Matrix2d &cov, const Vector3d &zj)
 }
 
 void Feat::moveMeas(int to_idx, const Vector3d &zj)
-{
+{    
     funcs.back().to_idx_ = to_idx;
     funcs.back().zetaj_ = zj;
 }
@@ -91,7 +91,6 @@ bool Feat::slideAnchor(int new_from_idx, const StateVec &xbuf, const Xformd &x_b
         return true; // Don't need to slide, this one is anchored ahead of the slide
     if (funcs.size() <= 1)
         return false; // can't slide, no future measurements
-
 
     Xformd x_I2i(xbuf[idx0].x);
     Xformd x_I2j(xbuf[new_from_idx].x);

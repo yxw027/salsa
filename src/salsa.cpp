@@ -291,6 +291,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
         return;
     }
 
+    SD(1, "Got IMU t: %.3f", t);
     imu_meas_buf_.push_back({t, z, R});
 
 
@@ -317,53 +318,53 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     logImu();
 }
 
-void Salsa::endInterval(double t)
-{
-    // shortcuts to the relevant transition factors
-    ImuFunctor& imu(imu_.back());
-    ClockBiasFunctor& clk(clk_.back());
-    const int from = imu.from_idx_;
-    int to = imu.to_idx_;
+//void Salsa::endInterval(double t)
+//{
+//    // shortcuts to the relevant transition factors
+//    ImuFunctor& imu(imu_.back());
+//    ClockBiasFunctor& clk(clk_.back());
+//    const int from = imu.from_idx_;
+//    int to = imu.to_idx_;
 
-    // see if this interval is pointing anywhere
-    bool do_cleanup = false;
-    if (to < 0)
-    {
-        assert(from == xbuf_head_);
-        // if it's not, then set up a new node
-        to = (xbuf_head_+1) % STATE_BUF_SIZE;
-        ++current_node_;
-        do_cleanup = true;
-    }
+//    // see if this interval is pointing anywhere
+//    bool do_cleanup = false;
+//    if (to < 0)
+//    {
+//        assert(from == xbuf_head_);
+//        // if it's not, then set up a new node
+//        to = (xbuf_head_+1) % STATE_BUF_SIZE;
+//        ++current_node_;
+//        do_cleanup = true;
+//    }
 
-    // Finish the transition factors
-    while (imu_meas_buf_.size() > 0 && imu_meas_buf_.front().t <= t)
-    {
-        auto& z(imu_meas_buf_.front());
-        imu.integrate(z.t, z.z, z.R);
-        imu_meas_buf_.pop_front();
-    }
-    imu.integrate(t, imu.u_, imu.cov_);
-    imu.finished(to);
-    clk.finished(imu.delta_t_, to);
-    current_state_integrator_.reset(t);
+//    // Finish the transition factors
+//    while (imu_meas_buf_.size() > 0 && imu_meas_buf_.front().t <= t)
+//    {
+//        auto& z(imu_meas_buf_.front());
+//        imu.integrate(z.t, z.z, z.R);
+//        imu_meas_buf_.pop_front();
+//    }
+//    imu.integrate(t, imu.u_, imu.cov_);
+//    imu.finished(to);
+//    clk.finished(imu.delta_t_, to);
+//    current_state_integrator_.reset(t);
 
-    // Initialize the estimated state at the end of the interval
-    xbuf_[to].t = t;
-    imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
-                   xbuf_[to].x.data(), xbuf_[to].v.data());
-    xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
-    xbuf_[to].tau(1) = xbuf_[from].tau(1);
-    xbuf_[to].kf = -1;
-    xbuf_[to].node = current_node_;
-    xbuf_head_ = to;
+//    // Initialize the estimated state at the end of the interval
+//    xbuf_[to].t = t;
+//    imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
+//                   xbuf_[to].x.data(), xbuf_[to].v.data());
+//    xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
+//    xbuf_[to].tau(1) = xbuf_[from].tau(1);
+//    xbuf_[to].kf = -1;
+//    xbuf_[to].node = current_node_;
+//    xbuf_head_ = to;
 
-    if (do_cleanup)
-        cleanUpSlidingWindow();
+//    if (do_cleanup)
+//        cleanUpSlidingWindow();
 
-    assert(xbuf_head_ < xbuf_.size());
-    assert(xbuf_head_ != xbuf_tail_);
-}
+//    assert(xbuf_head_ < xbuf_.size());
+//    assert(xbuf_head_ != xbuf_tail_);
+//}
 
 
 void Salsa::cleanUpSlidingWindow()
@@ -372,26 +373,41 @@ void Salsa::cleanUpSlidingWindow()
         return;
 
     oldest_node_ = current_node_ - node_window_;
+    SD(1, "Clean Up Sliding Window, oldest_node = %d", oldest_node_);
     while (xbuf_[xbuf_tail_].node < oldest_node_)
         xbuf_tail_ = (xbuf_tail_ + 1) % STATE_BUF_SIZE;
 
     while (imu_.begin()->from_node_ < oldest_node_)
+    {
+        SD(1, "removing IMU %d->%d", imu_.front().from_idx_, imu_.front().to_idx_);
         imu_.pop_front();
+    }
 
     while (clk_.front().from_node_ < oldest_node_)
+    {
+        SD(1, "removing clk %d->%d", clk_.front().from_idx_, clk_.front().to_idx_);
         clk_.pop_front();
+    }
 
     while (mocap_.size() > 0 && mocap_.begin()->node_ < oldest_node_)
+    {
+        SD(1, "removing mocap ->%d", mocap_.front().idx_);
         mocap_.pop_front();
+    }
+
 
     while (prange_.size() > 0 && prange_.front().front().node_ < oldest_node_)
+    {
+        SD(1, "removing %d prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
         prange_.pop_front();
+    }
 
     cleanUpFeatureTracking();
 }
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
+    SD(3, "Initialize State");
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
     xbuf_[0].t = current_state_.t = t;
@@ -410,6 +426,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
 void Salsa::setNewKeyframe()
 {
     current_kf_++;
+    SD(1, "Creating new keyframe %d", current_kf_);
     xbuf_[xbuf_head_].kf = current_kf_;
     current_state_.kf = current_kf_;
     if (new_kf_cb_)
@@ -432,6 +449,7 @@ void Salsa::handleMeas()
 
     if (current_node_ == -1)
     {
+        SD(5, "Initializing with Meas Type %d", (*mit)->type);
         initialize(*mit);
     }
 
@@ -491,6 +509,7 @@ void Salsa::initialize(const meas::Base *m)
     }
     case meas::Base::GNSS:
     {
+        SD(3, "Initialized GNSS\n");
         const meas::Gnss* z = dynamic_cast<const meas::Gnss*>(m);
         initializeStateGnss(*z);
         startNewInterval(z->t);
@@ -517,6 +536,7 @@ void Salsa::integrateTransition(double t)
     {
         num_imu++;
         auto& z(imu_meas_buf_.front());
+        SD(1, "Integrate to t=%.3f", z.t);
         imu.integrate(z.t, z.z, z.R);
         imu_meas_buf_.pop_front();
     }
@@ -535,6 +555,8 @@ void Salsa::integrateTransition(double t)
             to = (xbuf_head_+1) % STATE_BUF_SIZE;
             xbuf_head_ = to;
             ++current_node_;
+            SD(1, "Create a new node %d", current_node_);
+            SD(1, "Advance head %d", xbuf_head_);
             do_cleanup = true;
             xbuf_[xbuf_head_].type = State::None;
             xbuf_[xbuf_head_].n_cam = 0;
@@ -542,7 +564,9 @@ void Salsa::integrateTransition(double t)
             xbuf_[xbuf_head_].kf = -1;
         }
 
+        SD(1, "Integrate to t=%.2f", t);
         imu.integrate(t, imu.u_, imu.cov_);
+        SD(1, "End Imu Interval at idx=%d", to);
         imu.finished(to);
         ClockBiasFunctor& clk(clk_.back());
         clk.finished(imu.delta_t_, to);
@@ -556,8 +580,12 @@ void Salsa::integrateTransition(double t)
     }
     else // otherwise we gotta remove this transition, because we are going to double-up this node
     {
+        SD(1, "Remove Imu interval");
         if (imu.n_updates_ == 1)
+        {
+            SD(3, "Push singleton IMU measurement back onto queue");
             imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
+        }
         imu_.pop_back();
         clk_.pop_back();
     }
@@ -565,6 +593,7 @@ void Salsa::integrateTransition(double t)
 
 void Salsa::startNewInterval(double t)
 {
+    SD(1, "Starting a new interval. imu_.size()=%lu and xbuf_head=%d", imu_.size(), xbuf_head_);
     imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 
@@ -585,7 +614,10 @@ void Salsa::startNewInterval(double t)
 void Salsa::initializeNodeWithImu()
 {
     if (imu_.size() == 0)
+    {
+        SD(5, "Tried to initialize a node from IMU with not IMU measurements");
         return;
+    }
 
     ImuFunctor& imu(imu_.back());
     const int from = imu.from_idx_;
@@ -593,6 +625,7 @@ void Salsa::initializeNodeWithImu()
 
     SALSA_ASSERT(to > 0, "Need to have a valid destination");
 
+    SD(1, "Initialize Node %d with IMU factor %lu by integrating from %d", to, imu_.size(), from);
     xbuf_[to].t = imu.t;
     imu.estimateXj(xbuf_[from].x.data(), xbuf_[from].v.data(),
                    xbuf_[to].x.data(), xbuf_[to].v.data());
@@ -619,6 +652,7 @@ void Salsa::initializeNodeWithImu()
 
 void Salsa::addMeas(const meas::Mocap &&mocap)
 {
+    SD(1, "Got new Mocap measurement");
     mocap_meas_buf_.push_back(mocap);
     new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
     if (update_on_mocap_)
@@ -627,6 +661,7 @@ void Salsa::addMeas(const meas::Mocap &&mocap)
 
 void Salsa::addMeas(const meas::Gnss &&gnss)
 {
+    SD(1, "Got new GNSS measurement");
     gnss_meas_buf_.push_back(gnss);
     new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
     if (update_on_gnss_)
@@ -635,6 +670,7 @@ void Salsa::addMeas(const meas::Gnss &&gnss)
 
 void Salsa::addMeas(const meas::Img &&img)
 {
+    SD(1, "Got new IMG measurement t: ", img.t);
     img_meas_buf_.push_back(img);
     new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
     if (update_on_camera_)

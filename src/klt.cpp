@@ -141,6 +141,8 @@ int Salsa::calcNewKeyframeConditionKLT()
 
     if (current_feat_.size() < std::round(kf_feature_thresh_ * kf_num_feat_))
     {
+        SD(2, "KLT new keyframe, not enough matches: = %d/%f",
+           kf_Nmatch_feat_, std::round(kf_feature_thresh_ * kf_num_feat_));
         kf_condition_ = INSUFFICIENT_MATCHES;
         return INSUFFICIENT_MATCHES;
     }
@@ -168,6 +170,7 @@ int Salsa::calcNewKeyframeConditionKLT()
 
     if (kf_parallax_ > kf_parallax_thresh_)
     {
+        SD(2, "KLT new keyframe, too much parallax: = %f", kf_parallax_);
         kf_condition_ = TOO_MUCH_PARALLAX;
         return TOO_MUCH_PARALLAX;
     }
@@ -185,6 +188,8 @@ void Salsa::filterFeaturesTooClose()
             double dy = current_feat_.pix[i].y - current_feat_.pix[j].y;
             if (std::sqrt(dx*dx + dy*dy) < feature_nearby_radius_)
             {
+                SD(1, "feature %d is too close to feature %d, dropping %d",
+                   current_feat_.feat_ids[i], current_feat_.feat_ids[j], current_feat_.feat_ids[j]);
                 dropFeature(j);
             }
         }
@@ -206,6 +211,7 @@ void Salsa::filterFeaturesRANSAC()
         if (mask.at<float>(i,0) == 0)
         {
             dropFeature(i);
+            SD(1, "feature %d filtered by RANSAC", current_feat_.feat_ids[i]);
         }
     }
 }

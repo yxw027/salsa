@@ -47,7 +47,7 @@ struct Imu : public Base
 struct Mocap : public Base
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Mocap();
+    Mocap(double _t, const xform::Xformd& _z, const Matrix6d& _R);
     xform::Xformd z;
     Matrix6d R;
 };

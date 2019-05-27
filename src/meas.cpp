@@ -28,15 +28,18 @@ Gnss::Gnss(double _t, const ObsVec& _z)
     obs = _z;
 }
 
-Gnss::Gnss(double _t, ObsVec&& _z) :
-    obs(std::move(_z))
+//Gnss::Gnss(double _t, ObsVec&& _z) :
+//    obs(std::move(_z))
+//{
+//    t = _t;
+//    type = GNSS;
+//}
+
+Mocap::Mocap(double _t, const xform::Xformd &_z, const Matrix6d &_R) :
+    z(_z),
+    R(_R)
 {
     t = _t;
-    type = GNSS;
-}
-
-Mocap::Mocap()
-{
     type = MOCAP;
 }
 
@@ -48,14 +51,14 @@ Img::Img(double _t, const Features &_z, const Eigen::Matrix2d &_R, bool _new_key
     new_keyframe = _new_keyframe;
     type = IMG;
 }
-Img::Img(double _t, Features &&_z, const Eigen::Matrix2d &_R, bool _new_keyframe) :
-    z(std::move(_z))
-{
-    t = _t;
-    R_pix = _R;
-    new_keyframe = _new_keyframe;
-    type = IMG;
-}
+//Img::Img(double _t, Features &&_z, const Eigen::Matrix2d &_R, bool _new_keyframe) :
+//    z(std::move(_z))
+//{
+//    t = _t;
+//    R_pix = _R;
+//    new_keyframe = _new_keyframe;
+//    type = IMG;
+//}
 
 }
 }
