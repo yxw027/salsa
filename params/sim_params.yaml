@@ -1,5 +1,5 @@
-tmax: 60.0 # Simulation total time, time step is determined by IMU rate
-dt: 0.004
+tmax: 30.0 # Simulation total time
+dt: 0.004 # Sim step rate
 log_filename: ""
 seed: 15 # 0 initializes seed with time
 
@@ -74,20 +74,20 @@ lqr_max_yaw_error: 0.1
 lqr_Q: [1, 1, 10, 100, 100, 100]
 lqr_R: [10000, 1000, 1000, 1000]
 
-roll_kp: 10.0
+roll_kp: 5.0
 roll_ki: 0.0
 roll_kd: 1.0
-pitch_kp: 10.0
+pitch_kp: 5.0
 pitch_ki: 0.0
 pitch_kd: 1.0
 yaw_rate_kp: 1.0
 yaw_rate_ki: 0.0
 yaw_rate_kd: 0.0
-max_roll: 1.0
-max_pitch: 1.0
+max_roll: 0.5
+max_pitch: 0.5
 max_yaw_rate: 1.0
 max_throttle: 1.0
-max_vel: 5.0
+max_vel: 2.0
 max_tau_x: 1.0
 max_tau_y: 1.0
 max_tau_z: 1.0
@@ -148,10 +148,10 @@ raw_gnss_enabled: true
 imu_update_rate: 250
 accel_init_stdev: 0.0
 accel_noise_stdev: 0.2
-accel_bias_walk: 0.05
+accel_bias_walk: 0.002
 gyro_init_stdev: 0.0
 gyro_noise_stdev: 0.1
-gyro_bias_walk: 0.01
+gyro_bias_walk: 0.001
 p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
 

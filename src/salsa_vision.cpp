@@ -63,7 +63,7 @@ void Salsa::imageCallback(const double& tc, const Features& z, const Matrix2d& R
 
     if (current_node_ == -1)
     {
-        initialize(t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        initialize(t, x0_, v0_, Vector2d::Zero());
     }
     else
     {
@@ -93,6 +93,9 @@ void Salsa::imageCallback(const double& tc, const Features& z, const Matrix2d& R
             xfeat_.insert({z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, z.zetas[i], rho0, 1.0/z.depths[i])});
         }
     }
+//    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Camera) == 0, "Cannot double-up with Camera nodes");
+    xbuf_[xbuf_head_].type |= State::Camera;
+    xbuf_[xbuf_head_].n_cam++;;
 
     if (new_keyframe)
     {

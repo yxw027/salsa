@@ -47,7 +47,6 @@ public:
         int dummy[sizeof...(data)] = { (file_.write((char*)data.data(), sizeof(typename T::Scalar)*data.rows()*data.cols()), 1)... };
     }
 
-private:
     std::ofstream file_;
 };
 

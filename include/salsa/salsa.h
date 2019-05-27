@@ -77,6 +77,31 @@ public:
     void logCurrentState();
     void logImu();
 
+    void printGraph();
+    struct log
+    {
+        enum
+        {
+            CurrentState,
+            Opt,
+            RawRes,
+            FeatRes,
+            Feat,
+            State,
+            CB,
+            MocapRes,
+            SatPos,
+            PRangeRes,
+            Imu,
+            Xe2n,
+            Graph,
+            NumLogs,
+        };
+    };
+    std::vector<Logger*> logs_;
+    std::string log_prefix_;
+
+
     void endInterval(double t);
     void startNewInterval(double t);
     void cleanUpSlidingWindow();
@@ -137,6 +162,7 @@ public:
 
     State current_state_;
     xform::Xformd x0_;
+    Eigen::Vector3d v0_;
 
     int xbuf_head_, xbuf_tail_;
 
@@ -192,28 +218,6 @@ public:
     };
     int last_callback_;
 
-    struct log
-    {
-        enum
-        {
-            CurrentState,
-            Opt,
-            RawRes,
-            FeatRes,
-            Feat,
-            State,
-            CB,
-            MocapRes,
-            SatPos,
-            PRangeRes,
-            Imu,
-            Xe2n,
-            NumLogs,
-        };
-    };
-    std::vector<Logger*> logs_;
-
-    std::string log_prefix_;
     Camera<double> cam_;
     xform::Xformd x_b2m_; // transform from imu to mocap frame
     xform::Xformd x_b2c_; // transform from imu to camera frame

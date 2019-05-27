@@ -10,13 +10,12 @@ using namespace multirotor_sim;
 int main()
 {
     Simulator sim(true);
-    sim.load(imu_feat(false));
+    sim.load(imu_feat());
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
     salsa.x_b2c_ = sim.x_b2c_;
     salsa.x_e2n_ = sim.X_e2n_;
-    salsa.x_e2n0 = sim.X_e2n_;
     salsa.cam_ = sim.cam_;
 
     sim.register_estimator(&salsa);
@@ -27,8 +26,8 @@ int main()
     {
         if (salsa.current_node_ < 0)
         {
-            salsa.current_state_.x = sim.state().X;
-            salsa.current_state_.v = sim.state().v;
+            salsa.x0_ = sim.state().X;
+            salsa.v0_ = sim.state().v;
         }
         true_state_log.log(sim.t_);
         true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,

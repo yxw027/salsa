@@ -40,8 +40,9 @@ void Salsa::init(const string& filename)
     initFactors();
     initSolverOptions();
     x0_ = Xformd::Identity();
+    v0_ = Vector3d::Zero();
     current_state_.x = x0_;
-    current_state_.v = Vector3d::Zero();
+    current_state_.v = v0_;;
 }
 
 void Salsa::load(const string& filename)
@@ -64,6 +65,12 @@ void Salsa::load(const string& filename)
 
     xbuf_.resize(STATE_BUF_SIZE);
     s_.reserve(ns_);
+
+    for (auto& state : xbuf_)
+    {
+        state.type = 0;
+        state.n_cam = 0;
+    }
 
     Vector11d state_anchor_cov;
     get_yaml_eigen("state_anchor_cov", filename, state_anchor_cov);
@@ -361,6 +368,8 @@ void Salsa::endInterval(double t)
         // if it's not, then set up a new node
         to = (xbuf_head_+1) % STATE_BUF_SIZE;
         ++current_node_;
+        xbuf_[to].n_cam = 0;
+        xbuf_[to].type = State::None;
         do_cleanup = true;
     }
 
@@ -383,7 +392,7 @@ void Salsa::endInterval(double t)
     xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
     xbuf_[to].tau(1) = xbuf_[from].tau(1);
     xbuf_[to].kf = -1;
-    xbuf_[to].node = current_node_;
+    xbuf_[to].node = current_node_;    
     xbuf_head_ = to;
 
     if (do_cleanup)
@@ -472,8 +481,5 @@ const State& Salsa::lastKfState()
         it = (it - 1 + STATE_BUF_SIZE) % STATE_BUF_SIZE;
     return xbuf_[it];
 }
-
-
-
 
 }

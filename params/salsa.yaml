@@ -3,13 +3,13 @@ log_prefix: "/tmp/Salsa/"
 ######################################
 ### OPT SETUP
 ######################################
-node_window: 15
+node_window: 10
 state_buf_size: 200
 num_feat: 75
 num_sat: 15
 disable_solver: false
-max_iter: 100
-max_solver_time: 0.1
+max_iter: 1000
+max_solver_time: 1.0
 
 #####################################
 ### IMU
@@ -22,7 +22,7 @@ gyro_noise_stdev: 0.5
 #####################################
 tracker_freq: 10
 min_depth: 0.5
-use_measured_depth: false
+use_measured_depth: true
 
 focal_len: [250.0, 250.0]
 cam_center: [320, 240]
@@ -31,6 +31,7 @@ cam_skew: 0.0
 distortion: [0, 0, 0, 0, 0]
 kf_parallax_thresh: 120
 kf_feature_thresh: 0.75
+update_on_camera: true
 
 show_matches: true
 feature_nearby_radius: 30
@@ -48,6 +49,7 @@ doppler_cov: 0.005
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
+update_on_gnss: false
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, -0.3]
@@ -63,18 +65,22 @@ q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
 disable_mocap: false
 tm: -0.000605557781538751
 x_b2m: [0, 0, 0, 1, 0, 0, 0]
+update_on_mocap: false
 
 #####################################
 ### Anchors
 #####################################
-state_anchor_cov: [0.00001, 0.00001, 0.00001, # p
+state_anchor_cov: [0.000001, 0.000001, 0.000001, # p
                    0.00001, 0.00001, 0.00001, # q
                    0.00005, 0.00005, 0.00005, # v
                    0.001, 0.001] # clk_bias (nsec)
-estimate_x_b2c: false
-x_b2c_anchor_cov: [0.0001, 0.0001, 0.0001, # p
-                   0.00001, 0.00001, 0.00001] # q
 x_e2n_anchor_cov: [0.001, 0.001, 0.001, # p
                    0.001, 0.001, 0.001] # q
-bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
+bias_anchor_cov: [0.000001, 0.000001, 0.000001, # acc
                  0.0000001, 0.0000001, 0.0000001] # gyro
+
+
+### EXTRA (TO BE REMOVED)
+estimate_x_b2c: false
+x_b2c_anchor_cov: [0.001, 0.001, 0.001, # p
+                   0.001, 0.001, 0.001] # q

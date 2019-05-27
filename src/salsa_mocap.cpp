@@ -19,6 +19,8 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
         mocap_.emplace_back(dt_m_, x_b2m_, z.arr(), Vector6d::Zero(),
                             R.inverse().llt().matrixL().transpose(),
                             xbuf_head_, current_node_, current_kf_);
+        SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Mocap) == 0, "Cannot double-up with Mocap nodes");
+        xbuf_[xbuf_head_].type |= State::Mocap;
         return;
     }
     else
@@ -34,6 +36,8 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
                 / (xbuf_[xbuf_head_].t - xbuf_[prev_x_idx].t);
         mocap_.emplace_back(dt_m_, x_b2m_, z.arr(), zdot, R.inverse().llt().matrixL().transpose(),
                             xbuf_head_, current_node_, current_kf_);
+        SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Mocap) == 0, "Cannot double-up with Mocap nodes");
+        xbuf_[xbuf_head_].type |= State::Mocap;
 
         solve();
 

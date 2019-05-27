@@ -17,10 +17,18 @@ public:
         xSize = 12,
         dxSize = 11
     };
+    enum {
+        None = 0x00,
+        Gnss = 0x01,
+        Mocap = 0x02,
+        Camera = 0x04
+    };
     typedef Eigen::Matrix<double, dxSize, dxSize> dxMat;
     double buf_[13];
     int kf;
     int node;
+    uint8_t type;
+    uint8_t n_cam;
     xform::Xformd x;
     double& t;
     Eigen::Map<Eigen::Vector3d> p;
