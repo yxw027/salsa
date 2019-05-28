@@ -90,8 +90,8 @@ struct Obs
     uint8_t SNR;
     uint8_t LLI; // loss-of-lock indicator
     uint8_t code;
-    uint8_t qualL; // carrier phase cov
-    uint8_t qualP; // psuedorange cov
+    double qualL; // carrier phase cov
+    double qualP; // psuedorange cov
     Eigen::Vector3d z; // [prange, doppler, cphase]
 
     Obs();

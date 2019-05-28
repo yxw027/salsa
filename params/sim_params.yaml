@@ -215,7 +215,7 @@ p_b2g: [0, 0, 0]
 
 ## Raw GNSS
 use_raw_gnss_truth: false
-pseudorange_stdev: 1.0
+pseudorange_stdev: 0.5
 pseudorange_rate_stdev: 0.05
 carrier_phase_stdev: 0.01
 ephemeris_filename: "../sample/eph.dat"
