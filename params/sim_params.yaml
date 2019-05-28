@@ -1,4 +1,4 @@
-tmax: 30.0 # Simulation total time
+tmax: 60.0 # Simulation total time
 dt: 0.004 # Sim step rate
 log_filename: ""
 seed: 15 # 0 initializes seed with time
@@ -147,11 +147,11 @@ raw_gnss_enabled: true
 ## IMU
 imu_update_rate: 250
 accel_init_stdev: 0.0
-accel_noise_stdev: 0.2
-accel_bias_walk: 0.002
+accel_noise_stdev: 0.1
+accel_bias_walk: 0.02
 gyro_init_stdev: 0.0
-gyro_noise_stdev: 0.1
-gyro_bias_walk: 0.001
+gyro_noise_stdev: 0.05
+gyro_bias_walk: 0.01
 p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
 
@@ -211,7 +211,7 @@ use_gnss_truth: false
 gnss_horizontal_position_stdev: 1.0
 gnss_vertical_position_stdev: 3.0
 gnss_velocity_stdev: 0.1
-p_b2g: [0, 0, -0.3]
+p_b2g: [0, 0, 0]
 
 ## Raw GNSS
 use_raw_gnss_truth: false

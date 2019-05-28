@@ -76,7 +76,7 @@ void Salsa::logFeatRes()
         {
             logs_[log::FeatRes]->log(ft->first, (int)ft->second.funcs.size(), xbuf_[ft->second.idx0].node);
             FeatDeque::iterator func = ft->second.funcs.begin();
-            for (int j = 0; j < node_window_; j++)
+            for (int j = 0; j < max_node_window_; j++)
             {
                 Vector2d res;
                 if (func != ft->second.funcs.end())
@@ -99,7 +99,7 @@ void Salsa::logFeatRes()
         else
         {
             logs_[log::FeatRes]->log((int)-1, ((int)0), (int)-1);
-            for (int j = 0; j < node_window_; j++)
+            for (int j = 0; j < max_node_window_; j++)
             {
                 Vector2d res;
                 res.setConstant(NAN);
@@ -140,7 +140,7 @@ void Salsa::logMocapRes()
 {
     logs_[log::MocapRes]->log(current_state_.t);
     logs_[log::MocapRes]->log((int)mocap_.size());
-    for (int i = 0; i < node_window_; i++)
+    for (int i = 0; i < max_node_window_; i++)
     {
         double t;
         Vector6d residual;
@@ -163,7 +163,7 @@ void Salsa::logRawGNSSRes()
 {
     logs_[log::RawRes]->log(current_state_.t);
     logs_[log::RawRes]->log((int)prange_.size());
-    for (int i = 0; i < node_window_; i++)
+    for (int i = 0; i < max_node_window_; i++)
     {
         if (i < prange_.size())
         {
@@ -268,10 +268,10 @@ void Salsa::printGraph()
     // G --       --   X   --       --
     // F --   X   --       --   X   --
     // M --       --       --       --
-    logs_[log::Graph]->file_ << "\n\nhead: " << xbuf_head_ << "\ttail: " << xbuf_tail_;
+    logs_[log::Graph]->file_ << "head: " << xbuf_head_ << "\ttail: " << xbuf_tail_;
     logs_[log::Graph]->file_ << "\tkf_cond: " << kf_condition_ << "\tft_kf: " << current_feat_.size();
     logs_[log::Graph]->file_ << "\tft_win: " << xfeat_.size() << "\t  ft_ms_win: " << numTotalFeat() << "\t   ft_tot: " << next_feature_id_;
-    logs_[log::Graph]->file_ << "\tparallax: " << kf_parallax_ << "\t  kf_match: " << kf_Nmatch_feat_;
+    logs_[log::Graph]->file_ << "\nparallax: " << kf_parallax_ << "\t  kf_match: " << kf_Nmatch_feat_;
 
 
     logs_[log::Graph]->file_ << "\nt -- ";
@@ -307,7 +307,7 @@ void Salsa::printGraph()
     while (tmp != end)
     {
         if (xbuf_[tmp].type & State::Gnss)
-            logs_[log::Graph]->file_ << "  X   -- ";
+            logs_[log::Graph]->file_ << "    X -- ";
         else
             logs_[log::Graph]->file_ << "      -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
@@ -329,12 +329,12 @@ void Salsa::printGraph()
     while (tmp != end)
     {
         if (xbuf_[tmp].type & State::Mocap)
-            logs_[log::Graph]->file_ << "  X   -- ";
+            logs_[log::Graph]->file_ << "    X -- ";
         else
             logs_[log::Graph]->file_ << "      -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
-    logs_[log::Graph]->file_ << "\n";
+    logs_[log::Graph]->file_ << "\n\n\n";
 }
 
 void Salsa::printFeat()

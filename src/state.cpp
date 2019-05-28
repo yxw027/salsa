@@ -1,4 +1,5 @@
 #include "salsa/state.h"
+#include "salsa/misc.h"
 
 using namespace Eigen;
 using namespace xform;
@@ -72,8 +73,8 @@ Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_tru
 
 void Feat::addMeas(int to_idx, const Matrix2d &cov, const xform::Xformd& x_b2c, const Vector3d &zj)
 {
-    assert (to_idx != idx0);
-    assert (funcs.size() > 0 ? funcs.back().to_idx_ != to_idx : true);
+    SALSA_ASSERT(to_idx != idx0, "Cannot Point to the same id");
+    SALSA_ASSERT(funcs.size() > 0 ? funcs.back().to_idx_ != to_idx : true, "cannot add duplicate feat meas");
     funcs.emplace_back(cov, x_b2c, z0, zj, to_idx);
 }
 
@@ -106,7 +107,7 @@ bool Feat::slideAnchor(int new_from_idx, const StateVec &xbuf, const Xformd &x_b
     kf0 = new_from_kf;
     funcs.pop_front();
     slide_count++;
-    assert (funcs.front().to_idx_ != idx0);
+    SALSA_ASSERT (funcs.front().to_idx_ != idx0, "Trying to slide to zero");
     return true;
 }
 

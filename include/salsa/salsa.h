@@ -126,16 +126,18 @@ public:
     void setNewKeyframe();
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);
-    void cleanUpFeatureTracking();
+    void cleanUpFeatureTracking(int oldest_kf_idx);
     void rmLostFeatFromKf();
     bool inWindow(int idx);
     ImuIntegrator current_state_integrator_;
     State current_state_;
     int current_node_;
     int oldest_node_;
+    int oldest_kf_;
     int current_kf_;
     int STATE_BUF_SIZE;
-    int node_window_;
+    int max_node_window_;
+    int max_kf_window_;
 
     // Estimated variables
     int xbuf_head_, xbuf_tail_;

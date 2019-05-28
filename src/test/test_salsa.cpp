@@ -320,8 +320,8 @@ public:
         // N    |  0    1    1    2    |  2    3    3    4    | 4     5    5    6    |  6
         // head |  0    1    1    2    |  2    3    3    4    | 4     5    5    6    |  6
         //      | KF -- F -- G -- F -- | KF -- F -- G -- F -- | KF -- F -- G -- F -- | KF ...
-        salsa.node_window_ = 16;
-        for (int i = 0; i < salsa.node_window_; i += 2)
+        salsa.max_node_window_ = 16;
+        for (int i = 0; i < salsa.max_node_window_; i += 2)
         {
             simulateIMU(); createNewKeyframe();
             EXPECT_EQ(salsa.xbuf_head_, i);
@@ -344,7 +344,7 @@ public:
             EXPECT_EQ(salsa.current_kf_, i/2);
             EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
         }
-        for (int i = 0; i < salsa.node_window_; i+=2)
+        for (int i = 0; i < salsa.max_node_window_; i+=2)
         {
             EXPECT_EQ(salsa.xbuf_[i].node, i);
             EXPECT_EQ(salsa.xbuf_[i+1].node, i+1);
@@ -353,9 +353,9 @@ public:
         }
 
         simulateIMU(); createNewKeyframe();
-        EXPECT_EQ(salsa.current_node_, salsa.node_window_);
-        EXPECT_EQ(salsa.xfeat_.size(), salsa.node_window_/2 + 3);
-        EXPECT_EQ(salsa.prange_.size(), salsa.node_window_/2);
+        EXPECT_EQ(salsa.current_node_, salsa.max_node_window_);
+        EXPECT_EQ(salsa.xfeat_.size(), salsa.max_node_window_/2 + 3);
+        EXPECT_EQ(salsa.prange_.size(), salsa.max_node_window_/2);
         for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
         {
             EXPECT_GT(ft.first, 1);
@@ -373,9 +373,9 @@ public:
         simulateIMU(); simulateFeat();
 
         simulateIMU(); createNewKeyframe();
-        EXPECT_EQ(salsa.current_node_, salsa.node_window_+2);
-        EXPECT_EQ(salsa.xfeat_.size(), salsa.node_window_/2 + 3);
-        EXPECT_EQ(salsa.prange_.size(), salsa.node_window_/2);
+        EXPECT_EQ(salsa.current_node_, salsa.max_node_window_+2);
+        EXPECT_EQ(salsa.xfeat_.size(), salsa.max_node_window_/2 + 3);
+        EXPECT_EQ(salsa.prange_.size(), salsa.max_node_window_/2);
         EXPECT_EQ(salsa.xbuf_tail_, 2);
         for (const std::pair<const int,Feat>& ft: salsa.xfeat_)
         {
@@ -399,7 +399,7 @@ public:
         // N    |  0     1     2     2    |  3     4     5     5    | 6      7    8    8    |  9
         // head |  0     1     2     2    |  3     4     5     5    | 6      7    8    8    |  9
         //      | KF -- KF --  F --  G -- | KF -- KF --  F --  G -- | KF -- KF -- F -- G -- | KF ...
-        for (int i = 0; i < salsa.node_window_; i++)
+        for (int i = 0; i < salsa.max_node_window_; i++)
         {
             simulateIMU(); createNewKeyframe();
             EXPECT_EQ(salsa.xbuf_head_, i*3);
@@ -431,7 +431,7 @@ public:
         // N    |  0    1    |  2     3 |  4
         // head |  0    1    |  2     3 |  4
         //      | KF -- G -- | KF --  G | KF ...
-        for (int i = 0; i < salsa.node_window_; i++)
+        for (int i = 0; i < salsa.max_node_window_; i++)
         {
             simulateIMU(); createNewKeyframe();
             EXPECT_EQ(salsa.xbuf_head_, i*2);

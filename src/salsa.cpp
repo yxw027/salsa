@@ -51,7 +51,8 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("p_b2g", filename, p_b2g_);
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
-    get_yaml_node("node_window", filename, node_window_);
+    get_yaml_node("max_node_window", filename, max_node_window_);
+    get_yaml_node("max_kf_window", filename, max_kf_window_);
     get_yaml_node("num_sat", filename, ns_);
     get_yaml_node("num_feat", filename, nf_);
     get_yaml_node("state_buf_size", filename, STATE_BUF_SIZE);
@@ -232,14 +233,14 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
         FeatDeque::iterator func = ft->second.funcs.begin();
         while (func != ft->second.funcs.end())
         {
-            SALSA_ASSERT(inWindow(ft->second.idx0), "Trying to add factor to node outside of window");
-            SALSA_ASSERT(inWindow(func->to_idx_), "Trying to add factor to node outside of window");
+            SALSA_ASSERT(inWindow(ft->second.idx0), "Trying to add factor to node outside of window: %d", ft->second.idx0);
+            SALSA_ASSERT(inWindow(func->to_idx_), "Trying to add factor to node outside of window: %d", func->to_idx_);
             FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
             problem.AddResidualBlock(new FeatFactorAD(ptr),
                                      new ceres::HuberLoss(3.0),
                                      xbuf_[ft->second.idx0].x.data(),
-                                     xbuf_[func->to_idx_].x.data(),
-                                     &ft->second.rho);
+                    xbuf_[func->to_idx_].x.data(),
+                    &ft->second.rho);
             func++;
         }
         ft++;
@@ -368,13 +369,41 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 
 void Salsa::cleanUpSlidingWindow()
 {
-    if (current_node_ < node_window_)
+    if (current_node_ < max_node_window_ && current_kf_ < max_kf_window_)
         return;
 
-    oldest_node_ = current_node_ - node_window_;
-    SD(2, "Clean Up Sliding Window, oldest_node = %d", oldest_node_);
+    // start by placing the tail at the oldest node
+    oldest_node_ = current_node_ - max_node_window_;
+    oldest_kf_ = current_kf_ - max_kf_window_;
+
+    // Move the tail to the oldest node
     while (xbuf_[xbuf_tail_].node < oldest_node_)
         xbuf_tail_ = (xbuf_tail_ + 1) % STATE_BUF_SIZE;
+
+    int kf_idx = xbuf_tail_;
+
+    // Figure out which condition needs to be used by traversing the window and see where we
+    // meet our criteria
+    while (kf_idx != xbuf_head_ && xbuf_[kf_idx].kf < oldest_kf_)
+    {
+        kf_idx = (kf_idx + 1) % STATE_BUF_SIZE;
+    }
+
+    // If we have keyframes, we should check to see if this is a more conservative limit than the
+    // maximum number of nodes (keyframes are expensive to optimize)
+    if (kf_idx != xbuf_head_ && xbuf_[kf_idx].node > oldest_node_)
+    {
+        SD(2, "Using Max Keyframe Constraint To determine number of nodes to optimize");
+        oldest_node_ = xbuf_[kf_idx].node;
+        xbuf_tail_ = kf_idx;
+    }
+    else
+    {
+        SD(2, "Using Max Node Constraint To determine number of nodes to optimize");
+    }
+
+    SD(2, "Clean Up Sliding Window, oldest_node = %d, oldest_kf = %d", oldest_node_, oldest_kf_);
+
 
     while (imu_.begin()->from_node_ < oldest_node_)
     {
@@ -397,11 +426,11 @@ void Salsa::cleanUpSlidingWindow()
 
     while (prange_.size() > 0 && prange_.front().front().node_ < oldest_node_)
     {
-            SD(1, "removing %lu prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
+        SD(1, "removing %lu prange factors all pointing at ->%d", prange_.front().size(), prange_.front().front().idx_);
         prange_.pop_front();
     }
 
-    cleanUpFeatureTracking();
+    cleanUpFeatureTracking(kf_idx);
 }
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
@@ -575,8 +604,8 @@ void Salsa::integrateTransition(double t)
         if (do_cleanup)
             cleanUpSlidingWindow();
 
-        assert(xbuf_head_ < xbuf_.size());
-        assert(xbuf_head_ != xbuf_tail_);
+        SALSA_ASSERT(xbuf_head_ < xbuf_.size(), "Memory Overrun");
+        SALSA_ASSERT(xbuf_head_ != xbuf_tail_, "Cleaned up too much");
     }
     else // otherwise we gotta remove this transition, because we are going to double-up this node
     {
@@ -623,7 +652,7 @@ void Salsa::initializeNodeWithImu()
     const int from = imu.from_idx_;
     int to = imu.to_idx_;
 
-    SALSA_ASSERT(to > 0, "Need to have a valid destination");
+    SALSA_ASSERT(to >= 0, "Need to have a valid destination");
 
     SD(2, "Initialize Node %d with IMU factor %lu by integrating from %d", to, imu_.size(), from);
     xbuf_[to].t = imu.t;
