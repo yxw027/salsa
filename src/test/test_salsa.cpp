@@ -480,23 +480,28 @@ public:
                 keyframe_++;
                 expected_kf = true;
                 meas::Img img = simulateFeatDelay();
-                EXPECT_FALSE(expected_kf);
                 simulateIMU(); simulateGNSS();
                 salsa.addMeas(std::move(img));
+                EXPECT_FALSE(expected_kf);
+                EXPECT_EQ(salsa.xbuf_head_, i*2+1);
+                EXPECT_EQ(salsa.current_node_, i*2+1);
+                EXPECT_EQ(salsa.current_kf_, i);
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
             }
             else
             {
                 simulateIMU(); createNewKeyframe();
+                EXPECT_EQ(salsa.xbuf_head_, i*2);
+                EXPECT_EQ(salsa.current_node_, i*2);
+                EXPECT_EQ(salsa.current_kf_, i);
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, i);
                 simulateIMU(); simulateGNSS();
+                EXPECT_EQ(salsa.xbuf_head_, i*2);
+                EXPECT_EQ(salsa.current_node_, i*2);
+                EXPECT_EQ(salsa.current_kf_, i);
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, i);
+                EXPECT_EQ(salsa.new_meas_.size(), 1);
             }
-//            EXPECT_EQ(salsa.xbuf_head_, i*2);
-//            EXPECT_EQ(salsa.current_node_, i*2);
-//            EXPECT_EQ(salsa.current_kf_, i);
-//            EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, i);
-            EXPECT_EQ(salsa.xbuf_head_, i*2+1);
-            EXPECT_EQ(salsa.current_node_, i*2+1);
-            EXPECT_EQ(salsa.current_kf_, i);
-            EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
         }
     }
 
@@ -559,3 +564,4 @@ TEST_F (SalsaFeatGNSSTest, DelayedCamera)
 {
     runDelayedCamera();
 }
+
