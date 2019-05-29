@@ -111,7 +111,6 @@ void Salsa::initFactors()
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD());
-    problem.AddParameterBlock(x_b2c_.data(), 7, new XformParamAD());
     problem.AddParameterBlock(imu_bias_.data(), 6);
 
     int idx = xbuf_tail_;

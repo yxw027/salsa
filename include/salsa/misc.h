@@ -194,7 +194,7 @@ inline std::string imu_raw_gnss(bool noise=true, double tmax=-1.0)
     return filename;
 }
 
-inline std::string imu_feat_gnss(bool noise=false, double tmax=-1.0)
+inline std::string imu_feat_gnss(bool noise=true, double tmax=-1.0)
 {
     std::string filename = "/tmp/Salsa.imu_only.yaml";
     std::ofstream tmp(filename);

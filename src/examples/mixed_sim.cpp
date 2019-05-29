@@ -10,7 +10,7 @@ using namespace multirotor_sim;
 int main()
 {
     Simulator sim(true);
-    sim.load(imu_feat_gnss(false));
+    sim.load(imu_feat_gnss());
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/MixedSimulation/"));

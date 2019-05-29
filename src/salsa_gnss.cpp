@@ -117,11 +117,19 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
 
 void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
 {
+    initializeNodeWithImu();
+
     if (filtered_obs_.size() > 7 && use_point_positioning_)
     {
-        // Use IMU to estimate attitude
-        if (imu_.size() > 0)
-            xbuf_[xbuf_head_].x.q() = xbuf_[imu_.back().from_idx_].x.q() * quat::Quatd(imu_.back().y_.tail<4>());
+        int to = xbuf_head_;
+
+//        // Use IMU to estimate attitude
+//        if (imu_.size() > 0)
+//        {
+//            quat::Quatd gamma(imu_.back().y_.data()+ImuFunctor::GAMMA);
+//            xbuf_[to].x.q() = xbuf_[from].x.q() * gamma;
+//        }
+
 
         // Use Iterated Least-Squares to estimate position and velocity
         Vector8d pp_sol = Vector8d::Zero();
@@ -130,16 +138,13 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
         auto phat = pp_sol.segment<3>(0);
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
-        xbuf_[xbuf_head_].t = m.t;
-        xbuf_[xbuf_head_].x.t() = gnss_utils::WGS84::ecef2ned(x_e2n_, phat);
-        xbuf_[xbuf_head_].v = xbuf_[xbuf_head_].x.q().rotp(x_e2n_.q().rotp(vhat));
-        xbuf_[xbuf_head_].tau = that;
-        xbuf_[xbuf_head_].kf = -1;
-        xbuf_[xbuf_head_].node = current_node_;
-    }
-    else
-    {
-        initializeNodeWithImu();
+        xbuf_[to].t = m.t;
+        x_e2n_ = gnss_utils::WGS84
+        xbuf_[to].x.t() = gnss_utils::WGS84::ecef2ned(x_e2n_, phat);
+        xbuf_[to].v = xbuf_[to].x.q().rotp(x_e2n_.q().rotp(vhat));
+        xbuf_[to].tau = that;
+//        xbuf_[to].kf = -1;
+//        xbuf_[to].node = current_node_;
     }
 }
 

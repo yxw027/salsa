@@ -50,7 +50,7 @@ doppler_cov: 0.005
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
 disable_gnss: false
-update_on_gnss: false
+update_on_gnss: true
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, 0]
