@@ -174,7 +174,7 @@ TEST (Vision, SlideAnchor)
         if (!feat)
             feat = new Feat(idx, kf, zeta, 1.0/z.depths[0]);
         else
-            feat->addMeas(idx, R_pix, zeta);
+            feat->addMeas(idx, R_pix, salsa.x_b2c_, zeta);
         xbuf[idx].x = sim.state().X;
         xbuf[idx].v = sim.state().v;
         xbuf[idx].t = sim.t_;
@@ -197,13 +197,13 @@ TEST (Vision, SlideAnchor)
     Vector2d res;
     feat->funcs.front()(xbuf[feat->idx0].x.data(),
                         xbuf[feat->funcs.front().to_idx_].x.data(),
-                        &feat->rho, salsa.x_b2c_.data(), res.data());
+                        &feat->rho, res.data());
     for (int i = 1; i < 9; i++)
     {
         EXPECT_TRUE(feat->slideAnchor(i, xbuf, salsa.x_b2c_));
         feat->funcs.front()(xbuf[feat->idx0].x.data(),
                             xbuf[feat->funcs.front().to_idx_].x.data(),
-                            &feat->rho, salsa.x_b2c_.data(), res.data());
+                            &feat->rho, res.data());
         EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-5);
         EXPECT_NEAR(feat->rho, rho[i], 1e-5);
         EXPECT_MAT_NEAR(pt, feat->pos(xbuf, salsa.x_b2c_), 1e-5);
@@ -223,7 +223,7 @@ TEST (Vision, KeyframeCleanup)
 
     sim.register_estimator(&salsa);
 
-    while (salsa.current_kf_ <= salsa.node_window_)
+    while (salsa.current_kf_ <= salsa.max_kf_window_)
     {
         sim.run();
     }
@@ -426,7 +426,7 @@ TEST (Vision, HandleWindowSlide)
         expected_kf = false;
     };
 
-    for (int k = 0; k < salsa.node_window_*2; k++)
+    for (int k = 0; k < salsa.max_kf_window_*2; k++)
     {
         for (int i = 0; i < 10; i++)
         {
@@ -437,7 +437,7 @@ TEST (Vision, HandleWindowSlide)
             EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
             if (i == 0)
             {
-                EXPECT_EQ(salsa.xbuf_tail_, k < salsa.node_window_ ? 0 : k - salsa.node_window_);
+                EXPECT_EQ(salsa.xbuf_tail_, k < salsa.max_kf_window_ ? 0 : k - salsa.max_kf_window_);
                 EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k);
                 EXPECT_EQ(salsa.current_node_, k);
                 EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, k);
@@ -446,7 +446,7 @@ TEST (Vision, HandleWindowSlide)
             }
             else
             {
-                EXPECT_EQ(salsa.xbuf_tail_, k < salsa.node_window_ ? 0 : k - salsa.node_window_ + 1);
+                EXPECT_EQ(salsa.xbuf_tail_, k < salsa.max_kf_window_ ? 0 : k - salsa.max_kf_window_ + 1);
                 EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].node, k+1);
                 EXPECT_EQ(salsa.current_node_, k+1);
                 EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, -1);
@@ -475,14 +475,14 @@ TEST (Vision, HandleWindowSlide)
         else
             EXPECT_EQ(kf_cb_cond, Salsa::INSUFFICIENT_MATCHES);
 
-        if (k > salsa.node_window_)
+        if (k > salsa.max_kf_window_)
         {
             for (auto feat : salsa.xfeat_)
             {
                 Feat& ft(feat.second);
-                if (feat.first < 2*(k - salsa.node_window_))
+                if (feat.first < 2*(k - salsa.max_kf_window_))
                 {
-                    EXPECT_EQ(ft.kf0, k - salsa.node_window_);
+                    EXPECT_EQ(ft.kf0, k - salsa.max_kf_window_);
                 }
             }
         }

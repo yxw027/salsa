@@ -379,11 +379,11 @@ void Salsa::cleanUpSlidingWindow()
     while (xbuf_[xbuf_tail_].node < oldest_node_)
         xbuf_tail_ = (xbuf_tail_ + 1) % STATE_BUF_SIZE;
 
-    int kf_idx = xbuf_tail_;
+    int kf_idx = current_kf_ >= 0 ? xbuf_tail_ : xbuf_head_; // if we haven't declared keyframes, skip keyframe checking
 
     // Figure out which condition needs to be used by traversing the window and see where we
     // meet our criteria
-    while (kf_idx != xbuf_head_ && xbuf_[kf_idx].kf < oldest_kf_)
+    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf < oldest_kf_ || xbuf_[kf_idx].kf < 0))
     {
         kf_idx = (kf_idx + 1) % STATE_BUF_SIZE;
     }

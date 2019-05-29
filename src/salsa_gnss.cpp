@@ -139,7 +139,6 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
         xbuf_[to].t = m.t;
-        x_e2n_ = gnss_utils::WGS84
         xbuf_[to].x.t() = gnss_utils::WGS84::ecef2ned(x_e2n_, phat);
         xbuf_[to].v = xbuf_[to].x.q().rotp(x_e2n_.q().rotp(vhat));
         xbuf_[to].tau = that;
