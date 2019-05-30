@@ -16,6 +16,7 @@ XformAnchor::XformAnchor(const Matrix6d &Xi) :
 void XformAnchor::set(const Xformd& x)
 {
     x_ = x;
+    SALSA_ASSERT(std::abs(1.0 - x.q().arr_.norm()) < 1e-8, "Quat Left Manifold");
 }
 
 template <typename T>
@@ -39,6 +40,7 @@ StateAnchor::StateAnchor(const State::dxMat &Xi):
 void StateAnchor::set(const salsa::State& x)
 {
     x_ = x;
+    SALSA_ASSERT(std::abs(1.0 - x.x.q().arr_.norm()) < 1e-8, "Quat Left Manifold");
 }
 
 template<typename T>

@@ -123,27 +123,18 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
     {
         int to = xbuf_head_;
 
-//        // Use IMU to estimate attitude
-//        if (imu_.size() > 0)
-//        {
-//            quat::Quatd gamma(imu_.back().y_.data()+ImuFunctor::GAMMA);
-//            xbuf_[to].x.q() = xbuf_[from].x.q() * gamma;
-//        }
-
-
-        // Use Iterated Least-Squares to estimate position and velocity
+        // Use Iterated Least-Squares to estimate x_e2n and time offset
         Vector8d pp_sol = Vector8d::Zero();
         pp_sol.topRows<3>() = x_e2n_.t();
         pointPositioning(m.obs[0].t, m.obs, sats_, pp_sol);
         auto phat = pp_sol.segment<3>(0);
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
-        xbuf_[to].t = m.t;
-        xbuf_[to].x.t() = gnss_utils::WGS84::ecef2ned(x_e2n_, phat);
-        xbuf_[to].v = xbuf_[to].x.q().rotp(x_e2n_.q().rotp(vhat));
+
+//        Xformd x_e2bn = gnss_utils::WGS84::x_ecef2ned(phat);
+//        Xformd x_bn2b(Vector3d::Zero(), x0_.q());
+//        x_e2n_ = x_e2bn * x_bn2b * x0_.inverse();
         xbuf_[to].tau = that;
-//        xbuf_[to].kf = -1;
-//        xbuf_[to].node = current_node_;
     }
 }
 
@@ -173,7 +164,6 @@ void Salsa::initializeStateGnss(const meas::Gnss &m)
 
     if (use_point_positioning_)
     {
-        Xformd xhat = x0_;
         Vector8d pp_sol = Vector8d::Zero();
         pp_sol.topRows<3>() = x_e2n_.t();
         pointPositioning(m.obs[0].t, m.obs, sats_, pp_sol);
@@ -181,8 +171,10 @@ void Salsa::initializeStateGnss(const meas::Gnss &m)
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
 
-        xhat.t() = WGS84::ecef2ned(x_e2n_, phat);
-        initialize(current_state_.t, xhat, x_e2n_.q().rotp(vhat), that);
+        Xformd x_e2bn = gnss_utils::WGS84::x_ecef2ned(phat);
+        Xformd x_bn2b(Vector3d::Zero(), x0_.q());
+        x_e2n_ = x_e2bn * x_bn2b * x0_.inverse();
+        initialize(current_state_.t, x0_, v0_, that);
     }
     else
     {

@@ -78,10 +78,14 @@ void ImuIntegrator::estimateXj(const double* _xi, const double* _vi, double* _xj
     Map<const Vector3d> vi(_vi);
     Map<Vector3d> vj(_vj);
 
+    SALSA_ASSERT(std::abs(1.0 - gamma.arr_.norm()) < 1e-8, "Quat left manifold");
+    SALSA_ASSERT(std::abs(1.0 - xi.q_.arr_.norm()) < 1e-8, "Quat left manifold");
+
     xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
     xj.t_ = xi.t_ + xi.q_.rota(vi*delta_t_) + 1/2.0 * gravity_*delta_t_*delta_t_ + xi.q_.rota(alpha);
     vj = gamma.rotp(vi + xi.q_.rotp(gravity_)*delta_t_ + beta);
     xj.q_ = xi.q_ * gamma;
+    SALSA_ASSERT(std::abs(1.0 - xj.q_.arr_.norm()) < 1e-8, "Quat left manifold");
 }
 
 

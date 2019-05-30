@@ -24,11 +24,8 @@ int main()
 
     while (sim.run())
     {
-        if (salsa.current_node_ < 0)
-        {
-            salsa.current_state_.x = sim.state().X;
-            salsa.current_state_.v = sim.state().v;
-        }
+        salsa.x0_ = sim.state().X;
+        salsa.v0_ = sim.state().v;
         true_state_log.log(sim.t_);
         true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,
                                   sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_},

@@ -9,16 +9,11 @@ struct XformPlus {
 };
 typedef ceres::AutoDiffLocalParameterization<XformPlus, 7, 6> XformParamAD;
 
-//class XformParam : public ceres::LocalParameterization
-//{
-//public:
-//  bool Plus(const double* x, const double* delta, double* x_plus_delta);
-//  bool ComputeJacobian(const double* x, double* jacobian) const;
-//  bool MultiplyByJacobian(const double* x,
-//                          const int num_rows,
-//                          const double* global_matrix,
-//                          double* local_matrix) const;
-//  int GlobalSize() const;
-//  int LocalSize() const;
-
-//};
+class XformParam : public ceres::LocalParameterization
+{
+public:
+  bool Plus(const double* _x, const double* delta, double* x_plus_delta) const override;
+  bool ComputeJacobian(const double* _x, double* jacobian) const override;
+  int GlobalSize() const override;
+  int LocalSize() const override;
+};

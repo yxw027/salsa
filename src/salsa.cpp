@@ -110,14 +110,16 @@ void Salsa::initFactors()
 
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
-    problem.AddParameterBlock(x_e2n_.data(), 7, new XformParamAD());
+    problem.AddParameterBlock(x_e2n_.data(), 7, new XformParam());
+    problem.SetParameterBlockConstant(x_e2n_.data());
     problem.AddParameterBlock(imu_bias_.data(), 6);
 
     int idx = xbuf_tail_;
-    int prev_idx = idx;
+    int prev_idx = -1;
     while (prev_idx != xbuf_head_)
     {
-        problem.AddParameterBlock(xbuf_[idx].x.data(), 7, new XformParamAD());
+        SALSA_ASSERT(std::abs(1.0 - xbuf_[idx].x.q().arr_.norm()) < 1e-8, "Quat Left Manifold");
+        problem.AddParameterBlock(xbuf_[idx].x.data(), 7, new XformParam());
         problem.AddParameterBlock(xbuf_[idx].v.data(), 3);
         problem.AddParameterBlock(xbuf_[idx].tau.data(), 2);
         prev_idx = idx;
@@ -156,14 +158,21 @@ void Salsa::setAnchors(ceres::Problem &problem)
 
 void Salsa::addImuFactors(ceres::Problem &problem)
 {
+    int prev_idx = xbuf_tail_;
     for (auto it = imu_.begin(); it != imu_.end(); it++)
     {
         // ignore unfinished IMU factors
         if (it->to_idx_ < 0)
             continue;
 
+
+        SALSA_ASSERT(it->from_idx_ == prev_idx, "Out-of-order IMU intervals, expected: %d, got %d, tail: %d, head: %d",
+                     prev_idx, it->from_idx_, xbuf_tail_, xbuf_head_);
+        SALSA_ASSERT(it->to_idx_ == (it->from_idx_ + 1) % STATE_BUF_SIZE, "Skipping States! from %d to %d ", it->from_idx_, it->to_idx_);
+        prev_idx = it->to_idx_;
         SALSA_ASSERT(inWindow(it->to_idx_), "Trying to add factor to node outside of window");
         SALSA_ASSERT(inWindow(it->from_idx_), "Trying to add factor to node outside of window");
+        SALSA_ASSERT(std::abs(1.0 - xbuf_[it->to_idx_].x.q().arr_.norm()) < 1e-8, "Quat Left Manifold");
         FunctorShield<ImuFunctor>* ptr = new FunctorShield<ImuFunctor>(&*it);
         problem.AddResidualBlock(new ImuFactorAD(ptr),
                                  NULL,
@@ -173,6 +182,7 @@ void Salsa::addImuFactors(ceres::Problem &problem)
                 xbuf_[it->to_idx_].v.data(),
                 imu_bias_.data());
     }
+    SALSA_ASSERT(prev_idx == xbuf_head_, "not enough intervals");
 }
 
 void Salsa::addMocapFactors(ceres::Problem &problem)
@@ -199,7 +209,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
             SALSA_ASSERT(inWindow(it->idx_), "Trying to add factor to node outside of window");
             FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&*it);
             problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
-                                     new ceres::HuberLoss(2.0),
+                                     NULL,
                                      xbuf_[it->idx_].x.data(),
                     xbuf_[it->idx_].v.data(),
                     xbuf_[it->idx_].tau.data(),
@@ -236,7 +246,7 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
             SALSA_ASSERT(inWindow(func->to_idx_), "Trying to add factor to node outside of window: %d", func->to_idx_);
             FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
             problem.AddResidualBlock(new FeatFactorAD(ptr),
-                                     new ceres::HuberLoss(3.0),
+                                     NULL,
                                      xbuf_[ft->second.idx0].x.data(),
                     xbuf_[func->to_idx_].x.data(),
                     &ft->second.rho);
@@ -626,10 +636,10 @@ void Salsa::startNewInterval(double t)
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 
     // The following makes sure that we don't plot uninitialized memory
-    if (imu_.size() >= 2)
+    if (imu_.size() > 1)
     {
-        imu_.back().u_ = imu_[imu_.size() -2].u_;
-        imu_.back().cov_ = imu_[imu_.size() -2].cov_;
+        imu_.back().u_ = imu_[imu_.size()-2].u_;
+        imu_.back().cov_ = imu_[imu_.size()-2].cov_;
     }
     else
     {
@@ -643,7 +653,6 @@ void Salsa::initializeNodeWithImu()
 {
     if (imu_.size() == 0)
     {
-        SD(5, "Tried to initialize a node from IMU with not IMU measurements");
         return;
     }
 
@@ -652,6 +661,7 @@ void Salsa::initializeNodeWithImu()
     int to = imu.to_idx_;
 
     SALSA_ASSERT(to >= 0, "Need to have a valid destination");
+    SALSA_ASSERT(std::abs(1.0 - xbuf_[from].x.q().arr_.norm()) < 1e-8, "Quat left manifold");
 
     SD(2, "Initialize Node %d with IMU factor %lu by integrating from %d", to, imu_.size(), from);
     xbuf_[to].t = imu.t;
@@ -659,6 +669,7 @@ void Salsa::initializeNodeWithImu()
                    xbuf_[to].x.data(), xbuf_[to].v.data());
     xbuf_[to].tau(0) = xbuf_[from].tau(0) + xbuf_[from].tau(1) * imu.delta_t_;
     xbuf_[to].tau(1) = xbuf_[from].tau(1);
+    SALSA_ASSERT(std::abs(1.0 - xbuf_[to].x.q().arr_.norm()) < 1e-8, "Quat left manifold");
 }
 
 void Salsa::addMeas(const meas::Mocap &&mocap)

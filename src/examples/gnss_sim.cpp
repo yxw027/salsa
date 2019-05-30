@@ -27,6 +27,8 @@ int main()
 
     while (sim.run())
     {
+        salsa.x0_ = sim.state().X;
+        salsa.v0_ = sim.state().v;
         salsa.x_e2n_ = sim.X_e2n_;
         true_state_log.log(sim.t_);
         true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,

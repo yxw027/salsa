@@ -89,6 +89,7 @@ if (BUILD_TESTS)
         src/test/test_misc.cpp
         src/test/test_vision.cpp
         src/test/test_klt.cpp
+        src/test/test_xform_local_param.cpp
 #        src/test/test_salsa_mocap_indexing.cpp
         src/test/test_pseudorange_factor.cpp
 #        src/test/test_salsa_gps_indexing.cpp
