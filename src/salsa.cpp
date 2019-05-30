@@ -383,7 +383,7 @@ void Salsa::cleanUpSlidingWindow()
 
     // Figure out which condition needs to be used by traversing the window and see where we
     // meet our criteria
-    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf < oldest_kf_ || xbuf_[kf_idx].kf < 0))
+    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf <= oldest_kf_ || xbuf_[kf_idx].kf < 0))
     {
         kf_idx = (kf_idx + 1) % STATE_BUF_SIZE;
     }
