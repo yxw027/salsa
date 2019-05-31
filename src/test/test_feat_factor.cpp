@@ -10,6 +10,66 @@
 using namespace salsa;
 using namespace multirotor_sim;
 
+TEST (FeatFactor, ADvsANEval)
+{
+    Xformd xi;
+    xi.t() = Vector3d(0, 0, 0);
+    xi.q() = Quatd::Identity();
+    Xformd xj;
+    xj.t() = Vector3d(1, 0, 0);
+    xj.q() = Quatd::Identity();
+    Vector3d l(0, 0, 1);
+    Xformd xb2c = Xformd::Identity();
+
+    Vector3d zi = l - xi.t();
+    Vector3d zj = l - xj.t();
+    double rho = zi.norm();
+    zi.normalize();
+    zj.normalize();
+    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    UnshieldedFeatFactorAD ad(new FeatFunctor(Matrix2d::Identity(), xb2c, zi, zj, 0));
+
+    Vector2d res1, res2;
+    double* parameters[3] {xi.data(), xj.data(), &rho};
+    double* jac[3] {NULL, NULL, NULL};
+    ad.Evaluate(parameters, res1.data(), jac);
+    an.Evaluate(parameters, res2.data(), jac);
+
+    EXPECT_MAT_NEAR(res1, res2, 1e-8);
+}
+
+TEST (FeatFactor, ADvsANJac0)
+{
+    Xformd xi;
+    xi.t() = Vector3d(0, 0, 0);
+    xi.q() = Quatd::Identity();
+    Xformd xj;
+    xj.t() = Vector3d(1, 0, 0);
+    xj.q() = Quatd::Identity();
+    Vector3d l(0, 0, 1);
+    Xformd xb2c = Xformd::Identity();
+
+    Vector3d zi = l - xi.t();
+    Vector3d zj = l - xj.t();
+    double rho = zi.norm();
+    zi.normalize();
+    zj.normalize();
+    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    UnshieldedFeatFactorAD ad(new FeatFunctor(Matrix2d::Identity(), xb2c, zi, zj, 0));
+
+    Vector2d res1, res2;
+    Matrix<double, 2, 6> jac1, jac2;
+    double* parameters[3] {xi.data(), xj.data(), &rho};
+    double* jac_ad[3] {jac1.data(), NULL, NULL};
+    double* jac_an[3] {jac2.data(), NULL, NULL};
+    ad.Evaluate(parameters, res1.data(), jac_ad);
+    an.Evaluate(parameters, res2.data(), jac_an);
+    std::cout << "ad\n" << jac1 << std::endl;
+    std::cout << "an\n" << jac2 << std::endl;
+
+    EXPECT_MAT_NEAR(jac1, jac2, 1e-8);
+}
+
 
 TEST (FeatFactor, InitZeroResidual)
 {

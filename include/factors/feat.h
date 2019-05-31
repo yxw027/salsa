@@ -36,11 +36,11 @@ public:
 typedef ceres::AutoDiffCostFunction<FunctorShield<FeatFunctor>, 2, 7, 7, 1> FeatFactorAD;
 typedef ceres::AutoDiffCostFunction<FeatFunctor, 2, 7, 7, 1> UnshieldedFeatFactorAD;
 
-class FeatFactor : public FeatFunctor,  public ceres::CostFunction
+class FeatFactor : public FeatFunctor, public ceres::SizedCostFunction<2, 7, 7, 1>
 {
 public:
     using FeatFunctor::FeatFunctor;
-    bool Evaluate(double * const * parameters, double *residuals, double **jacobians) const;
+    bool Evaluate(const double * const * parameters, double *residuals, double **jacobians) const;
 };
 
 }
