@@ -418,7 +418,9 @@ void Salsa::cleanUpSlidingWindow()
     {
         SD(1, "removing IMU %d->%d", imu_.front().from_idx_, imu_.front().to_idx_);
         imu_.pop_front();
+        printImuIntervals();
     }
+    SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
 
     while (clk_.front().from_node_ < oldest_node_)
     {
@@ -616,7 +618,7 @@ void Salsa::integrateTransition(double t)
         SALSA_ASSERT(xbuf_head_ < xbuf_.size(), "Memory Overrun");
         SALSA_ASSERT(xbuf_head_ != xbuf_tail_, "Cleaned up too much");
     }
-    else // otherwise we gotta remove this transition, because we are going to double-up this node
+    else if (imu.n_updates_ <= 1) // otherwise we gotta remove this transition, because we are going to double-up this node
     {
         SD(2, "Remove Imu interval");
         if (imu.n_updates_ == 1)
@@ -625,7 +627,14 @@ void Salsa::integrateTransition(double t)
             imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
         }
         imu_.pop_back();
+        SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
         clk_.pop_back();
+    }
+    else
+    {
+        printImuIntervals();
+        SD(2, "Two measurements on node %d", current_node_);
+        SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
     }
 }
 
@@ -633,6 +642,8 @@ void Salsa::startNewInterval(double t)
 {
     SD(2, "Starting a new interval. imu_.size()=%lu and xbuf_head=%d", imu_.size(), xbuf_head_);
     imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
+    printImuIntervals();
+    SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 
     // The following makes sure that we don't plot uninitialized memory
@@ -656,7 +667,7 @@ void Salsa::initializeNodeWithImu()
         return;
     }
 
-    ImuFunctor& imu(imu_.back());
+    const ImuFunctor& imu(imu_.back());
     const int from = imu.from_idx_;
     int to = imu.to_idx_;
 
@@ -707,6 +718,28 @@ bool Salsa::inWindow(int idx)
         return (idx <= xbuf_head_ && idx >= xbuf_tail_);
     else
         return (idx <= xbuf_head_ || idx >= xbuf_tail_);
+}
+
+bool Salsa::checkIMUOrder()
+{
+    if (imu_.size() == 0)
+        return true;
+    int from = xbuf_tail_;
+    auto it = imu_.begin();
+    double t0 = imu_.begin()->t0_;
+    while(it != imu_.end())
+    {
+        if (it->to_idx_ == -1)
+            return it+1 == imu_.end();
+        if ((from != it->from_idx_) || (it->to_idx_ != (from + 1) %STATE_BUF_SIZE))
+            return false;
+        if (std::abs(it->t0_-t0) > 1e-8)
+            return false;
+        from = it->to_idx_;
+        t0 = it->t;
+        it++;
+    }
+    return it == imu_.end();
 }
 
 

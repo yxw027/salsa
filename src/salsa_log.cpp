@@ -334,7 +334,19 @@ void Salsa::printGraph()
             logs_[log::Graph]->file_ << "      -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
-    logs_[log::Graph]->file_ << "\n\n\n";
+    logs_[log::Graph]->file_ << "\n\n";
+}
+
+void Salsa::printImuIntervals()
+{
+    logs_[log::Graph]->file_ << "\nIMU: ";
+    for (auto& imu : imu_)
+    {
+        logs_[log::Graph]->file_ << imu.from_idx_ << " -> " << imu.to_idx_ << " | ";
+    }
+    logs_[log::Graph]->file_ << "\n";
+    logs_[log::Graph]->file_.flush();
+
 }
 
 void Salsa::printFeat()

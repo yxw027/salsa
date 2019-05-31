@@ -93,6 +93,7 @@ public:
     void logImu();
     void printGraph();
     void printFeat();
+    void printImuIntervals();
     struct log
     {
         enum
@@ -180,6 +181,7 @@ public:
     /*               IMU                */
     /************************************/
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
+    bool checkIMUOrder();
     double acc_wander_weight_;
     double gyro_wander_weight_;
 
