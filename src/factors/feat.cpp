@@ -86,17 +86,12 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
     Matrix3d Rb2c = x_b2c_.q().R();
     Vector3d pb2c = x_b2c_.t();
 
-    //    Vector3d zjhat = x_b2c_.rotp(xj.rotp(xi.transforma(x_b2c_.transforma(zi)) - xj.transforma(x_b2c_.t_)));
-    Vector3d zj_hat = Rb2c * (RI2j*(RI2i.Tr*(Rb2c.Tr*(zi)+pb2c) + pI2i - RI2j.Tr*(pb2c)-pI2j));
+    Vector3d zj_hat = Rb2c * (RI2j*(RI2i.Tr*(Rb2c.Tr*(zi)+pb2c) + pI2i -pI2j) - pb2c);
     double zj_norm = zj_hat.norm();
-    //    Vector3d zj_hat = pI2i;
-    //    std::cout << "AN:" << std::endl;
-    //    std::cout << "Pz " << Pz_ << std::endl;
-    //    std::cout << "Rb2c " << Rb2c << std::endl;
-    //    std::cout << "RI2j " << RI2j << std::endl;
-    //    std::cout << "zj " << zj_hat/zj_norm << std::endl;
 
     res = Xi_ * Pz_ * (zj_hat/zj_hat.norm() - zetaj_);
+
+
     if (jacobians)
     {
 
@@ -122,18 +117,15 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
                     -qj.y()*2.0, -qj.z()*2.0,  qj.w()*2.0,  qj.x()*2.0,
                     -qj.z()*2.0,  qj.y()*2.0, -qj.x()*2.0,  qj.w()*2.0;
             dres_dxj.block<2,3>(0, 0) = -Xi_*Pz_*Z*Rb2c*RI2j;
-            dres_dxj.block<2,4>(0, 3) = -Xi_*Pz_*Z*Rb2c*RI2j.Tr
-                    *skew(pI2i + RI2i.Tr*(Rb2c.Tr*zi + pb2c)-(RI2j.Tr*pb2c+pI2j))
-                    *RI2j.Tr*skew(pb2c+pI2j)*dqdd;
+            dres_dxj.block<2,4>(0, 3) = Xi_*Pz_*Z*Rb2c
+                    *skew(RI2j*(RI2i.Tr*(Rb2c.Tr*(zi)+pb2c) + pI2i -pI2j))
+                    *dqdd;
         }
-        //    if (jacobians[1])
-        //    {
-        //        Map<Matrix<double, 2, 7, RowMajor>> dres_dxj(jacobians[0]);
-        //        dres_dxj.block<2,3>(0, 0) = -Pz_ * R_b2c.Tr * R_I2j.Tr;
-        //        dres_dxj.block<2,3>(0, 0) = Pz_ * R_b2c
-        //                * skew(R_I2j*(xi.t() + R_I2i.Tr*x_b2c_.transforma(zi) - (R_I2j.Tr*x_b2c_.t() + xj.t())))
-        //                * R_I2j.Tr*skew(x_b2c_.t());
-        //    }
+        if (jacobians[2])
+        {
+            Map<Matrix<double, 2, 1>> dres_drho(jacobians[2]);
+            dres_drho = -Xi_*Pz_*Z*Rb2c*RI2j*RI2i.Tr*Rb2c.Tr*1.0/rho*zi;
+        }
     }
 
 }

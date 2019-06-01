@@ -112,12 +112,47 @@ TEST (FeatFactor, FDvsANJac2)
     }
     Matrix<double, 2, 7, RowMajor> drdxja_global;
     double* p[3] = {xi.data(), xj.data(), &rho};
-    double* j[3] = {drdxja_global.data(), NULL, NULL};
+    double* j[3] = {NULL, drdxja_global.data(), NULL};
     Vector2d res;
     an.Evaluate(p, res.data(), j);
     Matrix<double, 7,6, RowMajor> param_jac;
     param.ComputeJacobian(xj.data(), param_jac.data());
     drdxja = drdxja_global * param_jac;
+
+    std::cout << "FD:\n" << drdxjfd << std::endl;
+    std::cout << "AN:\n" << drdxja << std::endl;
+
+    EXPECT_MAT_NEAR(drdxjfd, drdxja, 1e-6);
+}
+
+TEST (FeatFactor, FDvsANJac3)
+{
+    Xformd xb2c = Xformd::Random();
+    Vector3d zi = Vector3d::Random();
+    Vector3d zj = Vector3d::Random();
+    double rho = zi.norm();
+    zi.normalize();
+    zj.normalize();
+    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    xform::Xformd xi  = Xformd::Random();
+    xform::Xformd xj  = Xformd::Random();
+
+    Matrix<double, 2, 1> drdxjfd, drdxja;
+    double eps = 1e-8;
+    double rho_plus(rho+eps), rho_minus(rho-eps);
+
+    double* p_plus[3] = {xi.data(), xj.data(), &rho_plus};
+    double* p_minus[3] = {xi.data(), xj.data(), &rho_minus};
+    Vector2d res_plus, res_minus;
+    an.Evaluate(p_plus, res_plus.data(), NULL);
+    an.Evaluate(p_minus, res_minus.data(), NULL);
+    drdxjfd = (res_plus - res_minus)/(2.0*eps);
+
+    double* j[3] = {NULL, NULL, drdxja.data()};
+    double* p[3] = {xi.data(), xj.data(), &rho};
+    Vector2d res;
+
+    an.Evaluate(p, res.data(), j);
 
     std::cout << "FD:\n" << drdxjfd << std::endl;
     std::cout << "AN:\n" << drdxja << std::endl;
