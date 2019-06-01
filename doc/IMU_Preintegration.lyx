@@ -942,7 +942,7 @@ The Jacobians of the feature residual are derived below.
 \frac{\partial r_{\zeta}}{\partial\p_{i/I}^{I}} & =\frac{\partial r_{\zeta}}{\partial\p_{i/I}^{I}}\mathbb{P}_{\zt}\left(\frac{\hat{\zt}}{\norm{\hat{\zt}}}-\bar{\zt}_{l/j}^{j}\right)\\
  & =\mathbb{P}_{\zt_{i}}\left(\frac{I\norm{\zt_{j}}-\zt_{j}\left(\frac{\zt_{j}}{\norm{\zt_{j}}}\right)^{\top}}{\zt_{j}^{\top}\zt_{j}}\frac{\partial r_{\zeta}}{\partial\p_{i/I}^{I}}\left(R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+R_{i}^{I}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)\right)\right)\\
  & =\mathbb{P}_{\zt_{i}}\frac{I\norm{\zt_{j}}-\zt_{j}\left(\frac{\zt_{j}}{\norm{\zt_{j}}}\right)^{\top}}{\zt_{j}^{\top}\zt_{j}}R_{j}^{c_{j}}R_{I}^{j}\\
- & =\mathbb{P}_{\zt_{i}}\left(Z\right)R_{j}^{c_{j}}R_{I}^{j},\quad\quad Z=\frac{I\norm{\zt_{j}}-\zt_{j}\left(\frac{\zt_{j}}{\norm{\zt_{j}}}\right)^{\top}}{\zt_{j}^{\top}\zt_{j}}
+ & =\mathbb{P}_{\zt_{i}}ZR_{j}^{c_{j}}R_{I}^{j},\quad\quad Z=\frac{I\norm{\zt_{j}}-\zt_{j}\left(\frac{\zt_{j}}{\norm{\zt_{j}}}\right)^{\top}}{\zt_{j}^{\top}\zt_{j}}
 \end{align*}
 
 \end_inset
@@ -956,9 +956,8 @@ The Jacobians of the feature residual are derived below.
 \frac{\partial r_{\zeta}}{\partial\q_{I}^{i}} & =\frac{\partial r_{\zeta}}{\partial\q_{I}^{i}}\mathbb{P}_{\zt}\left(\frac{\hat{\zt}}{\norm{\hat{\zt}}}-\bar{\zt}_{l/j}^{j}\right)\\
  & =\mathbb{P}_{\zt}\left(Z\frac{\partial r_{\zeta}}{\partial\q_{I}^{i}}\left(R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+R_{i}^{I}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)\right)\right)\\
  & =\mathbb{P}_{\zt}Z\frac{\partial r_{\zeta}}{\partial\q_{i/I}^{I}}\left(R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+R_{i}^{I}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)\right)\\
- & =\frac{\partial r_{\zeta}}{\partial\q_{I}^{i}}\mathbb{P}_{\zt}R_{j}^{c_{j}}R_{I}^{j}R\left(\q_{I}^{i}\right)^{\top}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)\\
- & =\mathbb{P}_{\zt}R_{j}^{c_{j}}R_{I}^{j}R\left(\q_{I}^{i}\right)^{\top}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)\\
- & =-\mathbb{P}_{\zt}R_{j}^{c_{j}}R_{I}^{j}R\left(\q_{I}^{i}\right)^{\top}\skew{R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}}
+ & =\mathbb{P}_{\zt}ZR_{j}^{c_{j}}R_{I}^{j}\frac{\partial r_{\zeta}}{\partial\q_{I}^{i}}R\left(\q_{I}^{i}\right)^{\top}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)\\
+ & =-\mathbb{P}_{\zt}ZR_{j}^{c_{j}}R_{I}^{j}R\left(\q_{I}^{i}\right)^{\top}\skew{R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}}
 \end{align*}
 
 \end_inset
@@ -969,9 +968,10 @@ The Jacobians of the feature residual are derived below.
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\frac{\partial r_{\zeta}}{\text{\ensuremath{\partial\p_{j/I}^{I}}}} & =\frac{\partial r_{\zeta}}{\partial\p_{j/I}^{I}}\mathbb{P}_{\zt}\left(R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+R_{i}^{I}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)-\bar{\zt}_{l/j}^{j}\right)\\
- & =\frac{\partial r_{\zeta}}{\partial\p_{j/I}^{I}}-\mathbb{P}_{\zt}R_{j}^{c_{j}}R_{I}^{j}\left(\p_{j/I}^{I}\right)\\
- & =-\mathbb{P}_{\zt}R_{j}^{c_{j}}R_{I}^{j}
+\frac{\partial r_{\zeta}}{\text{\ensuremath{\partial\p_{j/I}^{I}}}} & =\frac{\partial r_{\zeta}}{\partial\p_{j/I}^{I}}\mathbb{P}_{\zt}\left(\frac{\hat{\zt}}{\norm{\hat{\zt}}}-\bar{\zt}_{l/j}^{j}\right)\\
+ & =\mathbb{P}_{\zt}Z\frac{\partial r_{\zeta}}{\partial\p_{j/I}^{I}}\left(R_{j}^{c_{j}}R_{I}^{j}\left(\p_{i/I}^{I}+R_{i}^{I}\left(R_{c_{i}}^{i}\frac{1}{\rho}\zt_{l/c_{i}}^{c_{i}}+\p_{c_{i}/i}^{i}\right)-\left(R_{j}^{I}\p_{c_{j}/j}^{j}+\p_{j/I}^{I}\right)\right)\right)\\
+ & =\mathbb{P}_{\zt}Z\frac{\partial r_{\zeta}}{\partial\p_{j/I}^{I}}\left(R_{j}^{c_{j}}R_{I}^{j}\left(-\p_{j/I}^{I}\right)\right)\\
+ & =-\mathbb{P}_{\zt}ZR_{j}^{c_{j}}R_{I}^{j}
 \end{align*}
 
 \end_inset

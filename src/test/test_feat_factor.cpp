@@ -12,22 +12,17 @@ using namespace multirotor_sim;
 
 TEST (FeatFactor, ADvsANEval)
 {
-    Xformd xi;
-    xi.t() = Vector3d(0, 0, 0);
-    xi.q() = Quatd::Identity();
-    Xformd xj;
-    xj.t() = Vector3d(1, 0, 0);
-    xj.q() = Quatd::Identity();
-    Vector3d l(0, 0, 1);
-    Xformd xb2c = Xformd::Identity();
-
-    Vector3d zi = l - xi.t();
-    Vector3d zj = l - xj.t();
+    Xformd xb2c = Xformd::Random();
+    Vector3d zi = Vector3d::Random();
+    Vector3d zj = Vector3d::Random();
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
-    UnshieldedFeatFactorAD ad(new FeatFunctor(Matrix2d::Identity(), xb2c, zi, zj, 0));
+    xform::Xformd xi  = Xformd::Random();
+    xform::Xformd xj  = Xformd::Random();
+
+    FeatFactor an(3.0*Matrix2d::Identity(), xb2c, zi, zj, 0);
+    UnshieldedFeatFactorAD ad(new FeatFunctor(3.0*Matrix2d::Identity(), xb2c, zi, zj, 0));
 
     Vector2d res1, res2;
     double* parameters[3] {xi.data(), xj.data(), &rho};
@@ -38,9 +33,8 @@ TEST (FeatFactor, ADvsANEval)
     EXPECT_MAT_NEAR(res1, res2, 1e-8);
 }
 
-TEST (FeatFactor, ADvsANJac0)
+TEST (FeatFactor, FDvsANJac1)
 {
-
     Xformd xb2c = Xformd::Random();
     Vector3d zi = Vector3d::Random();
     Vector3d zj = Vector3d::Random();
@@ -48,25 +42,87 @@ TEST (FeatFactor, ADvsANJac0)
     zi.normalize();
     zj.normalize();
     FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
-    UnshieldedFeatFactorAD ad(new FeatFunctor(Matrix2d::Identity(), xb2c, zi, zj, 0));
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
 
-    Vector2d res1, res2;
-    Matrix<double, 2, 7, RowMajor> drdx1ad, drdx1an;
-//    Matrix<double, 2, 7, RowMajor> drdx2ad, drdx2an;
-//    Matrix<double, 2, 1, RowMajor> drdrhoad, drdrhoan;
-    drdx1ad.setConstant(1.0);
-    drdx1an.setConstant(2.0);
-    double* parameters[3] {xi.data(), xj.data(), &rho};
-    double* jac_ad[3] {drdx1ad.data(), NULL, NULL};
-    double* jac_an[3] {drdx1an.data(), NULL, NULL};
-    ad.Evaluate(parameters, res1.data(), jac_ad);
-    an.Evaluate(parameters, res2.data(), jac_an);
-    std::cout << "drdx1ad\n" << drdx1ad << std::endl;
-    std::cout << "drdx1an\n" << drdx1an << std::endl;
+    XformParam param;
+    Matrix<double, 2, 6, RowMajor> drdx1fd, drdx1a;
+    double eps = 1e-8;
+    for (int i = 0; i < 6; i++)
+    {
+        Xformd xi_plus;
+        Xformd xi_minus;
+        Vector6d e_ip = Vector6d::Unit(i)*eps;
+        Vector6d e_im = -1.0*Vector6d::Unit(i)*eps;
 
-    EXPECT_MAT_NEAR(drdx1ad, drdx1an, 1e-8);
+        param.Plus(xi.data(), e_ip.data(), xi_plus.data());
+        param.Plus(xi.data(), e_im.data(), xi_minus.data());
+        double* p_plus[3] = {xi_plus.data(), xj.data(), &rho};
+        double* p_minus[3] = {xi_minus.data(), xj.data(), &rho};
+        Vector2d res_plus, res_minus;
+        an.Evaluate(p_plus, res_plus.data(), NULL);
+        an.Evaluate(p_minus, res_minus.data(), NULL);
+        drdx1fd.col(i) = (res_plus - res_minus)/(2.0*eps);
+    }
+    Matrix<double, 2, 7, RowMajor> drdx1a_global;
+    double* p[3] = {xi.data(), xj.data(), &rho};
+    double* j[3] = {drdx1a_global.data(), NULL, NULL};
+    Vector2d res;
+    an.Evaluate(p, res.data(), j);
+    Matrix<double, 7,6, RowMajor> param_jac;
+    param.ComputeJacobian(xi.data(), param_jac.data());
+    drdx1a = drdx1a_global * param_jac;
+
+    std::cout << "FD:\n" << drdx1fd << std::endl;
+    std::cout << "AN:\n" << drdx1a << std::endl;
+
+    EXPECT_MAT_NEAR(drdx1fd, drdx1a, 1e-6);
+}
+
+TEST (FeatFactor, FDvsANJac2)
+{
+    Xformd xb2c = Xformd::Random();
+    Vector3d zi = Vector3d::Random();
+    Vector3d zj = Vector3d::Random();
+    double rho = zi.norm();
+    zi.normalize();
+    zj.normalize();
+    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    xform::Xformd xi  = Xformd::Random();
+    xform::Xformd xj  = Xformd::Random();
+
+    XformParam param;
+    Matrix<double, 2, 6, RowMajor> drdxjfd, drdxja;
+    double eps = 1e-8;
+    for (int i = 0; i < 6; i++)
+    {
+        Xformd xj_plus;
+        Xformd xj_minus;
+        Vector6d e_ip = Vector6d::Unit(i)*eps;
+        Vector6d e_im = -1.0*Vector6d::Unit(i)*eps;
+
+        param.Plus(xj.data(), e_ip.data(), xj_plus.data());
+        param.Plus(xj.data(), e_im.data(), xj_minus.data());
+        double* p_plus[3] = {xi.data(), xj_plus.data(), &rho};
+        double* p_minus[3] = {xi.data(), xj_minus.data(), &rho};
+        Vector2d res_plus, res_minus;
+        an.Evaluate(p_plus, res_plus.data(), NULL);
+        an.Evaluate(p_minus, res_minus.data(), NULL);
+        drdxjfd.col(i) = (res_plus - res_minus)/(2.0*eps);
+    }
+    Matrix<double, 2, 7, RowMajor> drdxja_global;
+    double* p[3] = {xi.data(), xj.data(), &rho};
+    double* j[3] = {drdxja_global.data(), NULL, NULL};
+    Vector2d res;
+    an.Evaluate(p, res.data(), j);
+    Matrix<double, 7,6, RowMajor> param_jac;
+    param.ComputeJacobian(xj.data(), param_jac.data());
+    drdxja = drdxja_global * param_jac;
+
+    std::cout << "FD:\n" << drdxjfd << std::endl;
+    std::cout << "AN:\n" << drdxja << std::endl;
+
+    EXPECT_MAT_NEAR(drdxjfd, drdxja, 1e-6);
 }
 
 
