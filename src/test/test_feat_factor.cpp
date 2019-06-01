@@ -40,34 +40,33 @@ TEST (FeatFactor, ADvsANEval)
 
 TEST (FeatFactor, ADvsANJac0)
 {
-    Xformd xi;
-    xi.t() = Vector3d(0, 0, 0);
-    xi.q() = Quatd::Identity();
-    Xformd xj;
-    xj.t() = Vector3d(1, 0, 0);
-    xj.q() = Quatd::Identity();
-    Vector3d l(0, 0, 1);
-    Xformd xb2c = Xformd::Identity();
 
-    Vector3d zi = l - xi.t();
-    Vector3d zj = l - xj.t();
+    Xformd xb2c = Xformd::Random();
+    Vector3d zi = Vector3d::Random();
+    Vector3d zj = Vector3d::Random();
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
     FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
     UnshieldedFeatFactorAD ad(new FeatFunctor(Matrix2d::Identity(), xb2c, zi, zj, 0));
+    xform::Xformd xi  = Xformd::Random();
+    xform::Xformd xj  = Xformd::Random();
 
     Vector2d res1, res2;
-    Matrix<double, 2, 6> jac1, jac2;
+    Matrix<double, 2, 7, RowMajor> drdx1ad, drdx1an;
+//    Matrix<double, 2, 7, RowMajor> drdx2ad, drdx2an;
+//    Matrix<double, 2, 1, RowMajor> drdrhoad, drdrhoan;
+    drdx1ad.setConstant(1.0);
+    drdx1an.setConstant(2.0);
     double* parameters[3] {xi.data(), xj.data(), &rho};
-    double* jac_ad[3] {jac1.data(), NULL, NULL};
-    double* jac_an[3] {jac2.data(), NULL, NULL};
+    double* jac_ad[3] {drdx1ad.data(), NULL, NULL};
+    double* jac_an[3] {drdx1an.data(), NULL, NULL};
     ad.Evaluate(parameters, res1.data(), jac_ad);
     an.Evaluate(parameters, res2.data(), jac_an);
-    std::cout << "ad\n" << jac1 << std::endl;
-    std::cout << "an\n" << jac2 << std::endl;
+    std::cout << "drdx1ad\n" << drdx1ad << std::endl;
+    std::cout << "drdx1an\n" << drdx1an << std::endl;
 
-    EXPECT_MAT_NEAR(jac1, jac2, 1e-8);
+    EXPECT_MAT_NEAR(drdx1ad, drdx1ad, 1e-8);
 }
 
 
