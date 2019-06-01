@@ -107,5 +107,6 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
             dres_drho = -AB*RI2i.Tr*Rb2c.Tr*1.0/rho*zi;
         }
     }
+    return true;
 }
 }
