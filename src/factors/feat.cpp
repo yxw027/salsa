@@ -18,11 +18,8 @@ FeatFunctor::FeatFunctor(const Matrix2d& cov, const xform::Xformd& x_b2c, const 
     x_b2c_(x_b2c)
 {
     Xi_ = cov.inverse().llt().matrixL().transpose();
-    //  Pz_.block<1,3>(0,0) = zetaj_.cross(e_x).transpose().normalized();
-    //  Pz_.block<1,3>(1,0) = zetaj_.cross(Pz_.block<1,3>(0,0).transpose()).transpose().normalized();
-    Pz_.setZero();
-    Pz_(0,0) = 1;
-    Pz_(1,1) = 1;
+    Pz_.block<1,3>(0,0) = zetaj_.cross(e_x).transpose().normalized();
+    Pz_.block<1,3>(1,0) = zetaj_.cross(Pz_.block<1,3>(0,0).transpose()).transpose().normalized();
 }
 
 template <typename T>
@@ -49,19 +46,23 @@ template bool FeatFunctor::operator ()<jactype>(const jactype* _xi, const jactyp
 const jactype* _rho, jactype* _res) const;
 
 
+FeatFactor::FeatFactor(const FeatFunctor *functor) :
+    ptr(functor)
+{}
+
 bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, double **jacobians) const
 {
     Map<Vector2d> res(residuals);
     Xformd xi(parameters[0]);
     Xformd xj(parameters[1]);
     const double& rho(*parameters[2]);
-    Vector3d zi = 1.0/rho * zetai_;
+    Vector3d zi = 1.0/rho * ptr->zetai_;
 
-    Vector3d zi_ci = x_b2c_.transforma(zi);
-    Vector3d zj_hat = x_b2c_.rotp(xj.rotp(xi.transforma(zi_ci) - xj.transforma(x_b2c_.t())));
+    Vector3d zi_ci = ptr->x_b2c_.transforma(zi);
+    Vector3d zj_hat = ptr->x_b2c_.rotp(xj.rotp(xi.transforma(zi_ci) - xj.transforma(ptr->x_b2c_.t())));
     double zj_norm = zj_hat.norm();
 
-    res = Xi_ * Pz_ * (zj_hat/zj_hat.norm() - zetaj_);
+    res = ptr->Xi_ * ptr->Pz_ * (zj_hat/zj_hat.norm() - ptr->zetaj_);
 
 
     if (jacobians)
@@ -71,10 +72,10 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
         Vector3d pI2i = xi.t();
         Matrix3d RI2j = xj.q().R();
         Vector3d pI2j = xj.t();
-        Matrix3d Rb2c = x_b2c_.q().R();
+        Matrix3d Rb2c = ptr->x_b2c_.q().R();
 
         Matrix3d Z = (I_3x3*zj_norm - zj_hat*zj_hat.Tr/zj_norm)/(zj_norm * zj_norm);
-        Matrix<double, 2, 3> A = Xi_*Pz_*Z*Rb2c;
+        Matrix<double, 2, 3> A = ptr->Xi_*ptr->Pz_*Z*Rb2c;
         Matrix<double, 2, 3> AB = A*RI2j;
 
         if (jacobians[0])

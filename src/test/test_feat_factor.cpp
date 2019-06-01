@@ -21,8 +21,9 @@ TEST (FeatFactor, ADvsANEval)
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
 
-    FeatFactor an(3.0*Matrix2d::Identity(), xb2c, zi, zj, 0);
-    UnshieldedFeatFactorAD ad(new FeatFunctor(3.0*Matrix2d::Identity(), xb2c, zi, zj, 0));
+    FeatFunctor f(3.0*Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFactor an(&f);
+    FeatFactorAD ad(new FunctorShield<FeatFunctor>(&f));
 
     Vector2d res1, res2;
     double* parameters[3] {xi.data(), xj.data(), &rho};
@@ -41,7 +42,8 @@ TEST (FeatFactor, FDvsANJac1)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFactor an(&f);
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
 
@@ -87,7 +89,8 @@ TEST (FeatFactor, FDvsANJac2)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFactor an(&f);
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
 
@@ -133,7 +136,8 @@ TEST (FeatFactor, FDvsANJac3)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFactor an(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFactor an(&f);
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
 

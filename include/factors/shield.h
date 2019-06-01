@@ -21,6 +21,11 @@ struct FunctorShield
     {
         return ptr->operator ()(args...);
     }
+    template <typename ... T>
+    bool Evaluate(T... args) const
+    {
+        return ptr->Evaluate(args...);
+    }
     const Functor* ptr;
 };
 

@@ -244,12 +244,12 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
         {
             SALSA_ASSERT(inWindow(ft->second.idx0), "Trying to add factor to node outside of window: %d", ft->second.idx0);
             SALSA_ASSERT(inWindow(func->to_idx_), "Trying to add factor to node outside of window: %d", func->to_idx_);
-            FunctorShield<FeatFunctor>* ptr = new FunctorShield<FeatFunctor>(&*func);
-            problem.AddResidualBlock(new FeatFactorAD(ptr),
+            FeatFactor* ptr = new FeatFactor(&*func);
+            problem.AddResidualBlock(ptr,
                                      NULL,
                                      xbuf_[ft->second.idx0].x.data(),
-                    xbuf_[func->to_idx_].x.data(),
-                    &ft->second.rho);
+                                     xbuf_[func->to_idx_].x.data(),
+                                     &ft->second.rho);
             func++;
         }
         ft++;
