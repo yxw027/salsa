@@ -31,8 +31,9 @@ bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho, T* _res
     Xform<T> xj(_xj);
     const T& rho(*_rho);
     Vec3 zi = 1.0/rho * zetai_;
-    Vec3 zj_hat = x_b2c_.rotp<T>(xj.rotp(xi.transforma(x_b2c_.transforma<T>(zi)) - xj.transforma(x_b2c_.t_)));
-    zj_hat.normalize();
+//    Vec3 zj_hat = x_b2c_.rotp<T>(xj.rotp(xi.transforma(x_b2c_.transforma<T>(zi)) - xj.transforma(x_b2c_.t_)));
+    Vec3 zj_hat = xi.rota(zi);
+//    zj_hat.normalize();
 
     Mat3 RI2i = xi.q().R();
     Vec3 pI2i = xi.t();
@@ -95,8 +96,16 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
     if (jacobians[0])
     {
         Map<Matrix<double, 2, 7, RowMajor>> dres_dxi(jacobians[0]);
-        dres_dxi.block<2,3>(0, 0) = - Xi_*Pz_*(I_3x3*zj_norm - zj_hat*zj_hat.Tr/zj_norm)/(zj_norm * zj_norm)*Rb2c*RI2j;
-//        dres_dxi.block<2,3>(0, 3) = Pz_ * R_b2c * R_I2j * R_I2i.Tr * skew(x_b2c_.transforma(zi));
+        Matrix3d Z = (I_3x3*zj_norm - zj_hat*zj_hat.Tr/zj_norm)/(zj_norm * zj_norm);
+        dres_dxi.block<2,3>(0, 0) = - Xi_*Pz_*Z*Rb2c*RI2j;
+        Matrix<double, 4, 3> dqdd;
+        const double* _xi = parameters[0];
+        dqdd << -_xi[4]/2.0, -_xi[5]/2.0, -_xi[6]/2.0,
+                 _xi[3]/2.0, -_xi[6]/2.0,  _xi[5]/2.0,
+                 _xi[6]/2.0,  _xi[3]/2.0, -_xi[4]/2.0,
+                -_xi[5]/2.0,  _xi[4]/2.0,  _xi[3]/2.0;
+//        dres_dxi.block<2,4>(0, 3) = -Pz_*Z*Rb2c*RI2j*RI2i.Tr*skew(x_b2c_.transforma(zi))*dqdd.Tr;
+        dres_dxi.block<2,4>(0, 3) = -Pz_*RI2i.Tr*skew(zi)*dqdd.Tr;
 //        dres_dxi.block<2,3>(0,3).setZero();
     }
 

@@ -66,7 +66,7 @@ TEST (FeatFactor, ADvsANJac0)
     std::cout << "drdx1ad\n" << drdx1ad << std::endl;
     std::cout << "drdx1an\n" << drdx1an << std::endl;
 
-    EXPECT_MAT_NEAR(drdx1ad, drdx1ad, 1e-8);
+    EXPECT_MAT_NEAR(drdx1ad, drdx1an, 1e-8);
 }
 
 
