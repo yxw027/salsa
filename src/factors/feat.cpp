@@ -37,29 +37,7 @@ bool FeatFunctor::operator ()(const T* _xi, const T* _xj, const T* _rho, T* _res
     const T& rho(*_rho);
     Vec3 zi = 1.0/rho * zetai_;
     Vec3 zj_hat = x_b2c_.rotp<T>(xj.rotp(xi.transforma(x_b2c_.transforma<T>(zi)) - xj.transforma(x_b2c_.t_)));
-    //    Vec3 zj_hat = xi.rotp(e_z);
     zj_hat.normalize();
-
-    //    Mat3 RI2i = xi.q().R();
-    //    Vec3 pI2i = xi.t();
-    //    Mat3 RI2j = xj.q().R();
-    //    Vec3 pI2j = xj.t();
-    //    Matrix3d Rb2c = x_b2c_.q().R();
-    //    Vector3d pb2c = x_b2c_.t();
-
-    //    Vec3 zj_hat = /*Rb2c **/ /*(RI2j**/(/*RI2i.Tr*(Rb2c.Tr*(zi)+pb2c)+*/pI2i /*- RI2j.Tr*(pb2c)-pI2j*//*)*/);
-    //    Vec3 zj_hat = x_b2c_.rotp(xj.rotp(xi.transforma(x_b2c_.transforma(zi)) - xj.transforma(x_b2c_.t_)));
-    //    Vec3 zj_hat = Rb2c * (RI2j*(RI2i*(pI2i - (RI2j *pb2c + pI2j))));
-    //    std::cout << "Pz " << Pz_ << std::endl;
-    //    std::cout << "Rb2c " << Rb2c << std::endl;
-    //    std::cout << "RI2j " << RI2j << std::endl;
-    //    Vec3 zj_hat = Rb2c * (RI2j*(pI2i));
-
-
-    //    res = Xi_ * Pz_ * (zj_hat - zetaj_);
-    //    Vec3 zj_hat = pI2i;
-    //    T norm_zj = zj_hat.norm();
-    //    std::cout << "zj " << zj_hat << std::endl;
     res = Xi_ * Pz_ * (zj_hat - zetaj_);
     return true;
 }
@@ -79,14 +57,8 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
     const double& rho(*parameters[2]);
     Vector3d zi = 1.0/rho * zetai_;
 
-    Matrix3d RI2i = xi.q().R();
-    Vector3d pI2i = xi.t();
-    Matrix3d RI2j = xj.q().R();
-    Vector3d pI2j = xj.t();
-    Matrix3d Rb2c = x_b2c_.q().R();
-    Vector3d pb2c = x_b2c_.t();
-
-    Vector3d zj_hat = Rb2c * (RI2j*(RI2i.Tr*(Rb2c.Tr*(zi)+pb2c) + pI2i -pI2j) - pb2c);
+    Vector3d zi_ci = x_b2c_.transforma(zi);
+    Vector3d zj_hat = x_b2c_.rotp(xj.rotp(xi.transforma(zi_ci) - xj.transforma(x_b2c_.t())));
     double zj_norm = zj_hat.norm();
 
     res = Xi_ * Pz_ * (zj_hat/zj_hat.norm() - zetaj_);
@@ -95,7 +67,16 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
     if (jacobians)
     {
 
+        Matrix3d RI2i = xi.q().R();
+        Vector3d pI2i = xi.t();
+        Matrix3d RI2j = xj.q().R();
+        Vector3d pI2j = xj.t();
+        Matrix3d Rb2c = x_b2c_.q().R();
+
         Matrix3d Z = (I_3x3*zj_norm - zj_hat*zj_hat.Tr/zj_norm)/(zj_norm * zj_norm);
+        Matrix<double, 2, 3> A = Xi_*Pz_*Z*Rb2c;
+        Matrix<double, 2, 3> AB = A*RI2j;
+
         if (jacobians[0])
         {
             Map<Matrix<double, 2, 7, RowMajor>> dres_dxi(jacobians[0]);
@@ -105,8 +86,8 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
             dqdd << -qi.x()*2.0,  qi.w()*2.0,  qi.z()*2.0, -qi.y()*2.0,
                     -qi.y()*2.0, -qi.z()*2.0,  qi.w()*2.0,  qi.x()*2.0,
                     -qi.z()*2.0,  qi.y()*2.0, -qi.x()*2.0,  qi.w()*2.0;
-            dres_dxi.block<2,3>(0, 0) = Xi_*Pz_*Z*Rb2c*RI2j;
-            dres_dxi.block<2,4>(0, 3) = -Xi_*Pz_*Z*Rb2c*RI2j*RI2i.Tr*skew(Rb2c.Tr*zi+pb2c)*dqdd;
+            dres_dxi.block<2,3>(0, 0) = AB;
+            dres_dxi.block<2,4>(0, 3) = -AB*RI2i.Tr*skew(zi_ci)*dqdd;
         }
         if (jacobians[1])
         {
@@ -116,17 +97,14 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
             dqdd << -qj.x()*2.0,  qj.w()*2.0,  qj.z()*2.0, -qj.y()*2.0,
                     -qj.y()*2.0, -qj.z()*2.0,  qj.w()*2.0,  qj.x()*2.0,
                     -qj.z()*2.0,  qj.y()*2.0, -qj.x()*2.0,  qj.w()*2.0;
-            dres_dxj.block<2,3>(0, 0) = -Xi_*Pz_*Z*Rb2c*RI2j;
-            dres_dxj.block<2,4>(0, 3) = Xi_*Pz_*Z*Rb2c
-                    *skew(RI2j*(RI2i.Tr*(Rb2c.Tr*(zi)+pb2c) + pI2i -pI2j))
-                    *dqdd;
+            dres_dxj.block<2,3>(0, 0) = -AB;
+            dres_dxj.block<2,4>(0, 3) = A * skew(RI2j * (RI2i.Tr*zi_ci+pI2i-pI2j))*dqdd;
         }
         if (jacobians[2])
         {
             Map<Matrix<double, 2, 1>> dres_drho(jacobians[2]);
-            dres_drho = -Xi_*Pz_*Z*Rb2c*RI2j*RI2i.Tr*Rb2c.Tr*1.0/rho*zi;
+            dres_drho = -AB*RI2i.Tr*Rb2c.Tr*1.0/rho*zi;
         }
     }
-
 }
 }
