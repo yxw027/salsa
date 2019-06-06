@@ -82,7 +82,6 @@ bool FeatFactor::Evaluate(const double * const *parameters, double *residuals, d
         {
             Map<Matrix<double, 2, 7, RowMajor>> dres_dxi(jacobians[0]);
             Matrix<double, 3, 4> dqdd;
-
             quat::Quatd& qi(xi.q());
             dqdd << -qi.x()*2.0,  qi.w()*2.0,  qi.z()*2.0, -qi.y()*2.0,
                     -qi.y()*2.0, -qi.z()*2.0,  qi.w()*2.0,  qi.x()*2.0,

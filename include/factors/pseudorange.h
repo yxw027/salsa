@@ -43,4 +43,12 @@ public:
 
 typedef ceres::AutoDiffCostFunction<FunctorShield<PseudorangeFunctor>, 2, 7, 3, 2, 7> PseudorangeFactorAD;
 
+class PseudorangeFactor : public ceres::SizedCostFunction<2,7,3,2,7>
+{
+public:
+    PseudorangeFactor(const PseudorangeFunctor* functor);
+    bool Evaluate(const double * const *parameters, double *residuals, double **jacobians) const;
+    const PseudorangeFunctor* ptr;
+};
+
 }
