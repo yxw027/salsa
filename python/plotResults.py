@@ -3,7 +3,10 @@ from typedefs import *
 from plotWindow import plotWindow
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import yaml
 import os
+
+sim_params = yaml.load(open("../params/sim_params.yaml"))
 
 def norm(v, axis=None):
     return np.sqrt(np.sum(v*v, axis=axis))
@@ -172,7 +175,7 @@ def plotFeatDepths():
     plt.ylim([0, 2])
     pw.addPlot("Depth", f)
 
-def plotPosition():
+def plotPosition(): 
     f = plt.figure()
     plt.suptitle('Position')
     for i in range(3):
@@ -182,6 +185,8 @@ def plotPosition():
         plt.plot(x['t'], x['x']['p'][:,i], label=r'$\hat{x}$')
         if i == 0:
             plt.legend()
+        plotMultipathTime()
+        plotDeniedTime()
     pw.addPlot("Position", f)
 
 def plotAttitude():
@@ -271,6 +276,32 @@ def plotVelocity():
     plt.plot(x['t'], norm(x['v'], axis=1), label=r'\hat{x}')
     pw.addPlot("Velocity", f)
 
+def getMultipathTime():
+    global multipathTime
+    switch_on = truth['t'][np.where(truth['multipath'][:-1] < truth['multipath'][1:])[0]]
+    switch_off = truth['t'][np.where(truth['multipath'][:-1] > truth['multipath'][1:])[0]]
+
+    if switch_on.size > switch_off.size:
+        switch_off = np.append(switch_off, np.max(truth['t']))
+    multipathTime =np.vstack((switch_on, switch_off)).T
+
+def getDeniedTime():
+    global deniedTime
+    switch_on = truth['t'][np.where(truth['denied'][:-1] < truth['denied'][1:])[0]]
+    switch_off = truth['t'][np.where(truth['denied'][:-1] > truth['denied'][1:])[0]]
+
+    if switch_on.size > switch_off.size:
+        switch_off = np.append(switch_off, np.max(truth['t']))
+    deniedTime = np.vstack((switch_on, switch_off)).T
+
+def plotMultipathTime():
+    for row in multipathTime:
+        plt.axvspan(row[0], row[1], alpha=0.2, color='black')
+
+def plotDeniedTime():
+    for row in deniedTime:
+        plt.axvspan(row[0], row[1], alpha=0.4, color='red')
+
 def plotResults(prefix):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
@@ -295,6 +326,8 @@ def plotResults(prefix):
     # trueFeatPos -= truth['x'][0,0:3]
     # truth['x'][:,:3] -= truth['x'][0,0:3]
 
+    getMultipathTime()
+    getDeniedTime()
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     pw = plotWindow()
@@ -325,14 +358,6 @@ def plotResults(prefix):
 
     if len(satPos) > 0 and max(satPos['size']) > 0:
         plotSatPos()
-
-
-
-
-
-
-
-
     pw.show()
 
 if __name__ == '__main__':

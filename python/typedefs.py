@@ -25,6 +25,8 @@ SimStateType = np.dtype([
     ('tau', (np.float64, 2)),
     ('x_e2n', XType),
     ('x_b2c', XType),
+    ('multipath', np.int32),
+    ('denied', np.int32),
 ])
 
 StateType = np.dtype([

@@ -223,6 +223,10 @@ start_time_week: 2026
 start_time_tow_sec: 165029
 clock_init_stdev: 1e-9
 clock_walk_stdev: 1e-9
-multipath_prob: 0.00
+multipath_prob: 0.5
 multipath_error_range: 25
 cycle_slip_prob: 0.00
+multipath_area: [-2, 0,      # x range [min, max]
+                 -100, 100]  # y range [min, max]
+gps_denied_area: [-10, -2,
+                  -100, 100]

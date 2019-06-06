@@ -1,5 +1,6 @@
 #include "salsa/salsa.h"
-#include "salsa/misc.h"
+#include "salsa/test_common.h"
+#include "salsa/sim_common.h"
 
 #include "multirotor_sim/simulator.h"
 
@@ -30,9 +31,6 @@ int main()
         salsa.x0_ = sim.state().X;
         salsa.v0_ = sim.state().v;
         salsa.x_e2n_ = sim.X_e2n_;
-        true_state_log.log(sim.t_);
-        true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,
-                                  sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_},
-                                  sim.X_e2n_.arr(), sim.x_b2c_.arr());
+        logTruth(true_state_log, sim);
     }
 }

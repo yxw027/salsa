@@ -1,5 +1,5 @@
 #include "salsa/salsa.h"
-#include "salsa/misc.h"
+#include "salsa/test_common.h"
 
 #include "multirotor_sim/simulator.h"
 

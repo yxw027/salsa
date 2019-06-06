@@ -159,6 +159,7 @@ public:
     Matrix6d imu_bias_xi_;
     MocapDeque mocap_;
     PseudorangeDeque prange_;
+    std::vector<double> sw0_;
 
 
     /************************************/

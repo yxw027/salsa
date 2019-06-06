@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "salsa/salsa.h"
+#include "salsa/test_common.h"
 
 using namespace Eigen;
 using namespace xform;

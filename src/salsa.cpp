@@ -135,6 +135,23 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
             problem.SetParameterLowerBound(&ft.rho, 0, 0.01);
         }
     }
+
+    sw0_.resize(sats_.size(), 1);
+    for (auto& s : sw0_)
+    {
+        problem.AddParameterBlock(&s, 1);
+        problem.SetParameterBlockConstant(&s);
+    }
+
+    for (auto& pvec : prange_)
+    {
+        for (auto& p : pvec)
+        {
+            problem.AddParameterBlock(&p.sw, 1);
+            problem.SetParameterLowerBound(&p.sw, 0, 0);
+            problem.SetParameterUpperBound(&p.sw, 0, 1);
+        }
+    }
 }
 
 void Salsa::setAnchors(ceres::Problem &problem)
