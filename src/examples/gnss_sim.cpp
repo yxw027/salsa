@@ -31,6 +31,6 @@ int main()
         salsa.x0_ = sim.state().X;
         salsa.v0_ = sim.state().v;
         salsa.x_e2n_ = sim.X_e2n_;
-        logTruth(true_state_log, sim);
+        logTruth(true_state_log, sim, salsa);
     }
 }

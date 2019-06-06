@@ -16,7 +16,6 @@ CurrentStateType = np.dtype([
     ('tau', (np.float64, 2))
 ])
 
-
 SimStateType = np.dtype([
 	('t', np.float64),
     ('x', XType),
@@ -27,6 +26,7 @@ SimStateType = np.dtype([
     ('x_b2c', XType),
     ('multipath', np.int32),
     ('denied', np.int32),
+    ('mp', (np.float64, params["num_sat"]))
 ])
 
 StateType = np.dtype([
@@ -50,14 +50,19 @@ OptStateType = np.dtype([
 ])
 
 OptType = np.dtype([
-    ('BUF_SIZE', np.int32),
     ('head', np.int32),
     ('tail', np.int32),
-    ('x', (OptStateType, params["state_buf_size"])),
+    ('x', (OptStateType, params["max_node_window"])),
     # ('s', (np.float64, 0)),
     ('imu', (np.float64, 6)),
     ('x_b2c', XType),
     ('x_e2n', XType),
+])
+
+SwParamsType = np.dtype([
+    ('p', (np.dtype([
+        ('t', np.float64),
+        ('s', np.float64)]), params["num_sat"]), params["max_node_window"])
 ])
 
 

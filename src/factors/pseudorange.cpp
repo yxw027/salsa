@@ -12,6 +12,7 @@ namespace salsa
 PseudorangeFunctor::PseudorangeFunctor()
 {
     active_ = false;
+    sw = 1.0;
 }
 
 void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& sat,

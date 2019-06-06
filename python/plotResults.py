@@ -306,13 +306,24 @@ def plotMultipathTime():
     for row in deniedTime:
         plt.axvspan(row[0], row[1], alpha=0.4, color='red')
 
+def plotMultipath():
+    nsat = truth["mp"][0].size
+    f = plt.figure()
+    for i in range(nsat):
+        plt.subplot(nsat, 1, i+1)
+        plt.plot(truth["t"], truth["mp"][:,i], label=r'$x$')
+        plt.plot(swParams['p']['t'][:,:,0], swParams['p']['s'][:,:,0], alpha=0.1, color='g')
+        if i == 0:
+            plt.legend()
+        plt.ylim([-0.05, 1.05])
+    pw.addPlot("Multipath", f)
 
 def plotResults(prefix):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles, trueFeatPos
-    global offset, pw, mocapRes, satPos, prangeRes, Imu
+    global offset, pw, mocapRes, satPos, prangeRes, Imu, swParams
 
     offset = 10
     x = np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType)
@@ -328,14 +339,17 @@ def plotResults(prefix):
     satPos = np.fromfile(os.path.join(prefix, "SatPos.log"), dtype=SatPosType)
     prangeRes = np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType)
     Imu = np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType)
+    swParams = np.fromfile(os.path.join(prefix, "SwParams.log"), dtype=SwParamsType)
     # trueFeatPos -= truth['x'][0,0:3]
     # truth['x'][:,:3] -= truth['x'][0,0:3]
+
 
     getMultipathTime()
     getDeniedTime()
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     pw = plotWindow()
+    plotMultipath()
 
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
@@ -350,6 +364,7 @@ def plotResults(prefix):
     plotXb2c()
 
     if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
+
         plotPRangeRes()
         plotClockBias()
         plotAzel()

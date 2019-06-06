@@ -87,6 +87,7 @@ public:
     void logFeatures();
     void logOptimizedWindow();
     void logState();
+    void logSwParams();
     void logSatPos();
     void logPrangeRes();
     void logCurrentState();
@@ -100,6 +101,7 @@ public:
         {
             CurrentState,
             Opt,
+            SwParams,
             RawRes,
             FeatRes,
             Feat,

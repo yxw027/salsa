@@ -19,6 +19,7 @@ void Salsa::initLog(const std::string& filename)
     logs_.resize(log::NumLogs);
     logs_[log::CurrentState] = new Logger(log_prefix_ + "CurrentState.log");
     logs_[log::Opt] = new Logger(log_prefix_ + "Opt.log");
+    logs_[log::SwParams] = new Logger(log_prefix_ + "SwParams.log");
     logs_[log::RawRes] = new Logger(log_prefix_+ "RawRes.log");
     logs_[log::FeatRes] = new Logger(log_prefix_ + "FeatRes.log");
     logs_[log::Feat] = new Logger(log_prefix_ + "Feat.log");
@@ -45,17 +46,63 @@ void Salsa::logState()
 
 void Salsa::logOptimizedWindow()
 {
-    logs_[log::Opt]->log(STATE_BUF_SIZE, xbuf_head_, xbuf_tail_);
-    for (int i = 0; i < STATE_BUF_SIZE; i++)
+    logs_[log::Opt]->log(xbuf_head_, xbuf_tail_);
+    for (int ii = 0; ii < max_node_window_; ii++)
     {
-        logs_[log::Opt]->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
-        logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
-    }
+        int i = (xbuf_tail_ + ii) % STATE_BUF_SIZE;
+        if (inWindow(i))
+        {
+            logs_[log::Opt]->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
+            logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
+        }
+        else
+        {
+            logs_[log::Opt]->log(-1, -1);
+            double padding = NAN;
+            for (int j = 0; j < 13; j++)
+                logs_[log::Opt]->log(padding);
+        }
+    }    
     logs_[log::Opt]->logVectors(imu_bias_, x_b2c_.arr(), x_e2n_.arr());
+    logSwParams();
+
     if (DEBUGLOGLEVEL <= 4)
         printGraph();
     if (DEBUGLOGLEVEL <= 2)
         printFeat();
+}
+
+void Salsa::logSwParams()
+{
+    PseudorangeDeque::iterator pit = prange_.begin();
+    for (int i = 0; i < max_node_window_; i++)
+    {
+        if (pit != prange_.end())
+        {
+            for (int p = 0; p < ns_; p++)
+            {
+                if (p < pit->size())
+                {
+                    logs_[log::SwParams]->log(((*pit)[p].t - start_time_).toSec());
+                    logs_[log::SwParams]->log(((*pit)[p].sw));
+                }
+                else
+                {
+                    double padding = NAN;
+                    logs_[log::SwParams]->log(padding, padding);
+                }
+            }
+            ++pit;
+        }
+        else
+        {
+            for (int p = 0; p < ns_; p++)
+            {
+                double padding = NAN;
+                logs_[log::SwParams]->log(padding, padding);
+            }
+        }
+    }
 }
 
 void Salsa::logCurrentState()
