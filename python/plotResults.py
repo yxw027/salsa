@@ -115,18 +115,22 @@ def plotPRangeRes():
                 debug = 1
             if i == 0:
                 plt.legend()
-    plt.grid()
+            if s == 1:
+                plotMultipathTime()
+    # plt.grid()
     pw.addPlot("PRangeRes", f)
     f = plt.figure()
-    for sat in np.unique(prangeRes['sats']['id']):
+    for s, sat in enumerate(np.unique(prangeRes['sats']['id'])):
         if sat < 0: continue
         idx = prangeRes['sats']['id'] == sat
         for i in range(2):
             plt.subplot(2, 1, i + 1)
             p = plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['z'][idx][:, i], label='z')
             plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['zhat'][idx][:, i], '--', color=p[0].get_color(), label='zhat')
+            if s == 1:
+                plotMultipathTime()
     plt.legend()
-    plt.grid()
+    # plt.grid()
     pw.addPlot("PRangeResDebug", f)
 
 
@@ -186,7 +190,6 @@ def plotPosition():
         if i == 0:
             plt.legend()
         plotMultipathTime()
-        plotDeniedTime()
     pw.addPlot("Position", f)
 
 def plotAttitude():
@@ -200,6 +203,7 @@ def plotAttitude():
         # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
         if i == 0:
             plt.legend()
+        plotMultipathTime()
     pw.addPlot("Attitude", f)
 
 def fixState(x):
@@ -237,6 +241,7 @@ def plotXe2n():
         plt.plot(t, opt['x_e2n']['q'][:, i], label=r"$\hat{q}_{" + titles[i] + "}$")
         plt.plot(truth['t'], truth['x_e2n']['q'][:, i], label=r"$q_{" + titles[i] + "}$")
         plt.legend()
+        plotMultipathTime()
     pw.addPlot("X_e2n", f)
 
 def plotXb2c():
@@ -270,6 +275,7 @@ def plotVelocity():
         # plt.plot(state[:,0], state[:,i+7], label=r'\hat{x}')
         if i == 0:
             plt.legend()
+        plotMultipathTime()
     plt.subplot(4,1,4)
     plt.ylabel("Magnitude")
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
@@ -297,10 +303,9 @@ def getDeniedTime():
 def plotMultipathTime():
     for row in multipathTime:
         plt.axvspan(row[0], row[1], alpha=0.2, color='black')
-
-def plotDeniedTime():
     for row in deniedTime:
         plt.axvspan(row[0], row[1], alpha=0.4, color='red')
+
 
 def plotResults(prefix):
     np.set_printoptions(linewidth=150)
