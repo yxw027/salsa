@@ -16,12 +16,13 @@ PseudorangeFunctor::PseudorangeFunctor()
 }
 
 void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& sat,
-                              const Vector3d& _rec_pos_ecef, const Matrix2d& cov,
+                              const Vector3d& _rec_pos_ecef, const Matrix2d& cov, double sw_xi,
                               const Vector3d &_p_b2g, int node, int idx)
 {
     node_ = node;
     idx_ = idx;
     p_b2g = _p_b2g;
+    sw_xi_ = sw_xi;
 
     // We don't have ephemeris for this satellite, we can't do anything with it yet
     if (sat.eph_.A == 0)
@@ -59,7 +60,7 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& 
 //#define DBG(x) printf(#x": %6.6f\n", x); std::cout << std::flush
 template <typename T>
 bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
-                                    const T* _x_e2n, T* _res) const
+                                    const T* _x_e2n, const T* _sw, T* _res) const
 {
     typedef Matrix<T,3,1> Vec3;
     typedef Matrix<T,2,1> Vec2;
@@ -69,6 +70,7 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
     Map<const Vec3> v_b(_v);
     Map<const Vec2> clk(_clk);
     Xform<T> x_e2n(_x_e2n);
+    const T& k(*_sw);
     Map<Vec2> res(_res);
 
 
@@ -83,7 +85,9 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
             + Satellite::OMEGA_EARTH / Satellite::C_LIGHT * (sat_vel[1]*p_ECEF[0] + sat_pos[1]*v_ECEF[0] - sat_vel[0]*p_ECEF[1] - sat_pos[0]*v_ECEF[1])
                    + (T)Satellite::C_LIGHT*(clk(1) - sat_clk(1));
 
-    res = Xi_ * (rho_hat - rho);
+    res << Xi_ * k * (rho_hat - rho),
+           sw_xi_ * (1.0 - k);
+
 
     /// TODO: Check if time or rec_pos have deviated too much
     /// and re-calculate ion_delay and earth rotation effect
@@ -91,9 +95,9 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
     return true;
 }
 
-template bool PseudorangeFunctor::operator()<double>(const double* _x, const double* _v, const double* _clk, const double* _x_e2n, double* _res) const;
-typedef ceres::Jet<double, 19> jactype;
-template bool PseudorangeFunctor::operator()<jactype>(const jactype* _x, const jactype* _v, const jactype* _clk, const jactype* _x_e2n, jactype* _res) const;
+template bool PseudorangeFunctor::operator()<double>(const double* _x, const double* _v, const double* _clk, const double* _x_e2n, const double* _s, double* _res) const;
+typedef ceres::Jet<double, 20> jactype;
+template bool PseudorangeFunctor::operator()<jactype>(const jactype* _x, const jactype* _v, const jactype* _clk, const jactype* _x_e2n, const jactype* _s, jactype* _res) const;
 
 PseudorangeFactor::PseudorangeFactor(const PseudorangeFunctor *functor) :
     ptr(functor)
@@ -105,6 +109,7 @@ bool PseudorangeFactor::Evaluate(const double * const *parameters, double *resid
     Map<const Vector3d> v_b(parameters[1]);
     Map<const Vector2d> clk(parameters[2]);
     Xformd x_e2n(parameters[3]);
+    const double& k(*parameters[4]);
     Map<Vector2d> res(residuals);
     const double& C(Satellite::C_LIGHT);
     const double& W(Satellite::OMEGA_EARTH);
@@ -125,7 +130,8 @@ bool PseudorangeFactor::Evaluate(const double * const *parameters, double *resid
                             - ptr->sat_vel[0]*ptr->rec_pos[1] - ptr->sat_pos[0]*v_ECEF[1])
                  + C*(clk(1) - ptr->sat_clk(1));
 
-    res = ptr->Xi_ * (rho_hat -ptr->rho);
+    res << ptr->Xi_ * k * (rho_hat - ptr->rho),
+           ptr->sw_xi_ * (1.0 - k);
 
     if (jacobians)
     {

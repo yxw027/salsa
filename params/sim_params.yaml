@@ -226,7 +226,7 @@ clock_walk_stdev: 1e-9
 multipath_prob: 0.5
 multipath_error_range: 25
 cycle_slip_prob: 0.00
-multipath_area: [-4, 0,      # x range [min, max]
+multipath_area: [-4, -2,      # x range [min, max]
                  -100, 100]  # y range [min, max]
 gps_denied_area: [-10, -4,
                   -100, 100]

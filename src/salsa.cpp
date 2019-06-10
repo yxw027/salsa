@@ -75,13 +75,15 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("bias_anchor_cov", filename, cov_diag);
     imu_bias_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
-    Vector2d clk_bias_diag;
-    get_yaml_eigen("R_clock_bias", filename, clk_bias_diag);
-    clk_bias_Xi_ = clk_bias_diag.cwiseInverse().cwiseSqrt().asDiagonal();
+    get_yaml_diag("clk_bias_xi", filename, clk_bias_Xi_);
 
     get_yaml_node("update_on_camera", filename, update_on_camera_);
     get_yaml_node("update_on_gnss", filename, update_on_gnss_);
     get_yaml_node("update_on_mocap", filename, update_on_mocap_);
+
+    get_yaml_node("switch_xi", filename, switch_Xi_);
+    get_yaml_node("switchdot_xi", filename, switchdot_Xi_);
+    get_yaml_node("enable_switching_factors", filename, enable_switching_factors_);
 }
 
 void Salsa::initState()
@@ -143,7 +145,8 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
             problem.AddParameterBlock(&p.sw, 1);
             problem.SetParameterLowerBound(&p.sw, 0, 0);
             problem.SetParameterUpperBound(&p.sw, 0, 1);
-            problem.SetParameterBlockConstant(&p.sw);
+            if (!enable_switching_factors_)
+                problem.SetParameterBlockConstant(&p.sw);
         }
     }
 }
@@ -213,18 +216,33 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
     if (disable_gnss_)
         return;
 
+    PseudorangeVec* pvec_prev = nullptr;
     for (auto pvec = prange_.begin(); pvec != prange_.end(); pvec++)
     {
-        for (auto it = pvec->begin(); it != pvec->end(); it++)
+        for (int i = 0; i < pvec->size(); i++)
         {
-            SALSA_ASSERT(inWindow(it->idx_), "Trying to add factor to node outside of window");
-            problem.AddResidualBlock(new PseudorangeFactor(&*it),
+            PseudorangeFunctor &p((*pvec)[i]);
+            SALSA_ASSERT(inWindow(p.idx_), "Trying to add factor to node outside of window");
+            // problem.AddResidualBlock(new PseudorangeFactor(&*it),
+            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
+            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
                                      NULL,
-                                     xbuf_[it->idx_].x.data(),
-                    xbuf_[it->idx_].v.data(),
-                    xbuf_[it->idx_].tau.data(),
-                    x_e2n_.data());
+                                     xbuf_[p.idx_].x.data(),
+                                     xbuf_[p.idx_].v.data(),
+                                     xbuf_[p.idx_].tau.data(),
+                                     x_e2n_.data(),
+                                     &(p.sw));
+
+            if (pvec_prev)
+            {
+                PseudorangeFunctor& pprev((*pvec_prev)[i]);
+                problem.AddResidualBlock(new SwitchFactor(switchdot_Xi_),
+                                         NULL,
+                                         &pprev.sw,
+                                         &p.sw);
+            }
         }
+        pvec_prev = &*pvec;
     }
     for (auto it = clk_.begin(); it != clk_.end(); it++)
     {

@@ -313,7 +313,7 @@ def plotMultipath():
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
         plt.plot(truth["t"], truth["mp"][:,i], label=r'$x$')
-        plt.plot(swParams['p']['t'][:,:,0], swParams['p']['s'][:,:,0], alpha=0.1, color='g')
+        plt.plot(swParams['p']['t'][:,:,i], swParams['p']['s'][:,:,i], alpha=0.1, color='g')
         if i == 0:
             plt.legend()
         plt.ylim([-0.05, 1.05])
@@ -365,10 +365,9 @@ def plotResults(prefix):
     plotXb2c()
 
     if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
-
-        plotPRangeRes()
+        # plotPRangeRes()
         plotClockBias()
-        plotAzel()
+        # plotAzel()
 
     if len(featPos) > 0 and max(featPos['size']) > 0:
         plotFeatRes()
@@ -377,8 +376,8 @@ def plotResults(prefix):
     if len(mocapRes) > 0 and max(mocapRes['size']) > 0:
         plotMocapRes()
 
-    if len(satPos) > 0 and max(satPos['size']) > 0:
-        plotSatPos()
+    # if len(satPos) > 0 and max(satPos['size']) > 0:
+    #     plotSatPos()
     pw.show()
 
 if __name__ == '__main__':

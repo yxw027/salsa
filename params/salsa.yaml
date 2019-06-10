@@ -45,7 +45,7 @@ x_b2c: [0, 0, 0, 1, 0, 0, 0]
 ### GNSS
 #####################################
 switch_weight: 1000.0
-R_clock_bias: [0.01, 0.01] # nsec
+clk_bias_xi: [2, 2] # 1/(nsec)
 doppler_cov: 0.005
 min_satellite_elevation: 0.43654987
 use_point_positioning: true
@@ -54,6 +54,9 @@ update_on_gnss: false
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, 0]
+switch_xi: 10
+switchdot_xi: 2
+enable_switching_factors: true
 
 
 #####################################

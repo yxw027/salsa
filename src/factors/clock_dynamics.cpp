@@ -32,7 +32,7 @@ bool ClockBiasFunctor::operator()(const T* _taui, const T* _tauj, T* _res) const
     res(0) = (tau_i(0) + tau_i(1) * (T)dt_) - tau_j(0);
     res(1) = (tau_i(1)) - tau_j(1);
 
-    res = Xi_ * (T)1e9 * res;
+    res = Xi_ * (T)1e9/dt_ * res;
     return true;
 }
 template bool ClockBiasFunctor::operator()<double>(const double* _taui, const double* _tauj, double* _res) const;
@@ -56,7 +56,7 @@ bool ClockBiasFactor::Evaluate(const double * const *parameters, double *residua
     res(0) = (tau_i(0) + tau_i(1) * ptr->dt_) - tau_j(0);
     res(1) = (tau_i(1)) - tau_j(1);
 
-    res = ptr->Xi_ * 1e9 * res;
+    res = ptr->Xi_ * 1e9/ptr->dt_ * res;
 
     if (jacobians)
     {

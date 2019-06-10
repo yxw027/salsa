@@ -160,6 +160,7 @@ public:
     Matrix6d x_e2n_anchor_xi_;
     Eigen::Matrix2d clk_bias_Xi_;
     double switch_Xi_;
+    double switchdot_Xi_;
     Matrix6d imu_bias_xi_;
     MocapDeque mocap_;
     PseudorangeDeque prange_;
@@ -220,6 +221,7 @@ public:
     SatVec sats_;
     ObsVec filtered_obs_;
     int n_obs_;
+    bool enable_switching_factors_;
 
     /************************************/
     /*              Image               */

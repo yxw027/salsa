@@ -223,7 +223,7 @@ void Salsa::logRawGNSSRes()
                 {
                     int idx = prange_[i][j].idx_;
                     prange_[i][j](xbuf_[idx].x.data(), xbuf_[idx].v.data(), xbuf_[idx].tau.data(),
-                            x_e2n_.data(), res.data());
+                                  x_e2n_.data(), &prange_[i][j].sw, res.data());
                     t = xbuf_[idx].t;
                 }
                 else

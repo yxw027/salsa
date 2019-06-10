@@ -31,7 +31,7 @@ TEST (PrangeFactor, ANvsADRes)
     Vector3d z;
     sat.computeMeasurement(log_start, p_E2g, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), p_b2g, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), 1.0, p_b2g, 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
     Vector2d res_ad, res_an;
@@ -68,7 +68,7 @@ TEST (PrangeFactor, Jac1)
     Vector3d z;
     sat.computeMeasurement(log_start, p_E2g, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), p_b2g, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), 1.0, p_b2g, 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
 
@@ -129,7 +129,7 @@ TEST (PrangeFactor, Jac2)
     Vector3d z;
     sat.computeMeasurement(log_start, p_E2g, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), p_b2g, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), 1.0, p_b2g, 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
 
@@ -184,7 +184,7 @@ TEST (PrangeFactor, Jac3)
     Vector3d z;
     sat.computeMeasurement(log_start, p_E2g, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), p_b2g, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), 1.0, p_b2g, 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
 
@@ -241,7 +241,7 @@ TEST (PrangeFactor, Jac4)
     Vector3d z;
     sat.computeMeasurement(log_start, p_E2g, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), p_b2g, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), 1.0, p_b2g, 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
 
@@ -297,15 +297,16 @@ TEST (PrangeFactor, InitZeroResidual)
     Vector3d p_E2g = WGS84::ned2ecef(x_e2n, p_b2g);
     Vector3d vel(1, 2,3);
     Vector2d clk(1e-5, 1e-8);
+    double k = 1.0;
 
     Vector3d z;
     sat.computeMeasurement(log_start, p_E2g, x_e2n.rota(vel), clk, z);
 
-    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), p_b2g, 0, 0);
+    func.init(log_start, z.topRows<2>(), sat, p_E2g, Matrix2d::Identity(), 1.0, p_b2g, 0, 0);
 
     xform::Xformd x = xform::Xformd::Identity();
     Vector2d res;
-    func(x.data(), vel.data(), clk.data(), x_e2n.data(), res.data());
+    func(x.data(), vel.data(), clk.data(), x_e2n.data(), &k, res.data());
 
     EXPECT_MAT_NEAR(res, Vector2d::Zero(), 1e-8);
 }
