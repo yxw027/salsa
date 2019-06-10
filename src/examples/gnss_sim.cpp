@@ -15,16 +15,17 @@ int main()
 //#ifndef NDEBUG
 //    sim.tmax_ = 10;
 //#endif
+    std::string prefix = "/tmp/Salsa/RawGNSSSimulation/";
 
     Salsa salsa;
-    salsa.init(default_params("/tmp/Salsa/RawGNSSSimulation/"));
+    salsa.init(default_params(prefix + "Main/"));
     salsa.x0_ = sim.state().X;
     salsa.x_e2n_ = sim.X_e2n_;
     salsa.update_on_gnss_ = true;
 
     sim.register_estimator(&salsa);
 
-    Logger true_state_log(salsa.log_prefix_ + "Truth.log");
+    Logger true_state_log(prefix + "Truth.log");
 
     while (sim.run())
     {

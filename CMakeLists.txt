@@ -114,4 +114,6 @@ add_executable(mocapSim src/examples/mocap_sim.cpp)
 target_link_libraries(mocapSim salsa geometry ${multirotor_sim_LIBRARIES})
 add_executable(mixedSim src/examples/mixed_sim.cpp)
 target_link_libraries(mixedSim salsa geometry ${multirotor_sim_LIBRARIES})
+add_executable(compareSim src/examples/compare_sim.cpp)
+target_link_libraries(compareSim salsa geometry ${multirotor_sim_LIBRARIES})
 

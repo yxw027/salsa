@@ -27,8 +27,8 @@ def plotClockBias():
         plt.subplot(2, 1, i + 1)
         plt.title(tautitles[i])
         plt.plot(truth['t'], truth['tau'][:, i], label='x')
-        plt.plot(state['t'], state['tau'][:, i], label=r'\hat{x}')
-        # plt.plot(state[:,0], state[:,i], label=r'\hat{x}')
+        for log in data:
+            plt.plot(log.state['t'], log.state['tau'][:, i], label=log.label)
         if i == 0:
             plt.legend()
     pw.addPlot("Clock Bias", f)
@@ -42,7 +42,8 @@ def plotImuBias():
         for j in range(2):
             plt.subplot(3, 2, i * 2 + j + 1)
             plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
-            plt.plot(state['t'], state['b'][:, j * 3 + i], label=r'\hat{x}')
+            for log in data:
+                plt.plot(log.state['t'], log.state['b'][:, j * 3 + i], label=log.label)
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
             plt.legend()
@@ -53,9 +54,12 @@ def plot3DMap():
     ax = f.add_subplot(111, projection='3d')
     ax.set_aspect('equal')
 
-    k = [x['node'] != -1][0]
-    ax.plot(state['x']['p'][:,1],state['x']['p'][:,0], -state['x']['p'][:,2], label=r'$\hat{x}$')
-    ax.plot(x['x']['p'][k,1],x['x']['p'][k,0], -x['x']['p'][k,2], '*')
+    for log in data:
+        k = [log.x['node'] != -1][0]
+        x = log.x
+        state = log.state
+        ax.plot(x['x']['p'][k,1],x['x']['p'][k,0], -x['x']['p'][k,2], '*')
+        ax.plot(state['x']['p'][:,1],state['x']['p'][:,0], -state['x']['p'][:,2], label=log.label)
     ax.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], -truth['x']['p'][:,2], label=r'$x$')
     ax.legend()
     plt.grid()
@@ -186,8 +190,11 @@ def plotPosition():
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
-        plt.plot(state['t'], state['x']['p'][:,i], label=r'$\hat{x}$')
-        plt.plot(x['t'], x['x']['p'][:,i], 'x')
+        for log in data:
+            state = log.state
+            x = log.x;
+            plt.plot(state['t'], state['x']['p'][:,i], label=log.label)
+            plt.plot(x['t'], x['x']['p'][:,i], 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -200,8 +207,11 @@ def plotAttitude():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x']['q'][:,i], label='x')
-        plt.plot(state['t'], state['x']['q'][:,i]*np.sign(state['x']['q'][:,0]), label=r'$\hat{x}$')
-        plt.plot(x['t'], x['x']['q'][:,i]*np.sign(x['x']['q'][:,0]), 'x')
+        for log in data:
+            state = log.state
+            x = log.x
+            plt.plot(state['t'], state['x']['q'][:,i]*np.sign(state['x']['q'][:,0]), label=log.label)
+            plt.plot(x['t'], x['x']['q'][:,i]*np.sign(x['x']['q'][:,0]), 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -218,10 +228,10 @@ def plotImu():
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     for i in range(3):
         plt.subplot(3, 2, 2*i+1)
-        plt.plot(Imu['t'], Imu['acc'][:, i], label=imu_titles[i])
+        plt.plot(data[0].Imu['t'], data[0].Imu['acc'][:, i], label=imu_titles[i])
         plt.legend()
         plt.subplot(3, 2, 2*i+2)
-        plt.plot(Imu['t'], Imu['omega'][:, i], label=imu_titles[i+3])
+        plt.plot(data[0].Imu['t'], data[0].Imu['omega'][:, i], label=imu_titles[i+3])
         plt.legend()
     pw.addPlot("IMU", f)
 
@@ -232,15 +242,18 @@ def plotXe2n():
     # titles = ["p_{x}", "p_{y}", "p_{z}", "~", "q_{w}", "q_{x}", "q_{y}", "q_{z}"]
     titles = ["x", "y", "z", "~", "w", "x", "y", "z"]
     for i in range(4):
-        t = np.nanmax(opt['x']['t'], axis=1)
         if i < 3:
             plt.subplot(4,2,2*i+1)
-            plt.plot(t, opt['x_e2n']['p'][:,i], label=r"$\hat{p}_{"+titles[i]+"}$")
-            plt.plot(truth['t'], truth['x_e2n']['p'][:,i], label=r"$p_{"+titles[i]+"}$")
+            plt.ylabel(r"$p_{"+titles[i]+"}$")
+            plt.plot(truth['t'], truth['x_e2n']['p'][:,i], label="x")
+            for log in data:
+                plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_e2n']['p'][:,i], label=log.label)
             plt.legend()
         plt.subplot(4,2, 2*i+2)
-        plt.plot(t, opt['x_e2n']['q'][:, i], label=r"$\hat{q}_{" + titles[i] + "}$")
-        plt.plot(truth['t'], truth['x_e2n']['q'][:, i], label=r"$q_{" + titles[i] + "}$")
+        plt.plot(truth['t'], truth['x_e2n']['q'][:, i], label="x")
+        plt.ylabel("$q_{" + titles[i] + "}$")
+        for log in data:
+            plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_e2n']['q'][:, i], label=log.label)
         plt.legend()
         plotMultipathTime()
     pw.addPlot("X_e2n", f)
@@ -252,15 +265,19 @@ def plotXb2c():
     # titles = ["p_{x}", "p_{y}", "p_{z}", "~", "q_{w}", "q_{x}", "q_{y}", "q_{z}"]
     titles = ["x", "y", "z", "~", "w", "x", "y", "z"]
     for i in range(4):
-        t = np.nanmax(opt['x']['t'], axis=1)
+
         if i < 3:
             plt.subplot(4,2,2*i+1)
-            plt.plot(t, opt['x_b2c']['p'][:,i], label=r"$\hat{p}_{"+titles[i]+"}$")
-            plt.plot(truth['t'], truth['x_b2c']['p'][:,i], label=r"$p_{"+titles[i]+"}$")
+            plt.ylabel(r"$p_{"+titles[i]+"}$")
+            plt.plot(truth['t'], truth['x_b2c']['p'][:,i], label="x")
+            for log in data:
+                plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_b2c']['p'][:,i], label=log.label)
             plt.legend()
         plt.subplot(4,2, 2*i+2)
-        plt.plot(t, opt['x_b2c']['q'][:, i], label=r"$\hat{q}_{" + titles[i] + "}$")
-        plt.plot(truth['t'], truth['x_b2c']['q'][:, i], label=r"$q_{" + titles[i] + "}$")
+        plt.plot(truth['t'], truth['x_b2c']['q'][:, i], label="x")
+        plt.ylabel(r"$q_{" + titles[i] + "}$")
+        for log in data:
+            plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_b2c']['q'][:, i], label=log.label)
         plt.legend()
     pw.addPlot("X_b2c", f)
 
@@ -272,8 +289,11 @@ def plotVelocity():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['v'][:,i], label='x')
-        plt.plot(state['t'], state['v'][:,i], label=r'\hat{x}')
-        plt.plot(x['t'], x['v'][:,i], 'x')
+        for log in data:
+            state = log.state
+            x = log.x
+            plt.plot(state['t'], state['v'][:,i], label=log.label)
+            plt.plot(x['t'], x['v'][:,i], 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -310,50 +330,59 @@ def plotMultipathTime():
 def plotMultipath():
     nsat = truth["mp"][0].size
     f = plt.figure()
+    cmap = plt.cm.get_cmap('Paired', len(data)+1)
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
-        plt.plot(truth["t"], truth["mp"][:,i], label=r'$x$')
-        plt.plot(swParams['p']['t'][:,:,i], swParams['p']['s'][:,:,i], alpha=0.1, color='g')
+        plt.plot(truth["t"], truth["mp"][:,i], color=cmap(0), label=r'$x$')
+        for l, log in enumerate(data):
+            plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], alpha=0.3, color=cmap(l+1), label=log.label)
         if i == 0:
             plt.legend()
         plt.ylim([-0.05, 1.05])
     pw.addPlot("Multipath", f)
 
-def plotResults(prefix):
+class Log:
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.load(prefix)
+
+    def load(self, prefix):
+        setattr(self, "x", np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType))
+        setattr(self, "state", np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType))
+        setattr(self, "opt", np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType))
+        setattr(self, "GnssRes", np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=GnssResType))
+        setattr(self, "featRes", np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType))
+        setattr(self, "featPos", np.fromfile(os.path.join(prefix, "Feat.log"), dtype=FeatType))
+        setattr(self, "cb", np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)]))
+        setattr(self, "mocapRes", np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType))
+        setattr(self, "satPos", np.fromfile(os.path.join(prefix, "SatPos.log"), dtype=SatPosType))
+        setattr(self, "prangeRes", np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType))
+        setattr(self, "Imu", np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType))
+        setattr(self, "swParams", np.fromfile(os.path.join(prefix, "SwParams.log"), dtype=SwParamsType))
+        setattr(self, "label", open(os.path.join(prefix, "name.txt"), "r").read().splitlines()[0])
+        self.label.replace(r"//", r"/")
+
+
+def plotResults(directory):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-    global x, state, truth, opt, GnssRes, featRes, featPos, cb, xtitles, vtitles, trueFeatPos
-    global offset, pw, mocapRes, satPos, prangeRes, Imu, swParams
+    global data, truth, pw, xtitles, imu_titles, vtitles
+    xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
+    vtitles = ['$v_x$', '$v_y$', '$v_z$']
+    imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
+                  r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
 
-    offset = 10
-    x = np.fromfile(os.path.join(prefix, "State.log"), dtype=StateType)
-    state = np.fromfile(os.path.join(prefix,"CurrentState.log"), dtype=CurrentStateType)
-    truth = np.fromfile(os.path.join(prefix,"Truth.log"), dtype=SimStateType)
-    opt = np.fromfile(os.path.join(prefix,"Opt.log"), dtype=OptType)
-    GnssRes = np.fromfile(os.path.join(prefix, "RawRes.log"), dtype=GnssResType)
-    featRes = np.fromfile(os.path.join(prefix, "FeatRes.log"), dtype=FeatResType)
-    featPos = np.fromfile(os.path.join(prefix, "Feat.log"), dtype=FeatType)
+    subdirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory,o))]
+    truth = np.fromfile(os.path.join(directory,"Truth.log"), dtype=SimStateType)
     # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
-    cb = np.fromfile(os.path.join(prefix, "CB.log"), dtype=[('t' ,np.float64), ('cb', np.int32)])
-    mocapRes = np.fromfile(os.path.join(prefix, "MocapRes.log"), dtype=MocapResType)
-    satPos = np.fromfile(os.path.join(prefix, "SatPos.log"), dtype=SatPosType)
-    prangeRes = np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType)
-    Imu = np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType)
-    swParams = np.fromfile(os.path.join(prefix, "SwParams.log"), dtype=SwParamsType)
-    # trueFeatPos -= truth['x'][0,0:3]
-    # truth['x'][:,:3] -= truth['x'][0,0:3]
 
+    data = [Log(subdir) for subdir in subdirs]
 
     getMultipathTime()
     getDeniedTime()
-    imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
-                  r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
-    pw = plotWindow()
-    plotMultipath()
 
-    xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
-    vtitles = ['$v_x$', '$v_y$', '$v_z$']
+    pw = plotWindow()
 
     plot3DMap()
     plotPosition()
@@ -362,22 +391,23 @@ def plotResults(prefix):
     plotImuBias()
     plotImu()
     plotXe2n()
-    plotXb2c()
-
-    if len(prangeRes) > 0 and max(prangeRes['size']) > 0:
+    # plotXb2c()
+    #
+    if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
         # plotPRangeRes()
         plotClockBias()
+        plotMultipath()
         # plotAzel()
-
-    if len(featPos) > 0 and max(featPos['size']) > 0:
-        plotFeatRes()
-        plotFeatDepths()
-
-    if len(mocapRes) > 0 and max(mocapRes['size']) > 0:
-        plotMocapRes()
-
-    # if len(satPos) > 0 and max(satPos['size']) > 0:
-    #     plotSatPos()
+    #
+    # if len(featPos) > 0 and max(featPos['size']) > 0:
+    #     plotFeatRes()
+    #     plotFeatDepths()
+    #
+    # if len(mocapRes) > 0 and max(mocapRes['size']) > 0:
+    #     plotMocapRes()
+    #
+    # # if len(satPos) > 0 and max(satPos['size']) > 0:
+    # #     plotSatPos()
     pw.show()
 
 if __name__ == '__main__':
