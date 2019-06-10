@@ -138,13 +138,13 @@ bool PseudorangeFactor::Evaluate(const double * const *parameters, double *resid
         Vector3d e = los.Tr/los_norm;
         Matrix3d RE2I = x_e2n.q().R();
         Matrix3d RI2b = x.q().R();
-        const double& xi0(ptr->Xi_(0,0));
-        const double& xi1(ptr->Xi_(1,1));
+        double xi0 = ptr->Xi_(0,0) * k;
+        double xi1 = ptr->Xi_(1,1) * k;
 //        Matrix3d Z = (los*e.Tr - I_3x3*norm)/(norm*norm);
 
         if (jacobians[0])
         {
-            Map<Matrix<double, 2, 7, RowMajor>> dres_dx(jacobians[0]);
+            Map<Matrix<double, 3, 7, RowMajor>> dres_dx(jacobians[0]);
             Matrix<double, 3, 4> dqdd;
             quat::Quatd& q(x.q());
             dqdd << -q.x()*2.0,  q.w()*2.0,  q.z()*2.0, -q.y()*2.0,
@@ -155,26 +155,29 @@ bool PseudorangeFactor::Evaluate(const double * const *parameters, double *resid
             dres_dx.block<1,4>(0,3) = xi0 * (e.Tr * RE2I.Tr * RI2b.Tr * skew(ptr->p_b2g) * dqdd);
             dres_dx.block<1,3>(1,0).setZero(); //approx
             dres_dx.block<1,4>(1,3) = xi1 * (e.Tr*RE2I.Tr*RI2b.Tr*skew(v_b) * dqdd); // approx
+            dres_dx.bottomRows<1>().setZero();
         }
 
         if (jacobians[1])
         {
-            Map<Matrix<double, 2, 3, RowMajor>> dres_dv(jacobians[1]);
+            Map<Matrix<double, 3, 3, RowMajor>> dres_dv(jacobians[1]);
             dres_dv.topRows<1>().setZero();
-            dres_dv.bottomRows<1>() = xi1*(-e.Tr*RE2I.Tr*RI2b.Tr);
+            dres_dv.row(1) = xi1*(-e.Tr*RE2I.Tr*RI2b.Tr);
+            dres_dv.bottomRows<1>().setZero();
         }
 
         if (jacobians[2])
         {
-            Map<Matrix<double, 2, 2, RowMajor>> dres_dclk(jacobians[2]);
+            Map<Matrix<double, 3, 2, RowMajor>> dres_dclk(jacobians[2]);
             dres_dclk << xi0*C, 0,
-                         0, xi1*C;
+                         0, xi1*C,
+                         0, 0;
 
         }
 
         if (jacobians[3])
         {
-            Map<Matrix<double, 2, 7, RowMajor>> dres_dx2en(jacobians[3]);
+            Map<Matrix<double, 3, 7, RowMajor>> dres_dx2en(jacobians[3]);
             Matrix<double, 3, 4> dqdd;
             quat::Quatd& q(x_e2n.q());
             dqdd << -q.x()*2.0,  q.w()*2.0,  q.z()*2.0, -q.y()*2.0,
@@ -185,6 +188,14 @@ bool PseudorangeFactor::Evaluate(const double * const *parameters, double *resid
             dres_dx2en.block<1,4>(0,3) = xi0 * (e.Tr*RE2I.Tr*skew(x.t() + RI2b.Tr*ptr->p_b2g) * dqdd);
             dres_dx2en.block<1,3>(1,0).setZero(); //approx
             dres_dx2en.block<1,4>(1,3) = xi1 * (e.Tr*RE2I.Tr*skew(RI2b.Tr*v_b)*dqdd); //approx
+            dres_dx2en.bottomRows<1>().setZero();
+        }
+
+        if (jacobians[4])
+        {
+            Map<Matrix<double, 3, 1>> dres_ds(jacobians[4]);
+            dres_ds << ptr->Xi_ * (rho_hat - ptr->rho),
+                       -ptr->sw_xi_;
         }
     }
 

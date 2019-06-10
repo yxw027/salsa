@@ -223,9 +223,9 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
         {
             PseudorangeFunctor &p((*pvec)[i]);
             SALSA_ASSERT(inWindow(p.idx_), "Trying to add factor to node outside of window");
-            // problem.AddResidualBlock(new PseudorangeFactor(&*it),
-            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
-            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
+//            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
+//            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
+            problem.AddResidualBlock(new PseudorangeFactor(&p),
                                      NULL,
                                      xbuf_[p.idx_].x.data(),
                                      xbuf_[p.idx_].v.data(),
