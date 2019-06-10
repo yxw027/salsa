@@ -40,30 +40,41 @@ typedef ceres::Jet<double, 4> jactype;
 template bool ClockBiasFunctor::operator()<jactype>(const jactype* _taui, const jactype* _tauj, jactype* _res) const;
 
 
+ClockBiasFactor::ClockBiasFactor(ClockBiasFunctor *_ptr)
+{
+    ptr = _ptr;
+}
 
-//ClockBiasPinFunctor::ClockBiasPinFunctor(const Vector2d &tau_prev, const Matrix2d &Xi)
-//{
-//    Xi_ = Xi;
-//    tau_prev_ = tau_prev;
-//}
+bool ClockBiasFactor::Evaluate(const double * const *parameters, double *residuals, double **jacobians) const
+{
+    typedef Matrix<double,2,1> Vec2;
 
-//void ClockBiasPinFunctor::setTauPrev(const Vector2d& tau_prev)
-//{
-//    tau_prev_ = tau_prev;
-//}
+    Map<const Vec2> tau_i(parameters[0]);
+    Map<const Vec2> tau_j(parameters[1]);
+    Map<Vec2> res(residuals);
 
-//template <typename T>
-//bool ClockBiasPinFunctor::operator()(const T* _tau, T* _res) const
-//{
-//    typedef Matrix<T,2,1> Vec2;
-//    Map<const Vec2> tau(_tau);
-//    Map<Vec2> res(_res);
+    res(0) = (tau_i(0) + tau_i(1) * ptr->dt_) - tau_j(0);
+    res(1) = (tau_i(1)) - tau_j(1);
 
-//    res = Xi_ * (tau - tau_prev_);
-//    return true;
-//}
+    res = ptr->Xi_ * 1e9 * res;
 
-//template bool ClockBiasPinFunctor::operator()<double>(const double* tau, double* res) const;
-//typedef ceres::Jet<double, 2> jactype2;
-//template bool ClockBiasPinFunctor::operator()<jactype2>(const jactype2* tau, jactype2* res) const;
+    if (jacobians)
+    {
+        if (jacobians[0])
+        {
+            Map<Matrix<double, 2, 2, RowMajor>> drdtaui(jacobians[0]);
+            drdtaui << 1, ptr->dt_,
+                       0, 1;
+            drdtaui = ptr->Xi_ * 1e9 * drdtaui;
+        }
+        if (jacobians[1])
+        {
+            Map<Matrix<double, 2, 2, RowMajor>> drdtauj(jacobians[1]);
+            drdtauj << -1,  0,
+                        0, -1;
+            drdtauj = ptr->Xi_ * 1e9 * drdtauj;
+        }
+    }
+    return true;
+}
 }

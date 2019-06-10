@@ -26,20 +26,13 @@ public:
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasFunctor>, 2, 2, 2> ClockBiasFactorAD;
 
+class ClockBiasFactor : public ceres::SizedCostFunction<2,2,2>
+{
+public:
+    ClockBiasFunctor* ptr;
 
-//class ClockBiasPinFunctor
-//{
-//public:
-//    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-//    ClockBiasPinFunctor(const Vector2d& tau_prev, const Matrix2d& Xi);
-//    void setTauPrev(const Vector2d& tau_prev);
-
-//    template <typename T>
-//    bool operator()(const T* _tau, T* res) const;
-
-//    Vector2d tau_prev_;
-//    Matrix2d Xi_;
-//};
-//typedef ceres::AutoDiffCostFunction<FunctorShield<ClockBiasPinFunctor>, 2, 2> ClockBiasPinFunctorAD;
+    ClockBiasFactor(ClockBiasFunctor* _ptr);
+    bool Evaluate(const double * const *parameters, double *residuals, double **jacobians) const override;
+};
 
 }

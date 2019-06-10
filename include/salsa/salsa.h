@@ -19,6 +19,7 @@
 #include "factors/xform.h"
 #include "factors/pseudorange.h"
 #include "factors/clock_dynamics.h"
+#include "factors/switch_dynamics.h"
 #include "factors/carrier_phase.h"
 #include "factors/clock_dynamics.h"
 #include "factors/anchor.h"
@@ -158,10 +159,10 @@ public:
     XformAnchor* x_e2n_anchor_;
     Matrix6d x_e2n_anchor_xi_;
     Eigen::Matrix2d clk_bias_Xi_;
+    double switch_Xi_;
     Matrix6d imu_bias_xi_;
     MocapDeque mocap_;
     PseudorangeDeque prange_;
-    std::vector<double> sw0_;
 
 
     /************************************/

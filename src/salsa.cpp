@@ -63,7 +63,6 @@ void Salsa::load(const string& filename)
     get_yaml_node("max_iter", filename, options_.max_num_iterations);
 
     xbuf_.resize(STATE_BUF_SIZE);
-    sw0_.resize(ns_, 1);
 
     Vector11d state_anchor_cov;
     get_yaml_eigen("state_anchor_cov", filename, state_anchor_cov);
@@ -137,11 +136,6 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
         }
     }
 
-    for (auto& s : sw0_)
-    {
-        problem.AddParameterBlock(&s, 1);
-    }
-
     for (auto& pvec : prange_)
     {
         for (auto& p : pvec)
@@ -149,6 +143,7 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
             problem.AddParameterBlock(&p.sw, 1);
             problem.SetParameterLowerBound(&p.sw, 0, 0);
             problem.SetParameterUpperBound(&p.sw, 0, 1);
+            problem.SetParameterBlockConstant(&p.sw);
         }
     }
 }

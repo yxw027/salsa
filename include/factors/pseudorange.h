@@ -7,7 +7,7 @@
 #include "gnss_utils/wgs84.h"
 
 #include "factors/shield.h"
-
+#include "factors/switch_dynamics.h"
 
 namespace salsa
 {

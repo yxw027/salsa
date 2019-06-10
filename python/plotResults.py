@@ -186,7 +186,8 @@ def plotPosition():
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
-        plt.plot(x['t'], x['x']['p'][:,i], label=r'$\hat{x}$')
+        plt.plot(state['t'], state['x']['p'][:,i], label=r'$\hat{x}$')
+        plt.plot(x['t'], x['x']['p'][:,i], 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -199,8 +200,8 @@ def plotAttitude():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x']['q'][:,i], label='x')
-        plt.plot(x['t'], x['x']['q'][:,i]*np.sign(x['x']['q'][:,0]), label=r'\hat{x}')
-        # plt.plot(state[:,0], state[:,i+3], label=r'\hat{x}')
+        plt.plot(state['t'], state['x']['q'][:,i]*np.sign(state['x']['q'][:,0]), label=r'$\hat{x}$')
+        plt.plot(x['t'], x['x']['q'][:,i]*np.sign(x['x']['q'][:,0]), 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -271,8 +272,8 @@ def plotVelocity():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['v'][:,i], label='x')
-        plt.plot(x['t'], x['v'][:,i], label=r'\hat{x}')
-        # plt.plot(state[:,0], state[:,i+7], label=r'\hat{x}')
+        plt.plot(state['t'], state['v'][:,i], label=r'\hat{x}')
+        plt.plot(x['t'], x['v'][:,i], 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
