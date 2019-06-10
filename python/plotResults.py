@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import yaml
 import os
+from scipy import interpolate
 
 sim_params = yaml.load(open("../params/sim_params.yaml"))
 
@@ -54,13 +55,12 @@ def plot3DMap():
     ax = f.add_subplot(111, projection='3d')
     ax.set_aspect('equal')
 
-    for log in data:
-        k = [log.x['node'] != -1][0]
-        x = log.x
-        state = log.state
-        ax.plot(x['x']['p'][k,1],x['x']['p'][k,0], -x['x']['p'][k,2], '*')
-        ax.plot(state['x']['p'][:,1],state['x']['p'][:,0], -state['x']['p'][:,2], label=log.label)
     ax.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], -truth['x']['p'][:,2], label=r'$x$')
+    for log in data:
+        if plotKF:
+            k = [log.x['node'] != -1][0]
+            ax.plot(log.x['x']['p'][k,1],log.x['x']['p'][k,0], -log.x['x']['p'][k,2], '*')
+        ax.plot(log.state['x']['p'][:,1],log.state['x']['p'][:,0], -log.state['x']['p'][:,2], label=log.label)
     ax.legend()
     plt.grid()
 
@@ -191,10 +191,9 @@ def plotPosition():
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
         for log in data:
-            state = log.state
-            x = log.x;
-            plt.plot(state['t'], state['x']['p'][:,i], label=log.label)
-            plt.plot(x['t'], x['x']['p'][:,i], 'x')
+            plt.plot(log.state['t'], log.state['x']['p'][:,i], label=log.label)
+            if plotKF:
+                plt.plot(log.x['t'], log.x['x']['p'][:,i], 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -208,10 +207,9 @@ def plotAttitude():
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x']['q'][:,i], label='x')
         for log in data:
-            state = log.state
-            x = log.x
-            plt.plot(state['t'], state['x']['q'][:,i]*np.sign(state['x']['q'][:,0]), label=log.label)
-            plt.plot(x['t'], x['x']['q'][:,i]*np.sign(x['x']['q'][:,0]), 'x')
+            plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['x']['q'][:,0]), label=log.label)
+            if plotKF:
+                plt.plot(log.x['t'], log.x['x']['q'][:,i]*np.sign(log.x['x']['q'][:,0]), 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
@@ -290,17 +288,17 @@ def plotVelocity():
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['v'][:,i], label='x')
         for log in data:
-            state = log.state
-            x = log.x
-            plt.plot(state['t'], state['v'][:,i], label=log.label)
-            plt.plot(x['t'], x['v'][:,i], 'x')
+            plt.plot(log.state['t'], log.state['v'][:,i], label=log.label)
+            if plotKF:
+                plt.plot(log.x['t'], log.x['v'][:,i], 'x')
         if i == 0:
             plt.legend()
         plotMultipathTime()
     plt.subplot(4,1,4)
     plt.ylabel("Magnitude")
     plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
-    plt.plot(x['t'], norm(x['v'], axis=1), label=r'\hat{x}')
+    for log in data:
+        plt.plot(log.state['t'], norm(log.state['v'], axis=1), label=r'\hat{x}')
     pw.addPlot("Velocity", f)
 
 def getMultipathTime():
@@ -310,6 +308,8 @@ def getMultipathTime():
 
     if switch_on.size > switch_off.size:
         switch_off = np.append(switch_off, np.max(truth['t']))
+    elif switch_off.size > switch_on.size:
+        switch_on = np.insert(switch_on, 0, np.min(truth['t']))
     multipathTime =np.vstack((switch_on, switch_off)).T
 
 def getDeniedTime():
@@ -319,18 +319,20 @@ def getDeniedTime():
 
     if switch_on.size > switch_off.size:
         switch_off = np.append(switch_off, np.max(truth['t']))
+    elif switch_off.size > switch_on.size:
+        switch_on = np.insert(switch_on, 0, np.min(truth['t']))
     deniedTime = np.vstack((switch_on, switch_off)).T
 
 def plotMultipathTime():
     for row in multipathTime:
         plt.axvspan(row[0], row[1], alpha=0.2, color='black')
     for row in deniedTime:
-        plt.axvspan(row[0], row[1], alpha=0.4, color='red')
+        plt.axvspan(row[0], row[1], alpha=0.2, color='red')
 
 def plotMultipath():
     nsat = truth["mp"][0].size
     f = plt.figure()
-    cmap = plt.cm.get_cmap('Paired', len(data)+1)
+    cmap = plt.cm.get_cmap('tab10', len(data)+1)
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
         plt.plot(truth["t"], truth["mp"][:,i], color=cmap(0), label=r'$x$')
@@ -340,6 +342,35 @@ def plotMultipath():
             plt.legend()
         plt.ylim([-0.05, 1.05])
     pw.addPlot("Multipath", f)
+
+def plotPosError():
+    f = plt.figure()
+    plt.suptitle('Position Error')
+    for i in range(3):
+        plt.subplot(3, 1, i + 1)
+        plt.title(xtitles[i])
+        plt.plot([np.nan, np.nan], [np.nan, np.nan]) # empty plot so the colors match
+        for log in data:
+            plt.plot(log.state['t'], np.abs(log.state['x']['p'][:, i] - truth_pos_interp(log.state['t'])[i,:]), label=log.label)
+        if i == 0:
+            plt.legend()
+        plotMultipathTime()
+    pw.addPlot("Position Error", f)
+
+def plotVelError():
+    f = plt.figure()
+    plt.suptitle('Velocity Error')
+    for i in range(3):
+        plt.subplot(3, 1, i + 1)
+        plt.title(xtitles[i])
+        plt.plot([np.nan, np.nan], [np.nan, np.nan]) # empty plot so the colors match
+        for log in data:
+            plt.plot(log.state['t'], np.abs(log.state['v'][:, i] - truth_vel_interp(log.state['t'])[i,:]), label=log.label)
+        if i == 0:
+            plt.legend()
+        plotMultipathTime()
+    pw.addPlot("Velocity Error", f)
+
 
 class Log:
     def __init__(self, prefix):
@@ -363,15 +394,22 @@ class Log:
         self.label.replace(r"//", r"/")
 
 
-def plotResults(directory):
+def interpolateTruth():
+    global truth_pos_interp, truth_vel_interp
+    truth_pos_interp = interpolate.interp1d(truth['t'], truth['x']['p'].T)
+    truth_vel_interp = interpolate.interp1d(truth['t'], truth['v'].T)
+
+
+def plotResults(directory, plotKeyframes=True):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-    global data, truth, pw, xtitles, imu_titles, vtitles
+    global data, truth, pw, xtitles, imu_titles, vtitles, plotKF
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+    plotKF = plotKeyframes
 
     subdirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory,o))]
     truth = np.fromfile(os.path.join(directory,"Truth.log"), dtype=SimStateType)
@@ -379,6 +417,7 @@ def plotResults(directory):
 
     data = [Log(subdir) for subdir in subdirs]
 
+    interpolateTruth()
     getMultipathTime()
     getDeniedTime()
 
@@ -388,6 +427,8 @@ def plotResults(directory):
     plotPosition()
     plotAttitude()
     plotVelocity()
+    plotPosError()
+    plotVelError()
     plotImuBias()
     plotImu()
     plotXe2n()

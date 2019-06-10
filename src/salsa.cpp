@@ -61,6 +61,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("disable_mocap", filename, disable_mocap_);
     get_yaml_node("max_solver_time", filename, options_.max_solver_time_in_seconds);
     get_yaml_node("max_iter", filename, options_.max_num_iterations);
+    get_yaml_node("num_threads", filename, options_.num_threads);
 
     xbuf_.resize(STATE_BUF_SIZE);
 
@@ -259,6 +260,9 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
 
 void Salsa::addFeatFactors(ceres::Problem &problem)
 {
+    if (disable_vision_)
+        return;
+
     FeatMap::iterator ft = xfeat_.begin();
     while (ft != xfeat_.end())
     {
@@ -286,7 +290,6 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
 
 void Salsa::initSolverOptions()
 {
-    options_.num_threads = 6;
     options_.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options_.minimizer_progress_to_stdout = false ;
 }

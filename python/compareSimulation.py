@@ -4,8 +4,8 @@ import os
 
 directory = "/tmp/Salsa/compareSimulation/"
 
-subprocess.call(("cmake", "..", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-GNinja"), cwd="../build")
-subprocess.call(("ninja", "compareSim"), cwd="../build")
-subprocess.call(("./compareSim"), cwd="../build")
+# subprocess.call(("cmake", "..", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-GNinja"), cwd="../build")
+# subprocess.call(("ninja", "compareSim"), cwd="../build")
+# subprocess.call(("./compareSim"), cwd="../build")
 
-plotResults(directory)
+plotResults(directory, False)

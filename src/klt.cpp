@@ -17,6 +17,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("show_matches", filename, show_matches_);
     get_yaml_node("feature_nearby_radius", filename, feature_nearby_radius_);
     get_yaml_node("tracker_freq", filename, tracker_freq_);
+    get_yaml_node("disable_vision", filename, disable_vision_);
 
     got_first_img_ = false;
     next_feature_id_ = 0;

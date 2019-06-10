@@ -14,13 +14,15 @@ void Salsa::initGNSS(const std::string& filename)
     get_yaml_node("doppler_cov", filename, doppler_cov_);
     get_yaml_eigen("x_e2n", filename, x_e2n_.arr_);
     get_yaml_node("min_satellite_elevation", filename, min_satellite_elevation_);
-    get_yaml_node("switch_weight", filename, switch_weight_);
     get_yaml_node("use_point_positioning", filename, use_point_positioning_);
     get_yaml_node("disable_gnss", filename, disable_gnss_);
 }
 
 void Salsa::ephCallback(const GTime& t, const eph_t &eph)
 {
+    if (disable_gnss_)
+        return;
+
     if (eph.sat > 90)
         return;
 
@@ -98,6 +100,9 @@ int Salsa::getSatIdx(int sat_id) const
 void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
                             SatVec &sats, const std::vector<bool>& slip)
 {
+    if (disable_gnss_)
+        return;
+
     sats_ = sats;
     ObsVec obsvec;
     for (int i = 0; i < z.size(); i++)

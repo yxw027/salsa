@@ -19,43 +19,46 @@ bool Salsa::isTrackedFeature(int id) const
 void Salsa::imageCallback(const double& tc, const ImageFeat& z,
                           const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
-  if (sim_KLT_)
-  {
-    SD(1, "Simulating KLT");
-    if (current_img_.empty())
+    if (disable_vision_)
+        return;
+
+    if (sim_KLT_)
     {
-        current_img_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), 0);
+        SD(1, "Simulating KLT");
+        if (current_img_.empty())
+        {
+            current_img_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), 0);
+        }
+        current_img_ = 0;
+        for (auto pix : z.pixs)
+        {
+            int d = 2;
+            cv::Point2d xp(pix(0)+d, pix(1));
+            cv::Point2d xm(pix(0)-d, pix(1));
+            cv::Point2d yp(pix(0), pix(1)+d);
+            cv::Point2d ym(pix(0), pix(1)-d);
+            cv::line(current_img_, xp, xm, 255);
+            cv::line(current_img_, yp, ym, 255);
+        }
+        imageCallback(tc, current_img_, R_pix);
     }
-    current_img_ = 0;
-    for (auto pix : z.pixs)
+    else
     {
-        int d = 2;
-        cv::Point2d xp(pix(0)+d, pix(1));
-        cv::Point2d xm(pix(0)-d, pix(1));
-        cv::Point2d yp(pix(0), pix(1)+d);
-        cv::Point2d ym(pix(0), pix(1)-d);
-        cv::line(current_img_, xp, xm, 255);
-        cv::line(current_img_, yp, ym, 255);
+        Features zfeat;
+        zfeat.id = z.id;
+        zfeat.t = z.t;
+        zfeat.feat_ids = z.feat_ids;
+        zfeat.depths = z.depths;
+        zfeat.zetas.reserve(z.pixs.size());
+        zfeat.pix.reserve(z.pixs.size());
+        for (auto pix : z.pixs)
+        {
+            zfeat.zetas.emplace_back(cam_.invProj(pix, 1.0));
+            zfeat.pix.emplace_back(pix.x(), pix.y());
+        }
+        bool new_keyframe = calcNewKeyframeCondition(zfeat);
+        addMeas(meas::Img(tc, zfeat, R_pix, new_keyframe));
     }
-    imageCallback(tc, current_img_, R_pix);
-  }
-  else
-  {
-    Features zfeat;
-    zfeat.id = z.id;
-    zfeat.t = z.t;
-    zfeat.feat_ids = z.feat_ids;
-    zfeat.depths = z.depths;
-    zfeat.zetas.reserve(z.pixs.size());
-    zfeat.pix.reserve(z.pixs.size());
-    for (auto pix : z.pixs)
-    {
-      zfeat.zetas.emplace_back(cam_.invProj(pix, 1.0));
-      zfeat.pix.emplace_back(pix.x(), pix.y());
-    }
-    bool new_keyframe = calcNewKeyframeCondition(zfeat);
-    addMeas(meas::Img(tc, zfeat, R_pix, new_keyframe));
-  }
 }
 
 void Salsa::imageUpdate(const meas::Img &m)
@@ -91,7 +94,7 @@ void Salsa::imageUpdate(const meas::Img &m)
             xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});
         }
     }
-//    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Camera) == 0, "Cannot double-up with Camera nodes");
+    //    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Camera) == 0, "Cannot double-up with Camera nodes");
     xbuf_[xbuf_head_].type |= State::Camera;
     xbuf_[xbuf_head_].n_cam++;;
 
@@ -203,7 +206,7 @@ void Salsa::rmLostFeatFromKf()
             continue;
         }
         else if (!ft.updated_in_last_image_
-           && (ft.funcs.back().to_idx_ == xbuf_head_ || xbuf_[ft.funcs.back().to_idx_].kf < 0))
+                 && (ft.funcs.back().to_idx_ == xbuf_head_ || xbuf_[ft.funcs.back().to_idx_].kf < 0))
         {
             SD(1, "Feature %d not tracked", ftpair->first);
             ft.funcs.pop_back();

@@ -179,6 +179,7 @@ public:
     bool disable_solver_;
     bool disable_mocap_;
     bool disable_gnss_;
+    bool disable_vision_;
     ceres::Solver::Options options_;
     ceres::Solver::Summary summary_;
 
@@ -214,7 +215,6 @@ public:
     void initializeStateGnss(const meas::Gnss& m);
     int ns_;
     bool update_on_gnss_;
-    double switch_weight_;
     double doppler_cov_;
     bool use_point_positioning_;
     double min_satellite_elevation_;

@@ -11,6 +11,7 @@ num_sat: 15
 disable_solver: false
 max_iter: 1000
 max_solver_time: 1.0
+num_threads: 12
 
 #####################################
 ### IMU
@@ -21,6 +22,7 @@ gyro_noise_stdev: 0.5
 #####################################
 ### Camera
 #####################################
+disable_vision: false
 tracker_freq: 10
 min_depth: 0.5
 use_measured_depth: true
@@ -44,8 +46,7 @@ x_b2c: [0, 0, 0, 1, 0, 0, 0]
 #####################################
 ### GNSS
 #####################################
-switch_weight: 1000.0
-clk_bias_xi: [2, 2] # 1/(nsec)
+clk_bias_xi: [2, 2] # nsec
 doppler_cov: 0.005
 min_satellite_elevation: 0.43654987
 use_point_positioning: true

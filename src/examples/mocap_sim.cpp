@@ -17,7 +17,7 @@ int main()
 #endif
 
   Salsa salsa;
-  salsa.init(default_params("/tmp/Salsa/MocapSimulation/", "$\hat{x}$"));
+  salsa.init(default_params("/tmp/Salsa/MocapSimulation/", "$\\hat{x}$"));
 
   sim.register_estimator(&salsa);
 
