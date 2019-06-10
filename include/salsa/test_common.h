@@ -99,7 +99,7 @@ do {\
 #define EXPECT_FINITE(val) EXPECT_TRUE(std::isfinite(val))
 
 
-inline std::string default_params(const std::string& prefix)
+inline std::string default_params(const std::string& prefix, std::string label="test")
 {
     std::string filename = "/tmp/Salsa.default.yaml";
     std::ofstream tmp(filename);
@@ -110,6 +110,7 @@ inline std::string default_params(const std::string& prefix)
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;
     node["enable_out_of_order"] = false;
+    node["label"] = label;
     tmp << node;
     tmp.close();
     return filename;

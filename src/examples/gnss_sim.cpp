@@ -18,7 +18,7 @@ int main()
     std::string prefix = "/tmp/Salsa/RawGNSSSimulation/";
 
     Salsa salsa;
-    salsa.init(default_params(prefix + "Main/"));
+    salsa.init(default_params(prefix + "Main/", "$\\hat{x}$"));
     salsa.x0_ = sim.state().X;
     salsa.x_e2n_ = sim.X_e2n_;
     salsa.update_on_gnss_ = true;

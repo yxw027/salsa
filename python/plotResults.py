@@ -359,7 +359,7 @@ class Log:
         setattr(self, "prangeRes", np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType))
         setattr(self, "Imu", np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType))
         setattr(self, "swParams", np.fromfile(os.path.join(prefix, "SwParams.log"), dtype=SwParamsType))
-        setattr(self, "label", open(os.path.join(prefix, "name.txt"), "r").read().splitlines()[0])
+        setattr(self, "label", open(os.path.join(prefix, "label.txt"), "r").read().splitlines()[0])
         self.label.replace(r"//", r"/")
 
 

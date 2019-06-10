@@ -13,7 +13,7 @@ int main()
     sim.load(imu_feat());
 
     Salsa salsa;
-    salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
+    salsa.init(default_params("/tmp/Salsa/FeatSimulation/", "$\hat{x}$"));
     salsa.x_b2c_ = sim.x_b2c_;
     salsa.x_e2n_ = sim.X_e2n_;
     salsa.cam_ = sim.cam_;

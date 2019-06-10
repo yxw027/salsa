@@ -13,6 +13,13 @@ void Salsa::initLog(const std::string& filename)
     if (log_prefix_.empty())
         get_yaml_node("log_prefix", filename, log_prefix_);
 
+    std::string label;
+    get_yaml_node("label", filename, label);
+    std::ofstream labelWriter;
+    labelWriter.open(log_prefix_ + "label.txt");
+    labelWriter << label;
+    labelWriter.close();
+
     if (!fs::exists(fs::path(log_prefix_).parent_path()))
         fs::create_directories(fs::path(log_prefix_).parent_path());
 

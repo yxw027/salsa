@@ -19,7 +19,7 @@ TEST (KLT, TrackVideo)
     double dt =  1.0 / cap.get(cv::CAP_PROP_FPS);
 
     salsa::Salsa salsa;
-    salsa.init(default_params("/tmp/Salsa/KLT_TrackVideo"));
+    salsa.init(default_params("/tmp/Salsa/KLT_TrackVideo", "$/hat{x}$"));
     salsa.disable_solver_ = true;
 
     Vector6d z;
@@ -54,7 +54,7 @@ TEST (DISABLED_KLT, TrackCamera)
     ASSERT_TRUE(cap.isOpened());
 
     salsa::Salsa salsa;
-    salsa.load(default_params("KLT.TrackVideo"));
+    salsa.load(default_params("KLT.TrackVideo", "$/hat{x}$"));
 
     while(1)
     {
