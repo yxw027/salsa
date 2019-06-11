@@ -4,6 +4,7 @@
 #include "geometry/xform.h"
 #include "factors/shield.h"
 #include "salsa/state.h"
+#include "salsa/misc.h"
 
 namespace salsa
 {

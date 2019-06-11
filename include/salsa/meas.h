@@ -4,6 +4,7 @@
 #include <gnss_utils/gtime.h>
 
 #include "salsa/state.h"
+#include "salsa/feat.h"
 
 namespace salsa
 {

@@ -27,6 +27,7 @@
 
 #include "salsa/logger.h"
 #include "salsa/state.h"
+#include "salsa/feat.h"
 #include "salsa/meas.h"
 
 #include "opencv2/opencv.hpp"

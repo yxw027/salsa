@@ -42,6 +42,7 @@ add_library(salsa
     src/salsa_vision.cpp
     src/salsa_log.cpp
     src/klt.cpp
+    src/feat.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
     factors
@@ -78,7 +79,7 @@ endif()
 
 option (BUILD_TESTS "Build Tests" ON)
 if (BUILD_TESTS)
-    find_package(GTest)
+    find_package(GTest REQUIRED)
     message(STATUS "Building salsa tests")
     add_executable(test_salsa
         src/test/test_salsa.cpp
@@ -91,9 +92,7 @@ if (BUILD_TESTS)
         src/test/test_vision.cpp
         src/test/test_klt.cpp
         src/test/test_xform_local_param.cpp
-#        src/test/test_salsa_mocap_indexing.cpp
         src/test/test_pseudorange_factor.cpp
-#        src/test/test_salsa_gps_indexing.cpp
      )
      target_link_libraries(test_salsa
         salsa
@@ -103,6 +102,7 @@ if (BUILD_TESTS)
         ${gnss_utils_LIBRARIES}
         ${multirotor_sim_LIBRARIES}
         ${GTEST_LIBRARIES}
+        ${OpenCV_LIBRARIES}
      )
 endif()
 

@@ -1,5 +1,3 @@
-#include <Eigen/QR>
-
 #include "factors/feat.h"
 
 using namespace Eigen;
