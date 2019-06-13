@@ -77,6 +77,7 @@ public:
     double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
     double dt_c_; // time offset of camera (t_c(stamped) - dt_c = t(true))
     Eigen::Vector3d p_b2g_; // Position of gps antenna wrt body
+    xform::Xformd x_b2o_; // transform from body frame to output
     gnss_utils::GTime start_time_;
 
     /************************************/
@@ -198,6 +199,7 @@ public:
     /************************************/
     void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
     void mocapUpdate(const meas::Mocap& m);
+    void initializeStateMocap(const meas::Mocap& m);
     bool update_on_mocap_;
 
     /************************************/

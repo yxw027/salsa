@@ -3,18 +3,22 @@ import subprocess
 import yaml
 import os
 
-directory = "/tmp/Salsa/MocapHardware/"
-if not os.path.exists(directory):
-    os.makedirs(directory)
+bagfile = "/home/superjax/rosbag/mynt_mocap/mocap2.bag"
+directory = "/tmp/Salsa/"
+prefix = "MocapHardware/"
 
 params = yaml.load(file("../params/salsa.yaml"))
-params['log_prefix'] = directory
-yaml.dump(params, file(os.path.join(directory, "tmp.yaml"), 'w'))
+params['log_prefix'] = os.path.join(directory, prefix)
+params['update_on_mocap'] = True
+params['disable_mocap'] = False
+params['disable_vision'] = True
+param_filename = os.path.join(directory, "tmp.yaml")
+yaml.dump(params, file(param_filename, 'w'))
 
 
-process = subprocess.call(("cmake", "..", "-DCMAKE_BUILD_TYPE=RelWithDebInfo"), cwd="../build")
-process = subprocess.call(("make", "-j12", "-l12"), cwd="../build")
-process = subprocess.call(("./salsa_rosbag", "-f", "/home/superjax/rosbag/leo_mocap/MocapCalCollect2.bag", "-y", directory + "tmp.yaml"), cwd="../build")
+process = subprocess.call(("cmake", "..", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-GNinja"), cwd="../build")
+process = subprocess.call(("ninja", "salsa_rosbag"), cwd="../build")
+process = subprocess.call(("./salsa_rosbag", "-f", param_filename), cwd="../build")
 
 
-plotResults("/tmp/Salsa/MocapHardware/")
+plotResults(directory, False)

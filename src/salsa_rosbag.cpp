@@ -12,21 +12,30 @@ SalsaRosbag::SalsaRosbag(int argc, char** argv)
 {
     start_ = 0;
     duration_ = 1e3;
-    seen_imu_topic_ = "";
+
+    param_filename_ = SALSA_DIR"/params/salsa.yaml";
     getArgs(argc, argv);
-    salsa_.log_prefix_ = log_prefix_;
 
     loadParams();
-    salsa_.init(param_filename_);
     openBag();
-    getEndTime();
-    truth_log_.open(salsa_.log_prefix_ + "Truth.log");
-    imu_log_.open(salsa_.log_prefix_ + "Imu.log");
-    imu_count_between_nodes_ = 0;
+    getMocapOffset();
+
+    got_imu_ = false;
+    salsa_.init(param_filename_);
+    truth_log_.open(salsa_.log_prefix_ + "/../Truth.log");
+    imu_log_.open(salsa_.log_prefix_ + "/Imu.log");
 }
 
 void SalsaRosbag::loadParams()
 {
+    get_yaml_node("bag_name", param_filename_, bag_filename_);
+    get_yaml_node("imu_topic", param_filename_, imu_topic_);
+    get_yaml_node("mocap_topic", param_filename_, mocap_topic_);
+    get_yaml_node("image_topic", param_filename_, image_topic_);
+    get_yaml_node("start_time", param_filename_, start_);
+    get_yaml_node("duration", param_filename_, duration_);
+
+    // Load Sensor Noise Parameters
     double acc_stdev, gyro_stdev;
     get_yaml_node("accel_noise_stdev", param_filename_, acc_stdev);
     get_yaml_node("gyro_noise_stdev", param_filename_, gyro_stdev);
@@ -34,13 +43,14 @@ void SalsaRosbag::loadParams()
     imu_R_.topLeftCorner<3,3>() = acc_stdev * acc_stdev * I_3x3;
     imu_R_.bottomRightCorner<3,3>() = gyro_stdev * gyro_stdev * I_3x3;
 
-
     double pos_stdev, att_stdev;
     get_yaml_node("position_noise_stdev", param_filename_, pos_stdev);
     get_yaml_node("attitude_noise_stdev", param_filename_, att_stdev);
     mocap_R_ << pos_stdev * pos_stdev * I_3x3,   Matrix3d::Zero(),
                 Matrix3d::Zero(),   att_stdev * att_stdev * I_3x3;
 
+    // Configure Motion Capture Frame
+    get_yaml_node("mocap_rate", param_filename_, mocap_rate_);
     get_yaml_eigen("q_mocap_to_NED_pos", param_filename_, q_mocap_to_NED_pos_.arr_);
     get_yaml_eigen("q_mocap_to_NED_att", param_filename_, q_mocap_to_NED_att_.arr_);
 }
@@ -49,12 +59,7 @@ void SalsaRosbag::displayHelp()
 {
     cout << "ROS bag parser" <<endl;
     cout << "-h            display this message" << endl;
-    cout << "-f <filename> bagfile to parse REQUIRED" << endl;
-    cout << "-y <filename> configuration yaml file REQUIRED" << endl;
-    cout << "-s <seconds>  start time" << endl;
-    cout << "-d <seconds>  duration" << endl;
-    cout << "-i <topic>    IMU Topic" << endl;
-    cout << "-p <prefix>   Log Prefix" << endl;
+    cout << "-f <filename> configuration yaml file to parse, [" SALSA_DIR "/params/salsa.yaml]" << endl;
     exit(0);
 }
 
@@ -64,14 +69,7 @@ void SalsaRosbag::getArgs(int argc, char** argv)
 
     if (argparse.cmdOptionExists("-h"))
         displayHelp();
-    if (!argparse.getCmdOption("-f", bag_filename_))
-        displayHelp();
-    if (!argparse.getCmdOption("-y", param_filename_))
-        displayHelp();
-    argparse.getCmdOption("-s", start_);
-    argparse.getCmdOption("-d", duration_);
-    argparse.getCmdOption("-i", seen_imu_topic_);
-    argparse.getCmdOption("-p", log_prefix_);
+    argparse.getCmdOption("-f", param_filename_);
 }
 
 void SalsaRosbag::openBag()
@@ -83,26 +81,24 @@ void SalsaRosbag::openBag()
     }
     catch(rosbag::BagIOException e)
     {
-        ROS_ERROR("unable to load rosbag %s, %s", bag_filename_.c_str(), e.what());
-        exit(-1);
+        fprintf(stderr, "unable to load rosbag %s, %s", bag_filename_.c_str(), e.what());
+        throw e;
     }
+
+    bag_start_ = view_->getBeginTime() + ros::Duration(start_);
+    bag_end_ = bag_start_ + ros::Duration(duration_);
+
+    if (bag_end_ > view_->getEndTime())
+        bag_end_ = view_->getEndTime();
+
+    delete view_;
+    view_ = new rosbag::View(bag_, bag_start_, bag_end_);
 }
 
-double SalsaRosbag::getEndTime()
-{
-    end_ = start_ + duration_;
-    end_ = (end_ < view_->getEndTime().toSec() - view_->getBeginTime().toSec())
-            ? end_ : view_->getEndTime().toSec() - view_->getBeginTime().toSec();
-    cout << "Playing bag from: = " << start_ << "s to: " << end_ << "s" << endl;
-    return end_;
-}
 
 void SalsaRosbag::parseBag()
 {
     ProgressBar prog(view_->size(), 80);
-    prog.set_theme_braille();
-    bag_start_ = view_->getBeginTime() + ros::Duration(start_);
-    bag_end_ = view_->getBeginTime() + ros::Duration(end_);
     int i = 0;
     for(rosbag::MessageInstance const m  : (*view_))
     {
@@ -112,14 +108,20 @@ void SalsaRosbag::parseBag()
         if (m.getTime() > bag_end_)
             break;
 
-        prog.print(i++);
 
-        if (m.isType<sensor_msgs::Imu>())
+        if (m.isType<sensor_msgs::Imu>() && m.getTopic().compare(imu_topic_) == 0)
+        {
+            prog.print(i++, (m.getTime() - bag_start_).toSec());
             imuCB(m);
-        else if (m.isType<geometry_msgs::PoseStamped>())
+        }
+        else if (m.isType<geometry_msgs::PoseStamped>() && m.getTopic().compare(mocap_topic_) == 0)
             poseCB(m);
         else if (m.isType<nav_msgs::Odometry>())
             odomCB(m);
+        else if (m.isType<sensor_msgs::Image>() && m.getTopic().compare(image_topic_) == 0)
+            imgCB(m);
+        else if (m.isType<sensor_msgs::CompressedImage>() && m.getTopic().compare(image_topic_) == 0)
+            compressedImgCB(m);
         else if (m.isType<inertial_sense::GNSSObsVec>())
             obsCB(m);
         else if (m.isType<inertial_sense::GNSSEphemeris>())
@@ -127,35 +129,32 @@ void SalsaRosbag::parseBag()
     }
     prog.finished();
     cout << endl;
+    cout.flush();
 }
 
 void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
 {
+    got_imu_ = true;
     sensor_msgs::ImuConstPtr imu = m.instantiate<sensor_msgs::Imu>();
     double t = (imu->header.stamp - bag_start_).toSec();
     Vector6d z;
     z << imu->linear_acceleration.x,
-            imu->linear_acceleration.y,
-            imu->linear_acceleration.z,
-            imu->angular_velocity.x,
-            imu->angular_velocity.y,
-            imu->angular_velocity.z;
+         imu->linear_acceleration.y,
+         imu->linear_acceleration.z,
+         imu->angular_velocity.x,
+         imu->angular_velocity.y,
+         imu->angular_velocity.z;
 
     if ((z.array() != z.array()).any())
+    {
+        std::cout << "Found NaNs in IMU data, skipping measurement" << std::endl;
         return;
+    }
+
+    salsa_.imuCallback(t, z, imu_R_);
 
     imu_log_.log(t);
     imu_log_.logVectors(z);
-
-    imu_count_between_nodes_++;
-    salsa_.imuCallback(t, z, imu_R_);
-    if (!seen_imu_topic_.empty() && seen_imu_topic_.compare(m.getTopic()))
-    {
-        std::cerr << "Subscribed to Two IMU messages, use the -i argument to specify IMU topic" << std::endl;
-        exit(-1);
-    }
-
-    seen_imu_topic_ = m.getTopic();
 }
 
 void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
@@ -179,7 +178,6 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
         z.push_back(new_obs);
     }
     salsa_.obsCallback(z);
-    imu_count_between_nodes_ = 0;
 }
 
 void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
@@ -230,16 +228,26 @@ void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
 
 void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 {
+    if (!got_imu_)
+        return;
+
     geometry_msgs::PoseStampedConstPtr pose = m.instantiate<geometry_msgs::PoseStamped>();
-    double t = (m.getTime() - bag_start_).toSec();
+//    ros::Time adjusted_msg_time = pose->header.stamp - mocap_offset_;
+    ros::Time adjusted_msg_time = m.getTime();
+    if ((adjusted_msg_time - prev_mocap_).toSec() < 1.0/mocap_rate_)
+        return;
+    prev_mocap_ = adjusted_msg_time;
+
+    double t = (adjusted_msg_time - bag_start_).toSec();
     Xformd z;
     z.arr() << pose->pose.position.x,
-            pose->pose.position.y,
-            pose->pose.position.z,
-            pose->pose.orientation.w,
-            pose->pose.orientation.x,
-            pose->pose.orientation.y,
-            pose->pose.orientation.z;
+               pose->pose.position.y,
+               pose->pose.position.z,
+               pose->pose.orientation.w,
+               pose->pose.orientation.x,
+               pose->pose.orientation.y,
+               pose->pose.orientation.z;
+    z.q().normalize(); // I am frustrated that I have to do this.
 
     // The mocap is a North, Up, East (NUE) reference frame, so we have to rotate the quaternion's
     // axis of rotation to NED by 90 deg. roll. Then we rotate that resulting quaternion by -90 deg.
@@ -248,12 +256,7 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     z.q_.arr_.segment<3>(1) = q_mocap_to_NED_pos_.rotp(z.q_.arr_.segment<3>(1));
     z.q_ = z.q_ * q_mocap_to_NED_att_;
 
-
-    if (imu_count_between_nodes_ > 2)
-    {
-        salsa_.mocapCallback(t, z, mocap_R_);
-        imu_count_between_nodes_ = 0;
-    }
+    salsa_.mocapCallback(t, z, mocap_R_);
 
     Vector3d v = Vector3d::Ones() * NAN;
     Vector6d b = Vector6d::Ones() * NAN;
@@ -262,6 +265,13 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     Vector7d x_b2c = Vector7d::Ones() * NAN;
     truth_log_.log(t);
     truth_log_.logVectors(z.arr(), v, b, tau, x_e2n, x_b2c);
+    int32_t multipath(0), denied(0);
+    truth_log_.log(multipath, denied);
+    for (int i = 0; i < salsa_.ns_; i++)
+    {
+        double sw = NAN;
+        truth_log_.log(sw);
+    }
 }
 
 void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
@@ -301,6 +311,36 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
     Vector7d x_b2c = Vector7d::Ones() * NAN;
     truth_log_.log((odom->header.stamp - bag_start_).toSec());
     truth_log_.logVectors(z.arr(), v, b, tau, x_e2n, x_b2c);
+}
+
+void SalsaRosbag::imgCB(const rosbag::MessageInstance &m)
+{
+
+}
+
+void SalsaRosbag::compressedImgCB(const rosbag::MessageInstance &m)
+{
+
+}
+
+void SalsaRosbag::getMocapOffset()
+{
+    ros::Duration biggest_dt = ros::DURATION_MIN;
+    for(rosbag::MessageInstance const m  : (*view_))
+    {
+        if (m.getTime() < bag_start_) continue;
+        if (m.getTime() > bag_end_) break;
+
+        if (m.isType<geometry_msgs::PoseStamped>() && m.getTopic().compare(mocap_topic_) == 0)
+        {
+            ros::Time header = m.instantiate<geometry_msgs::PoseStamped>()->header.stamp;
+            ros::Duration dt = header - m.getTime();
+            if (dt > biggest_dt)
+                biggest_dt = dt;
+        }
+    }
+    mocap_offset_ = biggest_dt;
+    prev_mocap_ = ros::Time(0,0);
 }
 
 }

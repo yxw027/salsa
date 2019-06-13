@@ -48,6 +48,7 @@ void Salsa::load(const string& filename)
 {
     get_yaml_eigen("x_b2m", filename, x_b2m_.arr());
     get_yaml_eigen("x_b2c", filename, x_b2c_.arr());
+    get_yaml_eigen("x_b2o", filename, x_b2o_.arr());
     get_yaml_eigen("p_b2g", filename, p_b2g_);
     get_yaml_node("tm", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
@@ -62,6 +63,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("max_solver_time", filename, options_.max_solver_time_in_seconds);
     get_yaml_node("max_iter", filename, options_.max_num_iterations);
     get_yaml_node("num_threads", filename, options_.num_threads);
+    get_yaml_eigen("bias0", filename, imu_bias_);
 
     xbuf_.resize(STATE_BUF_SIZE);
 
@@ -90,7 +92,6 @@ void Salsa::load(const string& filename)
 void Salsa::initState()
 {
     xbuf_head_ = xbuf_tail_ = 0;
-    imu_bias_.setZero();
 
     current_node_ = -1;
     current_kf_ = -1;
@@ -477,7 +478,8 @@ void Salsa::cleanUpSlidingWindow()
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
-    SD(3, "Initialize State");
+    SD_S(4, "Initialize State: pos = " << x0.t_.transpose() << " euler = "
+            << 180.0/M_PI * x0.q_.euler().transpose() << " q = " << x0.q_);
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
     xbuf_[0].t = current_state_.t = t;
@@ -518,14 +520,11 @@ void Salsa::handleMeas()
     std::multiset<meas::Base*>::iterator mit = new_meas_.begin();
 
     if (current_node_ == -1)
-    {
-        SD(5, "Initializing with Meas Type %d", (*mit)->type);
         initialize(*mit);
-    }
 
-    SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_head_].t - 1e-6, \
+    SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_tail_].t - 1e-6, \
                  "Unable to handle stale %s measurement.  State Time: %.3f, Meas Time: %.3f", \
-                 (*mit)->Type().c_str(), xbuf_[xbuf_head_].t, (*mit)->t);
+                 (*mit)->Type().c_str(), xbuf_[xbuf_tail_].t, (*mit)->t);
 
     while (mit != new_meas_.end())
     {
@@ -573,14 +572,14 @@ void Salsa::initialize(const meas::Base *m)
     {
     case meas::Base::IMG:
     {
-        SD(3, "Initialized Image\n");
+        SD(5, "Initialized Using Image\n");
         initialize(m->t, x0_, v0_, Vector2d::Zero());
         startNewInterval(m->t);
         break;
     }
     case meas::Base::GNSS:
     {
-        SD(3, "Initialized GNSS\n");
+        SD(5, "Initialized Using GNSS\n");
         const meas::Gnss* z = dynamic_cast<const meas::Gnss*>(m);
         initializeStateGnss(*z);
         startNewInterval(z->t);
@@ -588,9 +587,10 @@ void Salsa::initialize(const meas::Base *m)
     }
     case meas::Base::MOCAP:
     {
-        SD(3, "Initialized Mocap\n");
+        SD(5, "Initialized Using Mocap\n");
         const meas::Mocap* z = dynamic_cast<const meas::Mocap*>(m);
-        initialize(z->t, z->z, Vector3d::Zero(), Vector2d::Zero());
+        initializeStateMocap(*z);
+        startNewInterval(m->t);
         break;
     }
     default:

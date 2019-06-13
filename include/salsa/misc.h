@@ -23,8 +23,8 @@
 #define DEBUGPRINT 1
 #endif
 
-#define DEBUGPRINTLEVEL 3
-#define DEBUGLOGLEVEL 0
+#define DEBUGPRINTLEVEL 4
+#define DEBUGLOGLEVEL 10
 
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl
@@ -41,7 +41,14 @@
     }\
 } while(false)
 
-#define SD_S(args) std::cout << args;
+#define SD_S(level, args) do{\
+    if ((level) >= DEBUGPRINTLEVEL) {\
+        std::cout << args << std::endl;\
+        }\
+    if ((level) >= DEBUGLOGLEVEL) {\
+        logs_[log::Graph]->file_ << args << std::endl;\
+    }\
+} while(false)
 #else
 #define SL
 #define SD(...)
