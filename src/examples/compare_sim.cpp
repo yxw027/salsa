@@ -10,26 +10,6 @@ using namespace salsa;
 using namespace std;
 using namespace multirotor_sim;
 
-Salsa* initSalsa(const std::string& prefix, const std::string& label, Simulator& sim)
-{
-    Salsa* salsa = new Salsa;
-    salsa->init(default_params(prefix, label));
-    salsa->x0_ = sim.state().X;
-    salsa->v0_ = sim.state().v;
-    salsa->x_e2n_ = sim.X_e2n_;
-    salsa->x_b2c_ = sim.x_b2c_;
-    salsa->cam_ = sim.cam_;
-    sim.register_estimator(salsa);
-    return salsa;
-}
-
-void setInit(Salsa* salsa, Simulator& sim)
-{
-    salsa->x0_ = sim.state().X;
-    salsa->v0_ = sim.state().v;
-    salsa->x_e2n_ = sim.X_e2n_;
-}
-
 int main()
 {
     Simulator sim(true);

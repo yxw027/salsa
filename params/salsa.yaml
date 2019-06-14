@@ -102,5 +102,5 @@ state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-3, 1e-3] # clk_bias (nsec)
 x_e2n_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-8, 1e-8, 1e-2] # q
-bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
-                 0.0000001, 0.0000001, 0.0000001] # gyro
+bias_anchor_cov: [0.0001, 0.0001, 0.0001, # acc
+                 0.00001, 0.00001, 0.00001] # gyro
