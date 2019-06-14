@@ -233,6 +233,7 @@ public:
     void imageCallback(const double& tc, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
                        const Matrix1d& R_depth) override; // bindings for simulator image
     void imageUpdate(const meas::Img& m);
+    void initializeStateImage(const meas::Img& m);
     int numTotalFeat() const;
 
     enum {

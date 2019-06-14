@@ -38,7 +38,7 @@ void Salsa::init(const string& filename)
     initState();
     initFactors();
     initSolverOptions();
-    x0_ = Xformd::Identity();
+    x0_ = x_b2o_.inverse();
     v0_ = Vector3d::Zero();
     current_state_.x = x0_;
     current_state_.v = v0_;
@@ -537,12 +537,17 @@ void Salsa::handleMeas()
         mit = new_meas_.erase(mit);
     }
 
+    // figure out the most recent measurement we can handle (in case IMU is delayed)
+    double t_max = xbuf_[xbuf_head_].t;
+    if (imu_meas_buf_.size() > 0)
+        t_max = imu_meas_buf_.back().t;
+
     while (mit != new_meas_.end())
     {
-        if ((*mit)->t-1e-6 > imu_meas_buf_.back().t)
+        if ((*mit)->t-1e-6 > t_max)
         {
             SD(3, "Unable to handle %s measurement, because the IMU isn't here yet.  z.t: %.3f, Imu.t: %.3f",
-               (*mit)->Type().c_str(), (*mit)->t, imu_meas_buf_.back().t);
+               (*mit)->Type().c_str(), (*mit)->t, t_max);
             return;
         }
         integrateTransition((*mit)->t);
@@ -592,7 +597,7 @@ void Salsa::initialize(const meas::Base *m)
     {
         SD(5, "Initialized Using Image\n");
         const meas::Img* z = dynamic_cast<const meas::Img*>(m);
-        initialize(m->t, x0_, v0_, Vector2d::Zero());
+        initializeStateImage(*z);
         imageUpdate(*z);
         startNewInterval(m->t);
         break;

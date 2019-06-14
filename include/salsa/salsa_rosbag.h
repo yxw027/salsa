@@ -52,6 +52,7 @@ public:
     double duration_;
     double end_;
     bool got_imu_;
+    int imu_count_;
 
 
     quat::Quatd q_mocap_to_NED_pos_, q_mocap_to_NED_att_;
@@ -60,7 +61,7 @@ public:
     ros::Time bag_end_;
     ros::Duration mocap_offset_;
     double mocap_rate_;
-    ros::Time prev_mocap_;
+    ros::Time prev_mocap_, prev_mocap_run_;
     xform::Xformd x_I2m_prev_;
     Salsa salsa_;
 

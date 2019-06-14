@@ -61,6 +61,11 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
     }
 }
 
+void Salsa::initializeStateImage(const meas::Img &m)
+{
+    initialize(m.t, x0_, v0_, Vector2d::Zero());
+}
+
 void Salsa::imageUpdate(const meas::Img &m)
 {
     for (auto& ft : xfeat_)

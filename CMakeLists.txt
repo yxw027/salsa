@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(salsa)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)

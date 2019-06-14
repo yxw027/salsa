@@ -69,8 +69,8 @@ def convertObsType(inputfile, outputfile):
 
 
 if __name__ == '__main__':
-    adjustTime("/home/superjax/rosbag/mynt_mocap/mocap2.bag",
-               "/home/superjax/rosbag/mynt_mocap/mocap2_adjust.bag",
-               "/vrpn_client_node/Ragnarok/pose")
+    adjustTime("/home/superjax/rosbag/mocap_ned1.bag",
+               "/home/superjax/rosbag/mocap_ned1_adjust.bag",
+               "/Ragnarok_ned")
 
 

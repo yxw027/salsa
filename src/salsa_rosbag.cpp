@@ -18,9 +18,9 @@ SalsaRosbag::SalsaRosbag(int argc, char** argv)
 
     loadParams();
     openBag();
-//    getMocapOffset();
+    //    getMocapOffset();
 
-    got_imu_ = false;
+    imu_count_ = 0;
     salsa_.init(param_filename_);
     truth_log_.open(salsa_.log_prefix_ + "/../Truth.log");
     imu_log_.open(salsa_.log_prefix_ + "/Imu.log");
@@ -48,7 +48,7 @@ void SalsaRosbag::loadParams()
     get_yaml_node("position_noise_stdev", param_filename_, pos_stdev);
     get_yaml_node("attitude_noise_stdev", param_filename_, att_stdev);
     mocap_R_ << pos_stdev * pos_stdev * I_3x3,   Matrix3d::Zero(),
-                Matrix3d::Zero(),   att_stdev * att_stdev * I_3x3;
+            Matrix3d::Zero(),   att_stdev * att_stdev * I_3x3;
 
     double pix_err_stdev;
     get_yaml_node("pix_err_stdev", param_filename_, pix_err_stdev);
@@ -134,16 +134,16 @@ void SalsaRosbag::parseBag()
 
 void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
 {
-    got_imu_ = true;
+    imu_count_++;
     sensor_msgs::ImuConstPtr imu = m.instantiate<sensor_msgs::Imu>();
     double t = (imu->header.stamp - bag_start_).toSec();
     Vector6d z;
     z << imu->linear_acceleration.x,
-         imu->linear_acceleration.y,
-         imu->linear_acceleration.z,
-         imu->angular_velocity.x,
-         imu->angular_velocity.y,
-         imu->angular_velocity.z;
+            imu->linear_acceleration.y,
+            imu->linear_acceleration.z,
+            imu->angular_velocity.x,
+            imu->angular_velocity.y,
+            imu->angular_velocity.z;
 
     if ((z.array() != z.array()).any())
     {
@@ -228,28 +228,30 @@ void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
 
 void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 {
-    if (!got_imu_)
-        return;
-
     geometry_msgs::PoseStampedConstPtr pose = m.instantiate<geometry_msgs::PoseStamped>();
 
-    if ((m.getTime() - prev_mocap_).toSec() < 1.0/mocap_rate_)
-        return;
+    ros::Time time = m.getTime() + ros::Duration(0.05);
 
-    double t = (m.getTime() - bag_start_).toSec();
+
+    double t = (time - bag_start_).toSec();
     Xformd z;
     z.arr() << pose->pose.position.x,
-               pose->pose.position.y,
-               pose->pose.position.z,
-               pose->pose.orientation.w,
-               pose->pose.orientation.x,
-               pose->pose.orientation.y,
-               pose->pose.orientation.z;
+            pose->pose.position.y,
+            pose->pose.position.z,
+            pose->pose.orientation.w,
+            pose->pose.orientation.x,
+            pose->pose.orientation.y,
+            pose->pose.orientation.z;
     z.q().normalize(); // I am a little worried that I have to do this.
 
-    salsa_.mocapCallback(t, z, mocap_R_);
+    if (imu_count_ >= 10  && (time - prev_mocap_run_).toSec() > 1.0/mocap_rate_)
+    {
+        imu_count_ = 0;
+        prev_mocap_run_ = time;
+        salsa_.mocapCallback(t, z, mocap_R_);
+    }
 
-    ros::Duration dt = m.getTime() - prev_mocap_;
+    ros::Duration dt = time - prev_mocap_;
     Vector3d v = z.q_.rotp(z.t() - x_I2m_prev_.t())/dt.toSec();
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
@@ -267,40 +269,40 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 
 
     x_I2m_prev_ = z;
-    prev_mocap_ = m.getTime();
+    prev_mocap_ = time;
 }
 
 void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
 {
     nav_msgs::OdometryConstPtr odom = m.instantiate<nav_msgs::Odometry>();
-//    GTime gtime = GTime::fromUTC(odom->header.stamp.sec, odom->header.stamp.nsec/1e9);
+    //    GTime gtime = GTime::fromUTC(odom->header.stamp.sec, odom->header.stamp.nsec/1e9);
     if (salsa_.start_time_.tow_sec < 0)
         return;
 
     Xformd z;
     z.arr() << odom->pose.pose.position.x,
-               odom->pose.pose.position.y,
-               odom->pose.pose.position.z,
-               odom->pose.pose.orientation.w,
-               odom->pose.pose.orientation.x,
-               odom->pose.pose.orientation.y,
-               odom->pose.pose.orientation.z;
+            odom->pose.pose.position.y,
+            odom->pose.pose.position.z,
+            odom->pose.pose.orientation.w,
+            odom->pose.pose.orientation.x,
+            odom->pose.pose.orientation.y,
+            odom->pose.pose.orientation.z;
     if (salsa_.current_node_ < 0)
         salsa_.setInitialState(z);
 
-//    double t = (m.getTime() - bag_start_).toSec();
-//    if (imu_count_between_nodes_ > 20)
-//    {
-//        salsa_.mocapCallback(t, z, mocap_R_);
-//        imu_count_between_nodes_ = 0;
-//    }
+    //    double t = (m.getTime() - bag_start_).toSec();
+    //    if (imu_count_between_nodes_ > 20)
+    //    {
+    //        salsa_.mocapCallback(t, z, mocap_R_);
+    //        imu_count_between_nodes_ = 0;
+    //    }
 
 
-//    truth_log_.log((m.getTime() - bag_start_).toSec());
+    //    truth_log_.log((m.getTime() - bag_start_).toSec());
     Vector3d v;
     v << odom->twist.twist.linear.x,
-         odom->twist.twist.linear.y,
-         odom->twist.twist.linear.z;
+            odom->twist.twist.linear.y,
+            odom->twist.twist.linear.z;
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
     Vector7d x_e2n = Vector7d::Ones() * NAN;
@@ -333,6 +335,7 @@ void SalsaRosbag::compressedImgCB(const rosbag::MessageInstance &m)
 
 void SalsaRosbag::imgCB(double tc, const cv_bridge::CvImageConstPtr &img)
 {
+    imu_count_ = 0;
     salsa_.imageCallback(tc, img->image, pix_R_);
 }
 
