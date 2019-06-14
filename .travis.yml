@@ -13,6 +13,8 @@ addons:
       - libgtest-dev
       - libeigen3-dev
       - libyaml-cpp-dev
+      - libceres-dev
+      - libopencv-dev
     update: true
 
 before_install:
