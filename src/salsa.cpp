@@ -528,6 +528,13 @@ void Salsa::handleMeas()
 
     while (mit != new_meas_.end())
     {
+        if (imu_meas_buf_.size() > 0 && (*mit)->t > imu_meas_buf_.back().t)
+        {
+            SD(3, "Unable to handle %s measurement, because the IMU isn't here yet.  z.t: %.3f, Imu.t: %.3f",
+               (*mit)->Type().c_str(), (*mit)->t, imu_meas_buf_.back().t);
+            ++mit;
+            continue;
+        }
         integrateTransition((*mit)->t);
 
         switch ((*mit)->type)

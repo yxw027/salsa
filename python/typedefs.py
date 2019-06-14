@@ -10,15 +10,19 @@ XType = np.dtype([
 
 CurrentStateType = np.dtype([
 	('t', np.float64),
-    ('x', XType),
-    ('v', (np.float64, 3)),
+    ('xu', XType),
+    ('vu', (np.float64, 3)),
     ('b', (np.float64, 6)),
-    ('tau', (np.float64, 2))
+    ('tau', (np.float64, 2)),
+    ('x', XType),
+    ('euler', (np.float64, 3)),
+    ('v', (np.float64, 3)),
 ])
 
 SimStateType = np.dtype([
 	('t', np.float64),
     ('x', XType),
+    ('euler', (np.float64, 3)),
     ('v', (np.float64, 3)),
     ('b', (np.float64, 6)),
     ('tau', (np.float64, 2)),

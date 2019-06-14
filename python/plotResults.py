@@ -144,7 +144,8 @@ def plotMocapRes():
     for i in range(2):
         for j in range(3):
             plt.subplot(3,2, i*3+j+1)
-            plt.plot(mocapRes['r']['t'].T, mocapRes['r']['res'][:,:,i*3+j].T)
+            for log in data:
+                plt.plot(log.mocapRes['r']['t'].T, log.mocapRes['r']['res'][:,:,i*3+j].T, label=log.label)
     pw.addPlot("MocapRes", f)
 
 
@@ -206,7 +207,7 @@ def plotAttitude():
     for i in range(4):
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
-        plt.plot(truth['t'], truth['x']['q'][:,i], label='x')
+        plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
         for log in data:
             plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['x']['q'][:,0]), label=log.label)
             if plotKF:
@@ -215,6 +216,22 @@ def plotAttitude():
             plt.legend()
         plotMultipathTime()
     pw.addPlot("Attitude", f)
+
+def plotEuler():
+    f = plt.figure()
+    plt.suptitle("Euler")
+    labels=[r"$\phi$", r"$\theta$", r"$\psi$"]
+    for i in range(3):
+        plt.subplot(3,1,i+1)
+        plt.title(labels[i])
+        plt.plot(truth['t'], 180.0/np.pi * truth['euler'][:,i], label='x')
+        for log in data:
+            plt.plot(log.state['t'], 180.0/np.pi * log.state['euler'][:,i], label=log.label)
+        if i == 0:
+            plt.legend()
+        plotMultipathTime()
+    pw.addPlot("Euler", f)
+
 
 def fixState(x):
     x['x'][:,3:] *= np.sign(x['x'][:,3,None])
@@ -486,11 +503,12 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plot3DMap()
     plotPosition()
     plotAttitude()
+    plotEuler()
     plotVelocity()
     # plotPosError()
     # plotVelError()
     plotImuBias()
-    # plotImu()
+    plotImu()
     # plotXe2n()
     # plotXb2c()
     #
@@ -505,8 +523,8 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     #     plotFeatRes()
     #     plotFeatDepths()
     #
-    # if len(mocapRes) > 0 and max(mocapRes['size']) > 0:
-    #     plotMocapRes()
+    if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
+        plotMocapRes()
     #
     # # if len(satPos) > 0 and max(satPos['size']) > 0:
     # #     plotSatPos()
@@ -514,5 +532,5 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
-    # plotResults("/tmp/Salsa/")
-    plotResults("/tmp/Salsa/FeatSimulation/")
+    plotResults("/tmp/Salsa/")
+    # plotResults("/tmp/Salsa/FeatSimulation/")

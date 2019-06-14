@@ -45,11 +45,13 @@ void Salsa::initLog(const std::string& filename)
 void Salsa::logState()
 {
     logs_[log::State]->log(xbuf_[xbuf_head_].t);
-    logs_[log::State]->logVectors(xbuf_[xbuf_head_].x.arr());
-    logs_[log::State]->logVectors(xbuf_[xbuf_head_].v);
-    logs_[log::State]->logVectors(xbuf_[xbuf_head_].tau);
-    logs_[log::State]->log(xbuf_[xbuf_head_].kf);
-    logs_[log::State]->log(xbuf_[xbuf_head_].node);
+    logs_[log::State]->logVectors(xbuf_[xbuf_head_].x.arr(),
+                                  xbuf_[xbuf_head_].v,
+                                  xbuf_[xbuf_head_].tau,
+                                  (xbuf_[xbuf_head_].x * x_b2o_).arr(),
+                                  x_b2o_.rotp(xbuf_[xbuf_head_].v));
+    logs_[log::State]->log(xbuf_[xbuf_head_].kf,
+                           xbuf_[xbuf_head_].node);
 }
 
 void Salsa::logOptimizedWindow()
@@ -115,8 +117,15 @@ void Salsa::logSwParams()
 
 void Salsa::logCurrentState()
 {
+    xform::Xformd xo = current_state_.x * x_b2o_;
     logs_[log::CurrentState]->log(current_state_.t);
-    logs_[log::CurrentState]->logVectors(current_state_.x.arr(), current_state_.v, imu_bias_, current_state_.tau);
+    logs_[log::CurrentState]->logVectors(current_state_.x.arr(),
+                                         current_state_.v,
+                                         imu_bias_,
+                                         current_state_.tau,
+                                         xo.arr(),
+                                         xo.q().euler(),
+                                         x_b2o_.rotp(current_state_.v));
 }
 
 

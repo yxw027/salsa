@@ -61,6 +61,7 @@ if (BUILD_ROS)
         roscpp
         sensor_msgs
         inertial_sense
+        class_loader
         nav_msgs)
     message(STATUS "Building salsa ROS library")
     add_library(salsa_ros src/salsa_ros.cpp)

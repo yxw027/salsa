@@ -57,6 +57,7 @@ public:
     ros::Duration mocap_offset_;
     double mocap_rate_;
     ros::Time prev_mocap_;
+    xform::Xformd x_I2m_prev_;
     Salsa salsa_;
 
     std::string imu_topic_;

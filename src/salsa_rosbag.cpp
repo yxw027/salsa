@@ -236,7 +236,6 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     ros::Time adjusted_msg_time = m.getTime();
     if ((adjusted_msg_time - prev_mocap_).toSec() < 1.0/mocap_rate_)
         return;
-    prev_mocap_ = adjusted_msg_time;
 
     double t = (adjusted_msg_time - bag_start_).toSec();
     Xformd z;
@@ -247,7 +246,7 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
                pose->pose.orientation.x,
                pose->pose.orientation.y,
                pose->pose.orientation.z;
-    z.q().normalize(); // I am frustrated that I have to do this.
+    z.q().normalize(); // I am a little worried that I have to do this.
 
     // The mocap is a North, Up, East (NUE) reference frame, so we have to rotate the quaternion's
     // axis of rotation to NED by 90 deg. roll. Then we rotate that resulting quaternion by -90 deg.
@@ -258,13 +257,14 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 
     salsa_.mocapCallback(t, z, mocap_R_);
 
-    Vector3d v = Vector3d::Ones() * NAN;
+    ros::Duration dt = adjusted_msg_time - prev_mocap_;
+    Vector3d v = z.q_.rotp(x_I2m_prev_.t() - z.t())/dt.toSec();
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
     Vector7d x_e2n = Vector7d::Ones() * NAN;
     Vector7d x_b2c = Vector7d::Ones() * NAN;
     truth_log_.log(t);
-    truth_log_.logVectors(z.arr(), v, b, tau, x_e2n, x_b2c);
+    truth_log_.logVectors(z.arr(), z.q().euler(), v, b, tau, x_e2n, x_b2c);
     int32_t multipath(0), denied(0);
     truth_log_.log(multipath, denied);
     for (int i = 0; i < salsa_.ns_; i++)
@@ -272,6 +272,10 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
         double sw = NAN;
         truth_log_.log(sw);
     }
+
+
+    x_I2m_prev_ = z;
+    prev_mocap_ = adjusted_msg_time;
 }
 
 void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
