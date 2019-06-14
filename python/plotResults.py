@@ -243,12 +243,14 @@ def plotImu():
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     for i in range(3):
-        plt.subplot(3, 2, 2*i+1)
+        plt.subplot(4, 2, 2*i+1)
         plt.plot(data[0].Imu['t'], data[0].Imu['acc'][:, i], label=imu_titles[i])
         plt.legend()
-        plt.subplot(3, 2, 2*i+2)
+        plt.subplot(4, 2, 2*i+2)
         plt.plot(data[0].Imu['t'], data[0].Imu['omega'][:, i], label=imu_titles[i+3])
         plt.legend()
+    plt.subplot(4,2,7)
+    plt.plot(data[0].Imu['t'], scipy.linalg.norm(data[0].Imu['acc'], axis=1))
     pw.addPlot("IMU", f)
 
 def plotXe2n():

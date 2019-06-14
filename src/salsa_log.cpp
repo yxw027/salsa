@@ -320,7 +320,7 @@ void Salsa::logPrangeRes()
 void Salsa::logImu()
 {
     logs_[log::Imu]->log(current_state_.t);
-    logs_[log::Imu]->logVectors(imu_.back().u_);
+    logs_[log::Imu]->logVectors(imu_meas_buf_.back().z);
 }
 
 void Salsa::printGraph()

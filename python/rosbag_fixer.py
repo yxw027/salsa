@@ -3,26 +3,39 @@ import rospy
 import sys
 from tqdm import tqdm
 from inertial_sense.msg import GNSSObsVec
+from geometry_msgs.msg import PoseStamped
 
-def adjustTime(inputfile, outputfile):
+def adjustTime(inputfile, outputfile, mocaptopic):
     print("input file: %s" % inputfile)
     print('output file: %s' % outputfile)
+    print('mocap_topic: %s' % mocaptopic)
 
     outbag = rosbag.Bag(outputfile, 'w')
+    bag = rosbag.Bag(inputfile)
 
-    try:
-        bag = rosbag.Bag(inputfile)
-    except:
-        print("No bag file found at %s" % inputfile)
-        quit(1)
+    dt_m = mocapOffset(inputfile, mocaptopic)
 
     for topic, msg, t in tqdm(bag.read_messages(), total=bag.get_message_count()):
-        if hasattr(msg,"header") and topic != "/output_raw":
+        if topic == mocaptopic:
+            msg.header.stamp -= dt_m
+            outbag.write(topic, msg, msg.header.stamp)
+        elif hasattr(msg,"header") and topic != "/output_raw":
             outbag.write(topic, msg, msg.header.stamp)
 
     sys.stdout.flush()
     outbag.close()
     print ("done")
+
+def mocapOffset(inputfile, mocaptopic):
+    bag = rosbag.Bag(inputfile)
+
+    biggest_dt = rospy.Duration(0)
+    for topic, msg, t in tqdm(bag.read_messages(topics=[mocaptopic]), total=bag.get_message_count()):
+        dt = msg.header.stamp - t
+        if dt > biggest_dt:
+            biggest_dt = dt
+    return biggest_dt
+
 
 def gtime2rostime(gtime):
     rostime = rospy.Time()
@@ -56,9 +69,8 @@ def convertObsType(inputfile, outputfile):
 
 
 if __name__ == '__main__':
-    # adjustTime("/home/superjax/rosbag/MocapCalCollect2.bag",
-               # "/home/superjax/rosbag/MocapCalCollect2Adjust.bag")
-    convertObsType("/home/superjax/rosbag/thor_outdoors_walk2.bag",
-               "/home/superjax/rosbag/thor_outdoors_walk2_adjust.bag")
+    adjustTime("/home/superjax/rosbag/mynt_mocap/mocap2.bag",
+               "/home/superjax/rosbag/mynt_mocap/mocap2_adjust.bag",
+               "/vrpn_client_node/Ragnarok/pose")
 
 

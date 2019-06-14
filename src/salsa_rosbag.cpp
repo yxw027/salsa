@@ -258,7 +258,7 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
     salsa_.mocapCallback(t, z, mocap_R_);
 
     ros::Duration dt = adjusted_msg_time - prev_mocap_;
-    Vector3d v = z.q_.rotp(x_I2m_prev_.t() - z.t())/dt.toSec();
+    Vector3d v = z.q_.rotp(z.t() - x_I2m_prev_.t())/dt.toSec();
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
     Vector7d x_e2n = Vector7d::Ones() * NAN;

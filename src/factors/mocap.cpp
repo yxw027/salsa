@@ -25,9 +25,20 @@ bool MocapFunctor::operator()(const T* _xu, T* _res) const
     typedef Matrix<T,6,1> Vec6;
     Map<Vec6> res(_res);
     Xform<T> xu(_xu);
-//    res = Xi_ * ((xm_ + (dt_m_ * xmdot_)) - (xu.template otimes<T,double>(x_u2m_)));
-    res = Xi_ * (xm_*x_u2m_.inverse() - xu);
-//    res = xm_ - xu;
+
+//    res.setZero();
+//    res.template topRows<3>() = Xi_.topLeftCorner<3,3>() * (xm_.t() - xu.t());
+//    double yaw = xm_.q().yaw();
+//    T yawhat = xu.q().yaw();
+//    T diff = yaw - yawhat;
+//    if (diff > M_PI)
+//        diff -= (T)2.0*M_PI;
+//    if (diff < -M_PI)
+//        diff += (T)2.0*M_PI;
+//    res(3) = Xi_(5,5) * diff;
+    res = Xi_ * (xm_ - (xu.otimes(x_u2m_)));
+//    res.topRows<3>().setZero();
+
     return true;
 }
 
