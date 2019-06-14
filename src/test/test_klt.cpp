@@ -8,7 +8,7 @@ using namespace Eigen;
 using namespace xform;
 
 
-TEST (KLT, TrackVideo)
+TEST (DISABLED_KLT, TrackVideo)
 {
 //    std::string video_file=SALSA_DIR"/vid/away.avi";
     std::string video_file=SALSA_DIR"/vid/towards.avi";

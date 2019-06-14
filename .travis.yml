@@ -20,6 +20,7 @@ before_install:
   - sudo apt install -y cmake build-essential libgtest-dev libeigen3-dev libyaml-cpp-dev 
   - sudo apt install -y libopenblas-dev libboost-thread-dev
   - sudo apt install -y libceres-dev
+  - sudo apt install -y libopencv-dev
   - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
   - git submodule update --init --recursive
 
