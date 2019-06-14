@@ -3,6 +3,7 @@
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CompressedImage.h>
@@ -29,7 +30,7 @@ public:
     void openBag();
     void parseBag();
 
-    void getMocapOffset();
+//    void getMocapOffset();
 
     void imuCB(const rosbag::MessageInstance& m);
     void poseCB(const rosbag::MessageInstance& m);
@@ -38,6 +39,7 @@ public:
     void odomCB(const rosbag::MessageInstance& m);
     void imgCB(const rosbag::MessageInstance& m);
     void compressedImgCB(const rosbag::MessageInstance& m);
+    void imgCB(const cv_bridge::CvImagePtr& img);
 
     rosbag::Bag bag_;
     rosbag::View* view_;

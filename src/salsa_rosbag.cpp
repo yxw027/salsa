@@ -18,7 +18,7 @@ SalsaRosbag::SalsaRosbag(int argc, char** argv)
 
     loadParams();
     openBag();
-    getMocapOffset();
+//    getMocapOffset();
 
     got_imu_ = false;
     salsa_.init(param_filename_);
@@ -51,8 +51,6 @@ void SalsaRosbag::loadParams()
 
     // Configure Motion Capture Frame
     get_yaml_node("mocap_rate", param_filename_, mocap_rate_);
-    get_yaml_eigen("q_mocap_to_NED_pos", param_filename_, q_mocap_to_NED_pos_.arr_);
-    get_yaml_eigen("q_mocap_to_NED_att", param_filename_, q_mocap_to_NED_att_.arr_);
 }
 
 void SalsaRosbag::displayHelp()
@@ -232,12 +230,11 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
         return;
 
     geometry_msgs::PoseStampedConstPtr pose = m.instantiate<geometry_msgs::PoseStamped>();
-//    ros::Time adjusted_msg_time = pose->header.stamp - mocap_offset_;
-    ros::Time adjusted_msg_time = m.getTime();
-    if ((adjusted_msg_time - prev_mocap_).toSec() < 1.0/mocap_rate_)
+
+    if ((m.getTime() - prev_mocap_).toSec() < 1.0/mocap_rate_)
         return;
 
-    double t = (adjusted_msg_time - bag_start_).toSec();
+    double t = (m.getTime() - bag_start_).toSec();
     Xformd z;
     z.arr() << pose->pose.position.x,
                pose->pose.position.y,
@@ -248,16 +245,9 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
                pose->pose.orientation.z;
     z.q().normalize(); // I am a little worried that I have to do this.
 
-    // The mocap is a North, Up, East (NUE) reference frame, so we have to rotate the quaternion's
-    // axis of rotation to NED by 90 deg. roll. Then we rotate that resulting quaternion by -90 deg.
-    // in yaw because Leo thinks zero attitude is facing East, instead of North.
-    z.t_ = q_mocap_to_NED_pos_.rotp(z.t_);
-    z.q_.arr_.segment<3>(1) = q_mocap_to_NED_pos_.rotp(z.q_.arr_.segment<3>(1));
-    z.q_ = z.q_ * q_mocap_to_NED_att_;
-
     salsa_.mocapCallback(t, z, mocap_R_);
 
-    ros::Duration dt = adjusted_msg_time - prev_mocap_;
+    ros::Duration dt = m.getTime() - prev_mocap_;
     Vector3d v = z.q_.rotp(z.t() - x_I2m_prev_.t())/dt.toSec();
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
@@ -275,7 +265,7 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 
 
     x_I2m_prev_ = z;
-    prev_mocap_ = adjusted_msg_time;
+    prev_mocap_ = m.getTime();
 }
 
 void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
@@ -319,6 +309,12 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
 
 void SalsaRosbag::imgCB(const rosbag::MessageInstance &m)
 {
+    if (!got_imu_)
+        return;
+
+    sensor_msgs::ImageConstPtr img = m.instantiate<sensor_msgs::Image>();
+
+
 
 }
 
@@ -327,25 +323,30 @@ void SalsaRosbag::compressedImgCB(const rosbag::MessageInstance &m)
 
 }
 
-void SalsaRosbag::getMocapOffset()
+void SalsaRosbag::imgCB(const cv_bridge::CvImagePtr &img)
 {
-    ros::Duration biggest_dt = ros::DURATION_MIN;
-    for(rosbag::MessageInstance const m  : (*view_))
-    {
-        if (m.getTime() < bag_start_) continue;
-        if (m.getTime() > bag_end_) break;
 
-        if (m.isType<geometry_msgs::PoseStamped>() && m.getTopic().compare(mocap_topic_) == 0)
-        {
-            ros::Time header = m.instantiate<geometry_msgs::PoseStamped>()->header.stamp;
-            ros::Duration dt = header - m.getTime();
-            if (dt > biggest_dt)
-                biggest_dt = dt;
-        }
-    }
-    mocap_offset_ = biggest_dt;
-    prev_mocap_ = ros::Time(0,0);
 }
+
+//void SalsaRosbag::getMocapOffset()
+//{
+//    ros::Duration biggest_dt = ros::DURATION_MIN;
+//    for(rosbag::MessageInstance const m  : (*view_))
+//    {
+//        if (m.getTime() < bag_start_) continue;
+//        if (m.getTime() > bag_end_) break;
+
+//        if (m.isType<geometry_msgs::PoseStamped>() && m.getTopic().compare(mocap_topic_) == 0)
+//        {
+//            ros::Time header = m.instantiate<geometry_msgs::PoseStamped>()->header.stamp;
+//            ros::Duration dt = header - m.getTime();
+//            if (dt > biggest_dt)
+//                biggest_dt = dt;
+//        }
+//    }
+//    mocap_offset_ = biggest_dt;
+//    prev_mocap_ = ros::Time(0,0);
+//}
 
 }
 

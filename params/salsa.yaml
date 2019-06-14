@@ -86,10 +86,6 @@ enable_switching_factors: true
 #####################################
 position_noise_stdev: 0.001
 attitude_noise_stdev: 0.001
-#q_mocap_to_NED_pos: [0.7071067811865476, 0.7071067811865476, 0, 0]
-#q_mocap_to_NED_att: [0.7071067811865476, 0, 0, 0.7071067811865476]
-q_mocap_to_NED_pos: [1, 0, 0, 0]
-q_mocap_to_NED_att: [1, 0, 0, 0]
 disable_mocap: false
 tm: -150527.278188551
 x_b2m: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
