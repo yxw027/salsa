@@ -1,5 +1,5 @@
 # Salsa
+[![Build Status](https://travis-ci.com/superjax/salsa.svg?branch=master)](https://travis-ci.com/superjax/salsa)
 
-![salsa-picture](assets/salsa.jpg)
 
 GNSS-Visual-Inertial Moving Horizon Estimation
