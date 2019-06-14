@@ -126,8 +126,6 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
 
     if (filtered_obs_.size() > 7 && use_point_positioning_)
     {
-        int to = xbuf_head_;
-
         // Use Iterated Least-Squares to estimate x_e2n and time offset
         Vector8d pp_sol = Vector8d::Zero();
         pp_sol.topRows<3>() = x_e2n_.t();
@@ -139,13 +137,13 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
 //        Xformd x_e2bn = gnss_utils::WGS84::x_ecef2ned(phat);
 //        Xformd x_bn2b(Vector3d::Zero(), x0_.q());
 //        x_e2n_ = x_e2bn * x_bn2b * x0_.inverse();
-        xbuf_[to].tau = that;
+        xbuf_[xbuf_head_].tau = that;
     }
 }
 
 void Salsa::gnssUpdate(const meas::Gnss &m)
 {
-    SD(2, "Gnss Update, t=%.2f", m.t);
+    SD(2, "Gnss Update on node %d, t=%.3f", xbuf_[xbuf_head_].node, m.t);
     Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
     prange_.emplace_back(m.obs.size());
     int i = 0;

@@ -355,6 +355,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     //    ImuFunctor& imu(imu_.back());
     //    imu.integrate(t, z, R);
 
+    handleMeas();
     logCurrentState();
     logImu();
 }
@@ -517,23 +518,32 @@ const State& Salsa::lastKfState()
 
 void Salsa::handleMeas()
 {
+    if (new_meas_.size() == 0)
+        return;
+
     std::multiset<meas::Base*>::iterator mit = new_meas_.begin();
 
     if (current_node_ == -1)
+    {
         initialize(*mit);
+        new_meas_.erase(mit);
+        return;
+    }
 
-    SALSA_ASSERT((*mit)->t >= xbuf_[xbuf_tail_].t - 1e-6, \
-                 "Unable to handle stale %s measurement.  State Time: %.3f, Meas Time: %.3f", \
+    if((*mit)->t < xbuf_[xbuf_tail_].t - 1e-6)
+    {
+        SD(5, "Unable to handle stale %s measurement.  State Time: %.3f, Meas Time: %.3f", \
                  (*mit)->Type().c_str(), xbuf_[xbuf_tail_].t, (*mit)->t);
+        mit = new_meas_.erase(mit);
+    }
 
     while (mit != new_meas_.end())
     {
-        if (imu_meas_buf_.size() > 0 && (*mit)->t > imu_meas_buf_.back().t)
+        if ((*mit)->t-1e-6 > imu_meas_buf_.back().t)
         {
             SD(3, "Unable to handle %s measurement, because the IMU isn't here yet.  z.t: %.3f, Imu.t: %.3f",
                (*mit)->Type().c_str(), (*mit)->t, imu_meas_buf_.back().t);
-            ++mit;
-            continue;
+            return;
         }
         integrateTransition((*mit)->t);
 
@@ -571,6 +581,7 @@ void Salsa::handleMeas()
         mit = new_meas_.erase(mit); // The measurement has been handled, we don't need it anymore
     }
     solve();
+    SD(2, "Finished New Measurements\n\n\n");
 }
 
 void Salsa::initialize(const meas::Base *m)
@@ -580,7 +591,9 @@ void Salsa::initialize(const meas::Base *m)
     case meas::Base::IMG:
     {
         SD(5, "Initialized Using Image\n");
+        const meas::Img* z = dynamic_cast<const meas::Img*>(m);
         initialize(m->t, x0_, v0_, Vector2d::Zero());
+        imageUpdate(*z);
         startNewInterval(m->t);
         break;
     }
@@ -589,6 +602,7 @@ void Salsa::initialize(const meas::Base *m)
         SD(5, "Initialized Using GNSS\n");
         const meas::Gnss* z = dynamic_cast<const meas::Gnss*>(m);
         initializeStateGnss(*z);
+        gnssUpdate(*z);
         startNewInterval(z->t);
         break;
     }
@@ -597,6 +611,7 @@ void Salsa::initialize(const meas::Base *m)
         SD(5, "Initialized Using Mocap\n");
         const meas::Mocap* z = dynamic_cast<const meas::Mocap*>(m);
         initializeStateMocap(*z);
+        mocapUpdate(*z);
         startNewInterval(m->t);
         break;
     }
@@ -612,11 +627,19 @@ void Salsa::integrateTransition(double t)
     int num_imu = 0;
     while (imu_meas_buf_.size() > 0 && imu_meas_buf_.front().t-1e-6 <= t)
     {
-        num_imu++;
         auto& z(imu_meas_buf_.front());
-        SD(1, "Integrate to t=%.3f", z.t);
-        imu.integrate(z.t, z.z, z.R);
-        imu_meas_buf_.pop_front();
+        if (z.t < imu.t)
+        {
+            SD(4, "Removing unusable imu measurement with t=%.3f, (Integrator Time = %.3f)", z.t, imu.t);
+            imu_meas_buf_.pop_front();
+        }
+        else
+        {
+            num_imu++;
+            SD(1, "Integrate to t=%.3f", z.t);
+            imu.integrate(z.t, z.z, z.R);
+            imu_meas_buf_.pop_front();
+        }
     }
 
     // If the transition factors are done, then finish them
@@ -642,7 +665,7 @@ void Salsa::integrateTransition(double t)
             xbuf_[xbuf_head_].kf = -1;
         }
 
-        SD(1, "Integrate to t=%.2f", t);
+        SD(1, "Integrate to t=%.3f", t);
         imu.integrate(t, imu.u_, imu.cov_);
         SD(1, "End Imu Interval at idx=%d", to);
         imu.finished(to);
@@ -658,13 +681,17 @@ void Salsa::integrateTransition(double t)
     }
     else if (imu.n_updates_ <= 1) // otherwise we gotta remove this transition, because we are going to double-up this node
     {
-        SD(2, "Remove Imu interval");
+        SD(2, "Remove Imu interval, so we can double up");
         if (imu.n_updates_ == 1)
         {
-            SD(3, "Push singleton IMU measurement back onto queue");
-            imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
+            SD(3, "Push singleton IMU measurement into previous interval");
+//            imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
+            ImuFunctor& prev_imu(*(imu_.end()-2));
+            prev_imu.integrate(imu.t, imu.u_, imu.cov_);
+            prev_imu.finished(prev_imu.to_idx_);
         }
         imu_.pop_back();
+        printImuIntervals();
         SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
         clk_.pop_back();
     }
@@ -723,7 +750,7 @@ void Salsa::initializeNodeWithImu()
 
 void Salsa::addMeas(const meas::Mocap &&mocap)
 {
-    SD(2, "Got new Mocap measurement t: %.2f", mocap.t);
+    SD(2, "Got new Mocap measurement t: %.3f", mocap.t);
     mocap_meas_buf_.push_back(mocap);
     new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
     if (update_on_mocap_)
@@ -732,7 +759,7 @@ void Salsa::addMeas(const meas::Mocap &&mocap)
 
 void Salsa::addMeas(const meas::Gnss &&gnss)
 {
-    SD(2, "Got new GNSS measurement t: %.2f", gnss.t);
+    SD(2, "Got new GNSS measurement t: %.3f", gnss.t);
     gnss_meas_buf_.push_back(gnss);
     new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
     if (update_on_gnss_)
@@ -741,7 +768,7 @@ void Salsa::addMeas(const meas::Gnss &&gnss)
 
 void Salsa::addMeas(const meas::Img &&img)
 {
-    SD(2, "Got new IMG measurement t: %.2f", img.t);
+    SD(2, "Got new IMG measurement t: %.3f", img.t);
     img_meas_buf_.push_back(img);
     new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
     if (update_on_camera_)
@@ -770,9 +797,15 @@ bool Salsa::checkIMUOrder()
         if (it->to_idx_ == -1)
             return it+1 == imu_.end();
         if ((from != it->from_idx_) || (it->to_idx_ != (from + 1) %STATE_BUF_SIZE))
+        {
+            SD(5, "Index Gap in IMU String. End: %d, start: %d, SIZE %d", it->from_idx_, it->to_idx_, STATE_BUF_SIZE);
             return false;
+        }
         if (std::abs(it->t0_-t0) > 1e-8)
+        {
+            SD(5, "Time Gap in IMU String end: %.3f, start: %.3f", it->t0_, t0);
             return false;
+        }
         from = it->to_idx_;
         t0 = it->t;
         it++;

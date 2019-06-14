@@ -58,6 +58,8 @@ public:
         salsa.init(small_feat_test("/tmp/Salsa/ManualKFTest/"));
         salsa.x_b2c_.q() = quat::Quatd::Identity();
         salsa.x_b2c_.t() = Vector3d::Zero();
+        salsa.x_b2m_.q() = quat::Quatd::Identity();
+        salsa.x_b2m_.t() = Vector3d::Zero();
         Vector3d provo_lla{40.246184 * M_PI/180.0 , -111.647769 * M_PI/180.0, 1387.997511};
         Vector3d provo_ecef = WGS84::lla2ecef(provo_lla);
         salsa.x_e2n_ = WGS84::x_ecef2ned(provo_ecef);
@@ -111,6 +113,14 @@ public:
         salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
     }
 
+
+    void simulateIMUDelay()
+    {
+        salsa.imuCallback(t-dt, *imuit, R_imu);
+        salsa.imuCallback(t-dt/2.0, *imuit, R_imu);
+        t += dt;
+    }
+
     meas::Img simulateFeatDelay()
     {
         feat.id += 1;
@@ -126,13 +136,14 @@ public:
         return meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat));
     }
 
-    void createNewKeyframe()
+    void createNewKeyframe(bool check=true)
     {
         feat.feat_ids[keyframe_ % feat.feat_ids.size()] += feat.feat_ids.size();
         keyframe_++;
         expected_kf = true;
         simulateFeat();
-        EXPECT_FALSE(expected_kf);
+        if (check)
+            EXPECT_FALSE(expected_kf);
     }
 
     void incrementImuIt()
@@ -461,6 +472,31 @@ public:
         }
     }
 
+    void runDelayedIMU()
+    {
+        t = dt;
+        // i    0            1          2
+        // K    |  0         |  1       |  2
+        // N    |  0    1    |  2     3 |  4
+        // head |  0    1    |  2     3 |  4
+        //      | KF -- G -- | KF --  G | KF ...
+        simulateIMUDelay();
+        for (int i = 0; i < salsa.max_node_window_; i++)
+        {
+            createNewKeyframe(false);
+            simulateIMUDelay();
+            simulateGNSS();
+            simulateIMUDelay();
+            if (i > 2)
+            {
+                EXPECT_EQ(salsa.xbuf_head_, i);
+                EXPECT_EQ(salsa.current_node_, i);
+                EXPECT_EQ(salsa.current_kf_, i);
+                EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, i);
+            }
+        }
+    }
+
     void runDelayedCamera()
     {
         salsa.update_on_camera_ = true;
@@ -509,6 +545,7 @@ public:
     std::vector<Vector6d, aligned_allocator<Vector6d>> imu;
     std::vector<Vector6d, aligned_allocator<Vector6d>>::iterator imuit;
     Matrix6d R_imu;
+    Matrix6d R_mocap;
 
     GTime log_start;
     Salsa salsa;
@@ -563,5 +600,10 @@ TEST_F (SalsaFeatGNSSTest, KFSPlitGNSS)
 TEST_F (SalsaFeatGNSSTest, DelayedCamera)
 {
     runDelayedCamera();
+}
+
+TEST_F (SalsaFeatGNSSTest, DelayedIMU)
+{
+    runDelayedIMU();
 }
 

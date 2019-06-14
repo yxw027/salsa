@@ -42,6 +42,7 @@ gyro_noise_stdev: 0.5
 #####################################
 ### Camera
 #####################################
+pix_err_stdev: 1
 disable_vision: false
 tracker_freq: 10
 min_depth: 0.5

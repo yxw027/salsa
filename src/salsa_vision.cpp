@@ -66,7 +66,7 @@ void Salsa::imageUpdate(const meas::Img &m)
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
 
-    SD(2, "Image Update, t=%.2f", m.t);
+    SD(2, "Image Update, t=%.3f", m.t);
     for (int i = 0; i < m.z.zetas.size(); i++)
     {
         if (isTrackedFeature(m.z.feat_ids[i]))

@@ -62,7 +62,7 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
     if (img.channels() > 1)
         cvtColor(img, current_img_, COLOR_BGR2GRAY);
     else
-        current_img_ = img;
+        img.copyTo(current_img_);
 
     if (got_first_img_)
     {
@@ -134,7 +134,7 @@ void Salsa::filterFeaturesOutOfBounds()
 
 int Salsa::calcNewKeyframeConditionKLT()
 {
-    if (current_node_ == -1)
+    if (current_feat_.size() == 0)
     {
         kf_condition_ = FIRST_KEYFRAME;
         return FIRST_KEYFRAME;

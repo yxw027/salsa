@@ -27,8 +27,6 @@ void Salsa::initializeNodeWithMocap(const meas::Mocap& mocap)
     initializeNodeWithImu(); // get velocity from IMU
     xbuf_[xbuf_head_].t = mocap.t;
     xbuf_[xbuf_head_].x = mocap.z * x_b2m_.inverse();
-    xbuf_[xbuf_head_].kf = -1;
-    xbuf_[xbuf_head_].node = current_node_;
 }
 
 

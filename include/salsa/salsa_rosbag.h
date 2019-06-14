@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Eigen/Core>
+
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
@@ -39,7 +41,7 @@ public:
     void odomCB(const rosbag::MessageInstance& m);
     void imgCB(const rosbag::MessageInstance& m);
     void compressedImgCB(const rosbag::MessageInstance& m);
-    void imgCB(const cv_bridge::CvImagePtr& img);
+    void imgCB(double tc, const cv_bridge::CvImageConstPtr &img);
 
     rosbag::Bag bag_;
     rosbag::View* view_;
@@ -68,6 +70,7 @@ public:
 
     Matrix6d imu_R_;
     Matrix6d mocap_R_;
+    Eigen::Matrix2d pix_R_;
 
     Logger truth_log_;
     Logger imu_log_;

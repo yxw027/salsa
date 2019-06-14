@@ -44,13 +44,15 @@ void SalsaRosbag::loadParams()
     imu_R_.bottomRightCorner<3,3>() = gyro_stdev * gyro_stdev * I_3x3;
 
     double pos_stdev, att_stdev;
+    get_yaml_node("mocap_rate", param_filename_, mocap_rate_);
     get_yaml_node("position_noise_stdev", param_filename_, pos_stdev);
     get_yaml_node("attitude_noise_stdev", param_filename_, att_stdev);
     mocap_R_ << pos_stdev * pos_stdev * I_3x3,   Matrix3d::Zero(),
                 Matrix3d::Zero(),   att_stdev * att_stdev * I_3x3;
 
-    // Configure Motion Capture Frame
-    get_yaml_node("mocap_rate", param_filename_, mocap_rate_);
+    double pix_err_stdev;
+    get_yaml_node("pix_err_stdev", param_filename_, pix_err_stdev);
+    pix_R_ = pix_err_stdev*pix_err_stdev * I_2x2;
 }
 
 void SalsaRosbag::displayHelp()
@@ -313,19 +315,25 @@ void SalsaRosbag::imgCB(const rosbag::MessageInstance &m)
         return;
 
     sensor_msgs::ImageConstPtr img = m.instantiate<sensor_msgs::Image>();
-
-
-
+    cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(img);
+    double tc = (img->header.stamp - bag_start_).toSec();
+    imgCB(tc, cv_ptr);
 }
 
 void SalsaRosbag::compressedImgCB(const rosbag::MessageInstance &m)
 {
+    if (!got_imu_)
+        return;
 
+    sensor_msgs::CompressedImageConstPtr img = m.instantiate<sensor_msgs::CompressedImage>();
+    cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvCopy(img);
+    double tc = (img->header.stamp - bag_start_).toSec();
+    imgCB(tc, cv_ptr);
 }
 
-void SalsaRosbag::imgCB(const cv_bridge::CvImagePtr &img)
+void SalsaRosbag::imgCB(double tc, const cv_bridge::CvImageConstPtr &img)
 {
-
+    salsa_.imageCallback(tc, img->image, pix_R_);
 }
 
 //void SalsaRosbag::getMocapOffset()

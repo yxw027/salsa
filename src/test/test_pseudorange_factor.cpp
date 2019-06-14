@@ -319,20 +319,19 @@ TEST (PrangeFactor, Jac5)
 
     Matrix<double, 3, 1> drdsfd, drdsa;
     double eps = 1e-5;
-    for (int i = 0; i < 2; i++)
-    {
-        double s_plus;
-        double s_minus;
-        s_plus = s + eps;
-        s_minus = s - eps;
 
-        double* p_plus[5] = {x.data(), vel.data(), clk.data(), x_e2n.data(), &s_plus};
-        double* p_minus[5] = {x.data(), vel.data(), clk.data(), x_e2n.data(), &s_minus};
-        Vector3d res_plus, res_minus;
-        an.Evaluate(p_plus, res_plus.data(), NULL);
-        an.Evaluate(p_minus, res_minus.data(), NULL);
-        drdsfd.col(i) = (res_plus - res_minus)/(2.0*eps);
-    }
+    double s_plus;
+    double s_minus;
+    s_plus = s + eps;
+    s_minus = s - eps;
+
+    double* p_plus[5] = {x.data(), vel.data(), clk.data(), x_e2n.data(), &s_plus};
+    double* p_minus[5] = {x.data(), vel.data(), clk.data(), x_e2n.data(), &s_minus};
+    Vector3d res_plus, res_minus;
+    an.Evaluate(p_plus, res_plus.data(), NULL);
+    an.Evaluate(p_minus, res_minus.data(), NULL);
+    drdsfd = (res_plus - res_minus)/(2.0*eps);
+
     double* p[5] = {x.data(), vel.data(), clk.data(), x_e2n.data(), &s};
     double* j[5] = {NULL, NULL, NULL, NULL, drdsa.data()};
     Vector3d res;

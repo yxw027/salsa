@@ -71,7 +71,7 @@ bool PseudorangeFunctor::operator()(const T* _x, const T* _v, const T* _clk,
     Map<const Vec2> clk(_clk);
     Xform<T> x_e2n(_x_e2n);
     const T& k(*_sw);
-    Map<Vec2> res(_res);
+    Map<Vec3> res(_res);
 
 
     Vec3 v_ECEF = x_e2n.rota(x.rota(v_b));
@@ -110,7 +110,7 @@ bool PseudorangeFactor::Evaluate(const double * const *parameters, double *resid
     Map<const Vector2d> clk(parameters[2]);
     Xformd x_e2n(parameters[3]);
     const double& k(*parameters[4]);
-    Map<Vector2d> res(residuals);
+    Map<Vector3d> res(residuals);
     const double& C(Satellite::C_LIGHT);
     const double& W(Satellite::OMEGA_EARTH);
 

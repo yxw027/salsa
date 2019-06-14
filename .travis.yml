@@ -1,0 +1,54 @@
+dist: "bionic"
+language: cpp
+
+# Handle git submodules yourself
+git:
+    submodules: false
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - cmake
+      - libgtest-dev
+      - libeigen3-dev
+      - libyaml-cpp-dev
+    update: true
+
+before_install:
+  - sudo apt update
+  - sudo apt install -y cmake build-essential libgtest-dev libeigen3-dev libyaml-cpp-dev 
+  - sudo apt install -y libopenblas-dev libboost-thread-dev
+  - sudo apt install -y libceres-dev
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - git submodule update --init --recursive
+
+install:
+  - cd /usr/src/gtest
+  - sudo cmake CMakeLists.txt
+  - sudo make
+  - sudo cp *.a /usr/lib
+  - cd "${TRAVIS_BUILD_DIR}"
+  - gcc --version
+  - mkdir lib
+  - cd lib
+  - git clone https://github.com/superjax/geometry && cd geometry
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make && sudo make install && cd ../../
+  - git clone https://github.com/superjax/gnss_utils && cd gnss_utils
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make && sudo make install && cd ../../
+  - git clone https://github.com/superjax/nanoflann_eigen && cd nanoflann_eigen
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make && sudo make install && cd ../../
+  - git clone https://github.com/superjax/lin_alg_tools && cd lin_alg_tools
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make && sudo make install && cd ../../
+  - git clone https://github.com/superjax/multirotor_sim && cd multirotor_sim
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make && sudo make install && cd ../../
+  - cd ..
+
+
+script:
+  - mkdir build
+  - cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=ON
+  - make
+  - ./test_salsa
+

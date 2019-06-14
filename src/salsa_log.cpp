@@ -343,7 +343,7 @@ void Salsa::printGraph()
     int end = (xbuf_head_+1)%STATE_BUF_SIZE;
     while (tmp != end)
     {
-        logs_[log::Graph]->file_ << std::fixed << std::setw(5) << std::setprecision(1) << xbuf_[tmp].t << " -- ";
+        logs_[log::Graph]->file_ << std::fixed << std::setw(5) << std::setprecision(3) << xbuf_[tmp].t << " -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
 
@@ -406,7 +406,12 @@ void Salsa::printImuIntervals()
     logs_[log::Graph]->file_ << "\nIMU: ";
     for (auto& imu : imu_)
     {
-        logs_[log::Graph]->file_ << imu.from_idx_ << " -> " << imu.to_idx_ << " | ";
+        logs_[log::Graph]->file_ << std::setw(5) << std::setprecision(3) << imu.t0_ << " -> " << std::setw(5) << std::setprecision(3) << imu.t << " | ";
+    }
+    logs_[log::Graph]->file_ << "\n     ";
+    for (auto& imu : imu_)
+    {
+        logs_[log::Graph]->file_ << std::setw(5) << imu.from_idx_ << " -> " << std::setw(5) << imu.to_idx_ << " | ";
     }
     logs_[log::Graph]->file_ << "\n";
     logs_[log::Graph]->file_.flush();
