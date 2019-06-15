@@ -94,6 +94,7 @@ if (BUILD_TESTS)
         src/test/test_klt.cpp
         src/test/test_xform_local_param.cpp
         src/test/test_pseudorange_factor.cpp
+        src/test/test_node_management.cpp
      )
      target_link_libraries(test_salsa
         salsa

@@ -515,6 +515,14 @@ const State& Salsa::lastKfState()
     return xbuf_[it];
 }
 
+void Salsa::handleMeas2()
+{
+    std::multiset<meas::Base*>::iterator mit = new_meas_.begin();
+
+    if (current_node_ == -1)
+        initialize(*mit);
+}
+
 void Salsa::handleMeas()
 {
     std::multiset<meas::Base*>::iterator mit = new_meas_.begin();
@@ -676,6 +684,8 @@ void Salsa::integrateTransition(double t)
     }
 }
 
+
+
 void Salsa::startNewInterval(double t)
 {
     SD(2, "Starting a new interval. imu_.size()=%lu and xbuf_head=%d", imu_.size(), xbuf_head_);
@@ -727,7 +737,7 @@ void Salsa::addMeas(const meas::Mocap &&mocap)
     mocap_meas_buf_.push_back(mocap);
     new_meas_.insert(new_meas_.end(), &mocap_meas_buf_.back());
     if (update_on_mocap_)
-        handleMeas();
+        handleMeas2();
 }
 
 void Salsa::addMeas(const meas::Gnss &&gnss)
@@ -736,7 +746,7 @@ void Salsa::addMeas(const meas::Gnss &&gnss)
     gnss_meas_buf_.push_back(gnss);
     new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
     if (update_on_gnss_)
-        handleMeas();
+        handleMeas2();
 }
 
 void Salsa::addMeas(const meas::Img &&img)
@@ -745,7 +755,7 @@ void Salsa::addMeas(const meas::Img &&img)
     img_meas_buf_.push_back(img);
     new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
     if (update_on_camera_)
-        handleMeas();
+        handleMeas2();
 }
 
 bool Salsa::inWindow(int idx)
@@ -778,6 +788,13 @@ bool Salsa::checkIMUOrder()
         it++;
     }
     return it == imu_.end();
+}
+
+int Salsa::newNode(double t)
+{
+    ImuFunctor& imu = imu_.emplace_back(xhead().t, imu_bias_, xbuf_head_, xhead().node);
+
+
 }
 
 
