@@ -136,6 +136,7 @@ public:
     void rmLostFeatFromKf();
     bool inWindow(int idx);
     State& xhead() { return xbuf_[xbuf_head_]; }
+    State& xtail() { return xbuf_[xbuf_tail_]; }
     ImuIntegrator current_state_integrator_;
     State current_state_;
     int current_node_;
@@ -314,6 +315,7 @@ public:
     void splitInterval(int interval_idx, double t);
     int moveNode(double t);
     int newNode(double t);
+    int insertNode(double t);
 
     /*************************************/
     /*          Round-Off helpers        */

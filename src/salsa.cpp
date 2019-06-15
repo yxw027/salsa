@@ -955,6 +955,30 @@ int Salsa::moveNode(double t)
     xhead().tau(1) = xbuf_[from_idx].tau(1);
 
     return xbuf_head_;
+}
+
+int Salsa::insertNode(double t)
+{
+    // Sanity Checks
+    SALSA_ASSERT(le(t, xhead().t), "Trying to insert a future node"); // t <= t[node_max]
+    SALSA_ASSERT(ge(t, xtail().t), "Tryint to insert a node that is too old"); // t >= t[node_min]
+
+    auto imu_it = imu_.end()-1;
+    while (lt(t, imu_it->t)) // t < imu.t_end
+    {
+        // work backwards through buffer
+        --imu_it;
+    }
+
+    if (eq(xbuf_[imu_it->to_idx_].t, t))
+    {
+        SD(2, "Lucky Insert on top of previous node");
+        return imu_it->to_idx_;
+    }
+    else
+    {
+
+    }
 
 }
 

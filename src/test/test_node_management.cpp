@@ -41,6 +41,8 @@ public:
         initFeat();
         initGNSS();
         initMocap();
+
+        initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     }
 
     void initIMU()
@@ -130,7 +132,6 @@ TEST_F (Management, RoundOffHelpers)
 
 TEST_F (Management, NewNodeEndOfString)
 {
-    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     newNode(0.2);
     EXPECT_TRUE(checkIMUOrder());
@@ -143,7 +144,6 @@ TEST_F (Management, NewNodeEndOfString)
 
 TEST_F (Management, NodeBeforeEndOfString)
 {
-    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     newNode(0.1);
     EXPECT_EQ(imu_meas_buf_.size(), 10);
@@ -157,7 +157,6 @@ TEST_F (Management, NodeBeforeEndOfString)
 
 TEST_F (Management, NodeBarelyAfterOtherNode)
 {
-    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.2), 1);
     createIMUString(0.22);
@@ -174,7 +173,6 @@ TEST_F (Management, NodeBarelyAfterOtherNode)
 
 TEST_F (Management, MoveNodeToEndOfString)
 {
-    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(moveNode(0.2), 1);
@@ -184,6 +182,56 @@ TEST_F (Management, MoveNodeToEndOfString)
     EXPECT_EQ(xhead().node, 1);
     EXPECT_EQ(xbuf_head_, 1);
     EXPECT_EQ(imu_meas_buf_.size(), 0);
+}
 
+TEST_F (Management, InsertNode)
+{
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.1), 1);
+
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(current_node_, 2);
+    EXPECT_EQ(xhead().node, 2);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.1);
+}
+
+TEST_F (Management, InsertNodeOnTopOfPrevious)
+{
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.1), 1);
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 2);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.1);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_EQ(imu_.size(), 2);
+
+}
+
+TEST_F (Management, InsertNodeOnBarelyBehind)
+{
+    EXPECT_TRUE(0);
+}
+
+TEST_F (Management, InsertNodeOnTopOfCurrent)
+{
+    EXPECT_TRUE(0);
+}
+
+TEST_F (Management, InsertNodeBarelyAfterPrevious)
+{
+    EXPECT_TRUE(0);
+}
+
+TEST_F (Management, InsertNodeBarelyBehindPrevious)
+{
+    EXPECT_TRUE(0);
 }
 
