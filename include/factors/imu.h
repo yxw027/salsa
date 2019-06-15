@@ -63,9 +63,10 @@ public:
     void errorStateDynamics(const Vector10d& y, const Vector9d& dy,
                             const Vector6d& u, const Vector6d& eta, Vector9d& dydot);
     void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot, Matrix9d& A, Matrix96&B);
-    void integrate(const double& _t, const Vector6d& u, const Matrix6d& cov);
-    void integrate(const meas::Imu& z);
+    void integrate(const double& _t, const Vector6d& u, const Matrix6d& cov, bool save=true);
+    void integrate(const meas::Imu& z, bool save=true);
     void finished(int to_idx);
+    ImuFunctor split(double t);
 
     template<typename T>
     bool operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj,
@@ -83,6 +84,8 @@ public:
     Matrix9d Xi_;
 
     Matrix96 J_;
+
+    std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> meas_hist_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
 typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;

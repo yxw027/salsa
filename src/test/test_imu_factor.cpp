@@ -31,6 +31,96 @@ TEST(ImuFactor, compile)
     ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
 }
 
+TEST (ImuFactor, splitInMiddle)
+{
+    Vector6d z;
+    z << 0, 0, -9.80665, 0, 0, 0;
+    Matrix6d R = Matrix6d::Identity();
+    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    imu.integrate(0.01, z, R);
+    imu.integrate(0.02, z, R);
+    imu.integrate(0.03, z, R);
+    imu.integrate(0.04, z, R);
+    imu.integrate(0.05, z, R);
+    ImuFunctor f0 = imu.split(0.025);
+
+    EXPECT_FLOAT_EQ(f0.t0_, 0.0);
+    EXPECT_FLOAT_EQ(f0.t, 0.025);
+    EXPECT_FLOAT_EQ(imu.t0_, 0.025);
+    EXPECT_FLOAT_EQ(imu.t, 0.05);
+    EXPECT_EQ(f0.meas_hist_.size(), 3);
+    EXPECT_EQ(imu.meas_hist_.size(), 3);
+}
+
+TEST (ImuFactor, splitInOnTopOfMeas)
+{
+    Vector6d z;
+    z << 0, 0, -9.80665, 0, 0, 0;
+    Matrix6d R = Matrix6d::Identity();
+    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    imu.integrate(0.01, z, R);
+    imu.integrate(0.02, z, R);
+    imu.integrate(0.03, z, R);
+    imu.integrate(0.04, z, R);
+    imu.integrate(0.05, z, R);
+    ImuFunctor f0 = imu.split(0.03);
+
+    EXPECT_FLOAT_EQ(f0.t0_, 0.0);
+    EXPECT_FLOAT_EQ(f0.t, 0.03);
+    EXPECT_FLOAT_EQ(imu.t0_, 0.03);
+    EXPECT_FLOAT_EQ(imu.t, 0.05);
+    EXPECT_EQ(f0.meas_hist_.size(), 3);
+    EXPECT_EQ(imu.meas_hist_.size(), 2);
+}
+
+TEST (ImuFactor, splitJustAfterStart)
+{
+    Vector6d z;
+    z << 0, 0, -9.80665, 0, 0, 0;
+    Matrix6d R = Matrix6d::Identity();
+    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    imu.integrate(0.01, z, R);
+    imu.integrate(0.02, z, R);
+    imu.integrate(0.03, z, R);
+    imu.integrate(0.04, z, R);
+    imu.integrate(0.05, z, R);
+    ImuFunctor f0 = imu.split(0.005);
+
+    f0.finished(1);
+    imu.finished(1);
+
+    EXPECT_FLOAT_EQ(f0.t0_, 0.0);
+    EXPECT_FLOAT_EQ(f0.t, 0.005);
+    EXPECT_FLOAT_EQ(imu.t0_, 0.005);
+    EXPECT_FLOAT_EQ(imu.t, 0.05);
+    EXPECT_EQ(f0.meas_hist_.size(), 2);
+    EXPECT_EQ(imu.meas_hist_.size(), 5);
+}
+
+TEST (ImuFactor, splitJustBeforeEnd)
+{
+    Vector6d z;
+    z << 0, 0, -9.80665, 0, 0, 0;
+    Matrix6d R = Matrix6d::Identity();
+    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    imu.integrate(0.01, z, R);
+    imu.integrate(0.02, z, R);
+    imu.integrate(0.03, z, R);
+    imu.integrate(0.04, z, R);
+    imu.integrate(0.05, z, R);
+    ImuFunctor f0 = imu.split(0.045);
+
+    f0.finished(1);
+    imu.finished(1);
+
+    EXPECT_FLOAT_EQ(f0.t0_, 0.0);
+    EXPECT_FLOAT_EQ(f0.t, 0.045);
+    EXPECT_FLOAT_EQ(imu.t0_, 0.045);
+    EXPECT_FLOAT_EQ(imu.t, 0.05);
+    EXPECT_EQ(f0.meas_hist_.size(), 5);
+    EXPECT_EQ(imu.meas_hist_.size(), 2);
+}
+
 TEST(ImuFactor, Propagation)
 {
     Simulator multirotor(false, 1);

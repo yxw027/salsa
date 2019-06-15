@@ -858,7 +858,10 @@ int Salsa::newNode(double t)
     for (auto& it : imu_meas_buf_)
     {
         if (lt(it.t, t)) // imu.t < t
+        {
             ++num_imu;
+            break;
+        }
         else // imu.t >= t
             break;
     }
@@ -977,7 +980,7 @@ int Salsa::insertNode(double t)
     }
     else
     {
-
+        imu_it = imu_.insert(imu_it, std::move(imu_it->split(t)));
     }
 
 }

@@ -156,12 +156,12 @@ void ImuFunctor::dynamics(const Vector10d& y, const Vector6d& u,
 }
 
 
-void ImuFunctor::integrate(const meas::Imu& z)
+void ImuFunctor::integrate(const meas::Imu& z, bool save)
 {
-    integrate(z.t, z.z, z.R);
+    integrate(z.t, z.z, z.R, save);
 }
 
-void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& cov)
+void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& cov, bool save)
 {
     SALSA_ASSERT((cov.array() == cov.array()).all(), "NaN detected in covariance on propagation");
     SALSA_ASSERT((u.array() == u.array()).all(), "NaN detected in covariance on propagation");
@@ -182,14 +182,15 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
     A = Matrix9d::Identity() + A*dt + 1/2.0 * A*A*dt*dt;
     B = B*dt;
 
-    Matrix9d P_prev = P_;
     P_ = A*P_*A.transpose() + B*cov*B.transpose();
     J_ = A*J_ + B;
+
+    if (save)
+        meas_hist_.push_back(meas::Imu(_t, u, cov));
 
     SALSA_ASSERT((A.array() == A.array()).all(), "NaN detected in covariance on propagation");
     SALSA_ASSERT((P_.array() == P_.array()).all(), "NaN detected in covariance on propagation");
 }
-
 
 void ImuFunctor::finished(int to_idx)
 {
@@ -201,6 +202,64 @@ void ImuFunctor::finished(int to_idx)
   }
   Xi_ = P_.inverse().llt().matrixL().transpose();
   SALSA_ASSERT((Xi_.array() == Xi_.array()).all(), "NaN detected in IMU information matrix");
+}
+
+ImuFunctor ImuFunctor::split(double _t)
+{
+    SALSA_ASSERT(t > t0_ && _t < t, "Trying to split the wrong IMU functor");
+
+    // Figure out if we will run into single IMU message problems for the first functor
+    bool single_imu0 = le(_t, meas_hist_.front().t); // _t <= z.t
+
+    // Create new ImuFunctor from the beginning to the split
+    ImuFunctor f0(t0_, b_, from_idx_, from_node_);
+    while (lt(f0.t, _t)) // f0.t < _t
+    {
+        if (le(meas_hist_.front().t, _t)) // z.t <= _t
+        {
+            f0.integrate(meas_hist_.front());
+            meas_hist_.pop_front();
+        }
+        else
+        {
+            // interpolate
+            Vector6d z = (f0.u_ + meas_hist_.front().z)/2.0;
+            if (single_imu0)
+            {
+                double dt = _t - f0.t;
+                f0.integrate(f0.t+dt/2.0, z, meas_hist_.front().R);
+                f0.integrate(_t, z, meas_hist_.front().R);
+
+            }
+            else
+            {
+                f0.integrate(_t, z, meas_hist_.front().R);
+            }
+        }
+    }
+
+    // Adjust this functor
+    reset(_t);
+    n_updates_ = 0;
+    P_.setZero();
+    bool single_imu1 = meas_hist_.size() == 1;
+    if (single_imu1)
+    {
+        meas::Imu z = meas_hist_.front();
+        meas_hist_.clear();
+        double dt = z.t - t;
+        integrate(t + dt/2.0, z.z, z.R, true);
+        integrate(z, true);
+    }
+    else
+    {
+        for (auto z : meas_hist_)
+        {
+            integrate(z, false);
+        }
+
+    }
+    return f0;
 }
 
 template<typename T>

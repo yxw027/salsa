@@ -215,7 +215,7 @@ TEST_F (Management, InsertNodeOnTopOfPrevious)
 
 }
 
-TEST_F (Management, InsertNodeOnBarelyBehind)
+TEST_F (Management, InsertNodeBarelyBehindCurrent)
 {
     EXPECT_TRUE(0);
 }
@@ -225,13 +225,23 @@ TEST_F (Management, InsertNodeOnTopOfCurrent)
     EXPECT_TRUE(0);
 }
 
-TEST_F (Management, InsertNodeBarelyAfterPrevious)
+TEST_F (Management, InsertNodeExactlyOneImuIntervalAfterPrevious)
 {
-    EXPECT_TRUE(0);
+
 }
 
-TEST_F (Management, InsertNodeBarelyBehindPrevious)
+TEST_F (Management, InsertNodeExactlyOneImuIntervalBeforePrevious)
 {
-    EXPECT_TRUE(0);
+
+}
+
+TEST_F (Management, InsertNodeHalfOfOneImuIntervalAfterPrevious)
+{
+
+}
+
+TEST_F (Management, InsertNodeHalfOfOneImuIntervalBeforePrevious)
+{
+
 }
 

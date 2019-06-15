@@ -57,3 +57,13 @@
 //#   define SALSA_ASSERT(...)
 //#endif
 
+/*************************************/
+/*          Round-Off helpers        */
+/*************************************/
+constexpr double eps = 1e-4;
+inline bool lt(double t0, double t1) { return t0 < t1-2.0*eps; }
+inline bool le(double t0, double t1) { return t0-2.0*eps <= t1; }
+inline bool gt(double t0, double t1) { return t0 > t1+2.0*eps; }
+inline bool ge(double t0, double t1) { return t0+2.0*eps >= t1; }
+inline bool eq(double t0, double t1) { return std::abs(t0 - t1) <= 2.0*eps; }
+
