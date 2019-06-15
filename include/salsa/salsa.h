@@ -135,6 +135,7 @@ public:
     void cleanUpFeatureTracking(int oldest_kf_idx);
     void rmLostFeatFromKf();
     bool inWindow(int idx);
+    State& xhead() { return xbuf_[xbuf_head_]; }
     ImuIntegrator current_state_integrator_;
     State current_state_;
     int current_node_;
@@ -303,5 +304,15 @@ public:
     std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;
     std::deque<meas::Gnss, Eigen::aligned_allocator<meas::Gnss>> gnss_meas_buf_;
     std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
+
+    /**************************************/
+    /*            Meas Buffer 2           */
+    /**************************************/
+    void handleMeas2();
+    void alignIMU();
+    void findInterval(double t);
+    void splitInterval(int interval_idx, double t);
+    void moveNode(double t);
+    int newNode(double t);
 };
 }
