@@ -8,6 +8,8 @@ namespace fs = experimental::filesystem;
 namespace salsa
 {
 
+
+
 Salsa::Salsa() :
     new_meas_(meas::basecmp)
 {
@@ -225,15 +227,15 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
         {
             PseudorangeFunctor &p((*pvec)[i]);
             SALSA_ASSERT(inWindow(p.idx_), "Trying to add factor to node outside of window");
-//            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
-//            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
+            //            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
+            //            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
             problem.AddResidualBlock(new PseudorangeFactor(&p),
                                      NULL,
                                      xbuf_[p.idx_].x.data(),
-                                     xbuf_[p.idx_].v.data(),
-                                     xbuf_[p.idx_].tau.data(),
-                                     x_e2n_.data(),
-                                     &(p.sw));
+                    xbuf_[p.idx_].v.data(),
+                    xbuf_[p.idx_].tau.data(),
+                    x_e2n_.data(),
+                    &(p.sw));
 
             if (pvec_prev)
             {
@@ -281,8 +283,8 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
             problem.AddResidualBlock(ptr,
                                      NULL,
                                      xbuf_[ft->second.idx0].x.data(),
-                                     xbuf_[func->to_idx_].x.data(),
-                                     &ft->second.rho);
+                    xbuf_[func->to_idx_].x.data(),
+                    &ft->second.rho);
             func++;
         }
         ft++;
@@ -480,7 +482,7 @@ void Salsa::cleanUpSlidingWindow()
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
     SD_S(4, "Initialize State: pos = " << x0.t_.transpose() << " euler = "
-            << 180.0/M_PI * x0.q_.euler().transpose() << " q = " << x0.q_);
+         << 180.0/M_PI * x0.q_.euler().transpose() << " q = " << x0.q_);
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
     xbuf_[0].t = current_state_.t = t;
@@ -541,7 +543,7 @@ void Salsa::handleMeas()
     if((*mit)->t < xbuf_[xbuf_tail_].t - 1e-6)
     {
         SD(5, "Unable to handle stale %s measurement.  State Time: %.3f, Meas Time: %.3f", \
-                 (*mit)->Type().c_str(), xbuf_[xbuf_tail_].t, (*mit)->t);
+           (*mit)->Type().c_str(), xbuf_[xbuf_tail_].t, (*mit)->t);
         mit = new_meas_.erase(mit);
     }
 
@@ -698,7 +700,7 @@ void Salsa::integrateTransition(double t)
         if (imu.n_updates_ == 1)
         {
             SD(3, "Push singleton IMU measurement into previous interval");
-//            imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
+            //            imu_meas_buf_.push_front(meas::Imu(imu.t, imu.u_, imu.cov_));
             ImuFunctor& prev_imu(*(imu_.end()-2));
             prev_imu.integrate(imu.t, imu.u_, imu.cov_);
             prev_imu.finished(prev_imu.to_idx_);
@@ -830,8 +832,129 @@ bool Salsa::checkIMUOrder()
 
 int Salsa::newNode(double t)
 {
-    ImuFunctor& imu = imu_.emplace_back(xhead().t, imu_bias_, xbuf_head_, xhead().node);
+    // Sanity Checks
+    SALSA_ASSERT(le(t, imu_meas_buf_.back().t) , "Not enough IMU to create node"); // t <= t[imu_max]
+    SALSA_ASSERT(gt(t, xhead().t), "Trying to double up node"); // t > t[node_max]
 
+    SD(2, "New Transition Factors from %d", xhead().node);
+    ClockBiasFunctor& clk = clk_.emplace_back(clk_bias_Xi_, xbuf_head_, xhead().node);
+    ImuFunctor& imu = imu_.emplace_back(xhead().t, imu_bias_, xbuf_head_, xhead().node);
+    if (imu_.size() > 1)
+    {
+        SD(2, "Using previous IMU meas to initialize new imu functor");
+        imu.u_ = (imu_.end()-2)->u_;
+        imu.cov_ = (imu_.end()-2)->cov_;
+    }
+    else
+    {
+        SD(2, "Using next IMU meas to initialize new imu functor");
+        imu.u_ = imu_meas_buf_.front().z;
+        imu.cov_ = imu_meas_buf_.front().R;
+    }
+
+
+    // figure out how many imu measurements we have to integrate before our measurement
+    int num_imu = 1; // Count any interpolation we have to take care of
+    for (auto& it : imu_meas_buf_)
+    {
+        if (lt(it.t, t)) // imu.t < t
+            ++num_imu;
+        else // imu.t >= t
+            break;
+    }
+    SD(1, "We have %d imu measurements between t%.3f and t%.3f", num_imu, xhead().t, t);
+
+    // Integrate to the measurement
+    while (lt(imu.t, t))
+    {
+        meas::Imu& next_imu(imu_meas_buf_.front());
+        Vector6d z = (imu.u_ + next_imu.z)/2.0; // use trapezoidal integration
+
+        if (le(next_imu.t, t))
+        {
+            imu.integrate(next_imu.t, z, next_imu.R);
+            imu_meas_buf_.pop_front();
+        }
+        else
+        {
+            // interpolate
+            if (num_imu == 1)
+            {
+                // IMU intervals need at least two updates otherwise we'll get NaNs when when
+                // invert the covariance, so we can just apply half the measurement, twice.
+                double dt = t - imu.t;
+                imu.integrate(imu.t+dt/2.0, z, next_imu.R);
+                imu.integrate(t, z, next_imu.R);
+            }
+            else
+            {
+                imu.integrate(t, z, next_imu.R);
+            }
+        }
+    }
+
+    // Create new Node
+    int next_idx = (xbuf_head_ + 1) % STATE_BUF_SIZE;
+    SALSA_ASSERT(next_idx != xbuf_tail_, "Overfull State Buffer");
+
+    xbuf_[next_idx].kf = -1;
+    xbuf_[next_idx].node = ++current_node_;
+    xbuf_[next_idx].t = t;
+    imu.estimateXj(xhead().x.data(), xhead().v.data(), xbuf_[next_idx].x.data(), xbuf_[next_idx].v.data());
+    xbuf_[next_idx].tau(0) = xhead().tau(0) + imu.delta_t_*xhead().tau(1);
+    xbuf_[next_idx].tau(1) = xhead().tau(1);
+
+    imu.finished(next_idx);
+    clk.finished(imu.delta_t_, next_idx);
+
+    SD(3, "Creating new node %d in idx %d", current_node_, next_idx);
+    SD(2, "Advancing Head to %d", next_idx);
+    xbuf_head_ = next_idx;
+    printImuIntervals();
+    cleanUpSlidingWindow();
+
+    return xbuf_head_;
+}
+
+int Salsa::moveNode(double t)
+{
+    // Sanity Checks
+    SALSA_ASSERT(le(t, imu_meas_buf_.back().t) , "Not enough IMU to move node"); // t <= t[imu_max]
+
+    // Grab the Transition Factors
+    ClockBiasFunctor& clk = clk_.back();
+    ImuFunctor& imu = imu_.back();
+
+    // Integrate to the measurement
+    SD(2, "Extending IMU Factor n%d->n%d from to t%.3f", imu.from_node_, xhead().node, t);
+    while (lt(imu.t, t))
+    {
+        meas::Imu& next_imu(imu_meas_buf_.front());
+        Vector6d z = (imu.u_ + next_imu.z)/2.0; // use trapezoidal integration
+
+        if (le(next_imu.t, t))
+        {
+            imu.integrate(next_imu.t, z, next_imu.R);
+            imu_meas_buf_.pop_front();
+        }
+        else
+        {
+            // interpolate
+            imu.integrate(t, z, next_imu.R);
+        }
+    }
+
+    imu.finished(xbuf_head_);
+    clk.finished(imu.delta_t_, xbuf_head_);
+
+    SD(2, "Sliding node %d from t%.3f -> t%.3f", xhead().node, xhead().t, t);
+    int from_idx = imu.from_idx_;
+    xhead().t = t;
+    imu.estimateXj(xbuf_[from_idx].x.data(), xbuf_[from_idx].v.data(), xhead().x.data(), xhead().v.data());
+    xhead().tau(0) = xbuf_[from_idx].tau(0) + imu.delta_t_*xhead().tau(1);
+    xhead().tau(1) = xbuf_[from_idx].tau(1);
+
+    return xbuf_head_;
 
 }
 

@@ -26,10 +26,16 @@ public:
     GTime log_start;
     SatVec sats;
 
+    double _dt;
+    double _last_t;
+
     void SetUp() override
     {
         init(default_params("/tmp/Salsa/ManualKFTest/"));
         disable_solver_ = true;
+
+        _dt = 0.01;
+        _last_t = -_dt;
 
         initIMU();
         initFeat();
@@ -89,25 +95,95 @@ public:
 
     void createIMUString(double t)
     {
-        if (imu_meas_buf_.size() == 0)
+        while (_last_t < t)
         {
-            imu_meas_buf_.push_back(meas::Imu(0.0, z_imu, R_imu));
-        }
-        else
-        {
-            while (imu_meas_buf_.back().t < t)
-            {
-                double t_new = imu_meas_buf_.back().t + 0.01;
-                imu_meas_buf_.push_back(meas::Imu(t_new, z_imu, R_imu));
-            }
+            double t_new = _last_t + _dt;
+            imu_meas_buf_.push_back(meas::Imu(t_new, z_imu, R_imu));
+            _last_t = t_new;
         }
     }
 };
+
+TEST_F (Management, RoundOffHelpers)
+{
+    double a = 1.0;
+    double b = -1.0;
+
+    double ap = a + eps - std::numeric_limits<double>::epsilon();
+    double am = a - eps + std::numeric_limits<double>::epsilon();
+    double bp = b + eps - std::numeric_limits<double>::epsilon();
+    double bm = b - eps + std::numeric_limits<double>::epsilon();
+
+    EXPECT_TRUE(eq(ap, am));
+    EXPECT_TRUE(eq(bp, bm));
+    EXPECT_TRUE(le(ap, am));
+    EXPECT_TRUE(le(bp, bm));
+    EXPECT_TRUE(ge(ap, am));
+    EXPECT_TRUE(ge(bp, bm));
+    EXPECT_FALSE(gt(ap, am));
+    EXPECT_FALSE(lt(am, ap));
+    EXPECT_FALSE(gt(bp, bm));
+    EXPECT_FALSE(lt(bm, bp));
+    EXPECT_TRUE(gt(am, bm));
+    EXPECT_TRUE(lt(bm, am));
+}
 
 TEST_F (Management, NewNodeEndOfString)
 {
     initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     newNode(0.2);
-    ASSERT_TRUE(checkIMUOrder());
+    EXPECT_TRUE(checkIMUOrder());
+    EXPECT_EQ(xbuf_head_, 1);
+    EXPECT_EQ(xbuf_tail_, 0);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 1);
+    EXPECT_EQ(imu_.size(), 1);
 }
+
+TEST_F (Management, NodeBeforeEndOfString)
+{
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
+    createIMUString(0.2);
+    newNode(0.1);
+    EXPECT_EQ(imu_meas_buf_.size(), 10);
+    EXPECT_EQ(xbuf_head_, 1);
+    EXPECT_EQ(xbuf_tail_, 0);
+    EXPECT_FLOAT_EQ(xhead().t, 0.1);
+    EXPECT_EQ(xhead().node, 1);
+    EXPECT_EQ(imu_.size(), 1);
+}
+
+
+TEST_F (Management, NodeBarelyAfterOtherNode)
+{
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.2), 1);
+    createIMUString(0.22);
+    EXPECT_EQ(imu_meas_buf_.size(), 2);
+    EXPECT_EQ(2, newNode(0.205)); // create a new halfway to the next node
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(xbuf_tail_, 0);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_FLOAT_EQ(xhead().t, 0.205);
+    EXPECT_EQ(xhead().node, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(imu_meas_buf_.size(), 2);
+}
+
+TEST_F (Management, MoveNodeToEndOfString)
+{
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(moveNode(0.2), 1);
+
+    EXPECT_FLOAT_EQ(imu_.back().delta_t_, 0.2);
+    EXPECT_EQ(imu_.size(), 1);
+    EXPECT_EQ(xhead().node, 1);
+    EXPECT_EQ(xbuf_head_, 1);
+    EXPECT_EQ(imu_meas_buf_.size(), 0);
+
+}
+

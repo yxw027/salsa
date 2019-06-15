@@ -88,9 +88,7 @@ void ImuIntegrator::estimateXj(const double* _xi, const double* _vi, double* _xj
     SALSA_ASSERT(std::abs(1.0 - xj.q_.arr_.norm()) < 1e-8, "Quat left manifold");
 }
 
-
-
-ImuFunctor::ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node)
+ImuFunctor::ImuFunctor(const double &_t0, const Vector6d &b0, int from_idx, int from_node)
 {
     delta_t_ = 0.0;
     t0_ = _t0;
@@ -158,7 +156,10 @@ void ImuFunctor::dynamics(const Vector10d& y, const Vector6d& u,
 }
 
 
-
+void ImuFunctor::integrate(const meas::Imu& z)
+{
+    integrate(z.t, z.z, z.R);
+}
 
 void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& cov)
 {

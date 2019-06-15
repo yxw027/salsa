@@ -28,9 +28,11 @@ add_library(factors
 target_link_libraries(factors
     ${geometry_LIBRARIES}
     ${gnss_utils_LIBRARIES}
+    ${OpenCV_LIBRARIES}
     ${CERES_LIBRARIES})
 target_include_directories(factors PUBLIC
     include
+    ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
     ${CERES_INCLUDE_DIRS})
 

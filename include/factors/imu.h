@@ -6,6 +6,7 @@
 #include "factors/shield.h"
 
 #include "salsa/misc.h"
+#include "salsa/meas.h"
 #include "geometry/xform.h"
 
 namespace salsa
@@ -58,10 +59,12 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node);
 
+
     void errorStateDynamics(const Vector10d& y, const Vector9d& dy,
                             const Vector6d& u, const Vector6d& eta, Vector9d& dydot);
     void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot, Matrix9d& A, Matrix96&B);
     void integrate(const double& _t, const Vector6d& u, const Matrix6d& cov);
+    void integrate(const meas::Imu& z);
     void finished(int to_idx);
 
     template<typename T>
