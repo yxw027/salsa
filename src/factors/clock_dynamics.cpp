@@ -19,6 +19,11 @@ bool ClockBiasFunctor::finished(double dt, int to_idx)
     to_idx_ = to_idx;
 }
 
+ClockBiasFunctor ClockBiasFunctor::split(double t)
+{
+    return ClockBiasFunctor(Xi_, from_idx_, from_node_);
+}
+
 
 template <typename T>
 bool ClockBiasFunctor::operator()(const T* _taui, const T* _tauj, T* _res) const

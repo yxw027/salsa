@@ -455,7 +455,7 @@ void Salsa::cleanUpSlidingWindow()
         imu_.pop_front();
         printImuIntervals();
     }
-    SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
+    SALSA_ASSERT(checkIMUString(), "IMU lost order");
 
     while (clk_.front().from_node_ < oldest_node_)
     {
@@ -707,14 +707,14 @@ void Salsa::integrateTransition(double t)
         }
         imu_.pop_back();
         printImuIntervals();
-        SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
+        SALSA_ASSERT(checkIMUString(), "IMU lost order");
         clk_.pop_back();
     }
     else
     {
         printImuIntervals();
         SD(2, "Two measurements on node %d", current_node_);
-        SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
+        SALSA_ASSERT(checkIMUString(), "IMU lost order");
     }
 }
 
@@ -725,7 +725,7 @@ void Salsa::startNewInterval(double t)
     SD(2, "Starting a new interval. imu_.size()=%lu and xbuf_head=%d", imu_.size(), xbuf_head_);
     imu_.emplace_back(t, imu_bias_, xbuf_head_, current_node_);
     printImuIntervals();
-    SALSA_ASSERT(checkIMUOrder(), "IMU lost order");
+    SALSA_ASSERT(checkIMUString(), "IMU lost order");
     clk_.emplace_back(clk_bias_Xi_, xbuf_head_, current_node_);
 
     // The following makes sure that we don't plot uninitialized memory
@@ -802,10 +802,10 @@ bool Salsa::inWindow(int idx)
         return (idx <= xbuf_head_ || idx >= xbuf_tail_);
 }
 
-bool Salsa::checkIMUOrder()
+bool Salsa::checkIMUString()
 {
     if (imu_.size() == 0)
-        return true;
+        return xbuf_head_ == xbuf_tail_;
     int from = xbuf_tail_;
     auto it = imu_.begin();
     double t0 = imu_.begin()->t0_;
@@ -818,6 +818,11 @@ bool Salsa::checkIMUOrder()
             SD(5, "Index Gap in IMU String. End: %d, start: %d, SIZE %d", it->from_idx_, it->to_idx_, STATE_BUF_SIZE);
             return false;
         }
+        if (xbuf_[it->from_idx_].node != it->from_node_)
+        {
+            SD(5, "Misaligned from_node in Clk");
+            return false;
+        }
         if (std::abs(it->t0_-t0) > 1e-8)
         {
             SD(5, "Time Gap in IMU String end: %.3f, start: %.3f", it->t0_, t0);
@@ -828,6 +833,40 @@ bool Salsa::checkIMUOrder()
         it++;
     }
     return it == imu_.end();
+}
+
+bool Salsa::checkClkString()
+{
+    if (clk_.size() == 0)
+        return xbuf_head_ == xbuf_tail_;
+    int from = xbuf_tail_;
+    auto it = clk_.begin();
+    double t0 = xtail().t;
+    while (it != clk_.end())
+    {
+        if (it->to_idx_ == -1)
+            return it+1 == clk_.end();
+        double tf = xbuf_[it->to_idx_].t;
+        if ((from != it->from_idx_) || (it->to_idx_ != (from + 1) %STATE_BUF_SIZE))
+        {
+            SD(5, "Index Gap in Clk String. End: %d, start: %d, SIZE %d", it->from_idx_, it->to_idx_, STATE_BUF_SIZE);
+            return false;
+        }
+        if (xbuf_[it->from_idx_].node != it->from_node_)
+        {
+            SD(5, "Misaligned from_node in Clk");
+            return false;
+        }
+        if (ne(tf, t0 + it->dt_))
+        {
+            SD(5, "Time Gap in Clk String end: %.3f, start: %.3f, dt: %.3f", tf, t0, it->dt_);
+            return false;
+        }
+        from = it->to_idx_;
+        t0 = tf;
+        it++;
+    }
+    return it == clk_.end();
 }
 
 int Salsa::newNode(double t)
@@ -967,10 +1006,12 @@ int Salsa::insertNode(double t)
     SALSA_ASSERT(ge(t, xtail().t), "Tryint to insert a node that is too old"); // t >= t[node_min]
 
     auto imu_it = imu_.end()-1;
-    while (lt(t, imu_it->t)) // t < imu.t_end
+    auto clk_it = clk_.end()-1;
+    while (le(t, imu_it->t0_)) // t < imu.t_start
     {
         // work backwards through buffer
         --imu_it;
+        --clk_it;
     }
 
     if (eq(xbuf_[imu_it->to_idx_].t, t))
@@ -980,10 +1021,82 @@ int Salsa::insertNode(double t)
     }
     else
     {
-        imu_it = imu_.insert(imu_it, std::move(imu_it->split(t)));
-    }
+        int new_node_idx = imu_it->to_idx_;
+        // insert new node
+        State& new_node(insertNodeIntoBuffer(new_node_idx));
 
+        // split transition functions
+        imu_it = imu_.insert(imu_it, std::move(imu_it->split(t)));
+        clk_it = clk_.insert(clk_it, std::move(clk_it->split(t)));
+
+        // Initialize the new node
+        State& from_node(xbuf_[imu_it->from_idx_]);
+        new_node.kf = -1;
+        new_node.t = t;
+        imu_it->estimateXj(from_node.x.data(), from_node.v.data(),
+                           new_node.x.data(), new_node.v.data());
+        new_node.tau(0) = from_node.tau(0) + from_node.tau(1) * imu_it->delta_t_;
+        new_node.tau(1) = from_node.tau(1);
+
+        // Fix all the indices
+        // -- finish the first half of the split
+        int to_idx = new_node_idx;
+        imu_it->finished(to_idx);
+        clk_it->finished(imu_it->delta_t_, to_idx);
+
+        // -- finish the second half of split
+        int from_idx = new_node_idx;
+        ++imu_it; ++clk_it;
+        to_idx = (to_idx + 1) % STATE_BUF_SIZE;
+        clk_it->from_idx_ = imu_it->from_idx_ = from_idx;
+        clk_it->from_node_ = imu_it->from_node_ = xbuf_[from_idx].node;
+        imu_it->finished(to_idx);
+        clk_it->finished(imu_it->delta_t_, to_idx);
+
+        // -- The rest of the factors don't need to be finished, they just need updated idx-es
+        ++imu_it; ++clk_it;
+        while (imu_it != imu_.end())
+        {
+            to_idx = (to_idx + 1) % STATE_BUF_SIZE;
+            clk_it->from_idx_ = imu_it->from_idx_ = from_idx;
+            clk_it->from_node_ = imu_it->from_node_ = xbuf_[from_idx].node;
+            clk_it->to_idx_ = imu_it->to_idx_ = to_idx;
+            from_idx = to_idx;
+            ++imu_it; ++clk_it;
+        }
+
+        // Cleanup/Make sure it worked correctly
+        printImuIntervals();
+        checkIMUString();
+        printGraph();
+
+        SALSA_ASSERT(to_idx == xbuf_head_, "Misalinged nodes/IMUs after insertion");
+        SALSA_ASSERT(clk_it == clk_.end(), "Misalinged clk/IMUs after insertion");
+        return new_node_idx;
+    }
 }
 
+State& Salsa::insertNodeIntoBuffer(int idx)
+{
+    SALSA_ASSERT((xbuf_head_ + 1) % STATE_BUF_SIZE != xbuf_tail_, "Buffer Overrun");
+    SALSA_ASSERT(inWindow(idx), "Trying to insert outside of buffer");
+
+    // shift all nodes up one, meanwhile incrementing node id
+    int src = xbuf_head_;
+    int dst = (xbuf_head_ +1 ) % STATE_BUF_SIZE;
+    xbuf_head_ = dst;
+    do
+    {
+        xbuf_[dst] = xbuf_[src];
+        xbuf_[dst].node += 1;
+        src = (src - 1 + STATE_BUF_SIZE) % STATE_BUF_SIZE;
+        dst = (dst - 1 + STATE_BUF_SIZE) % STATE_BUF_SIZE;
+    } while (dst != idx);
+    ++current_node_;
+
+
+    // return reference to new node
+    return xbuf_[idx];
+}
 
 }

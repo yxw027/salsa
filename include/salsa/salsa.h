@@ -192,7 +192,7 @@ public:
     /*               IMU                */
     /************************************/
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
-    bool checkIMUOrder();
+    bool checkIMUString();
     double acc_wander_weight_;
     double gyro_wander_weight_;
 
@@ -219,6 +219,7 @@ public:
                          SatVec &sat, const std::vector<bool>& slip) override;
     void gnssUpdate(const meas::Gnss& m);
     void initializeStateGnss(const meas::Gnss& m);
+    bool checkClkString();
     int ns_;
     bool update_on_gnss_;
     double doppler_cov_;
@@ -317,5 +318,6 @@ public:
     int moveNode(double t);
     int newNode(double t);
     int insertNode(double t);
+    State& insertNodeIntoBuffer(int idx);
 };
 }
