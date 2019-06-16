@@ -1055,6 +1055,7 @@ int Salsa::insertNode(double t)
 
         // -- The rest of the factors don't need to be finished, they just need updated idx-es
         ++imu_it; ++clk_it;
+        from_idx = to_idx;
         while (imu_it != imu_.end())
         {
             to_idx = (to_idx + 1) % STATE_BUF_SIZE;

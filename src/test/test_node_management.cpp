@@ -248,35 +248,121 @@ TEST_F (Management, InsertNodeOnTopOfPrevious)
     EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNodeBarelyBehindCurrent)
-{
-    EXPECT_TRUE(0);
-}
-
 TEST_F (Management, InsertNodeOnTopOfCurrent)
 {
-    EXPECT_TRUE(0);
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.2), 2);
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 2);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.1);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+}
+
+TEST_F (Management, InsertNodeBarelyBehindCurrent)
+{
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.195), 2);
+
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 3);
+    EXPECT_FLOAT_EQ(xbuf_[2].t, 0.195);
+    EXPECT_EQ(xbuf_[2].node, 2);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
 }
 
 
 
-TEST_F (Management, InsertNodeExactlyOneImuIntervalAfterPrevious)
+TEST_F (Management, InsertOneIMUAfterPrev)
 {
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.11), 2);
 
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 3);
+    EXPECT_FLOAT_EQ(xbuf_[2].t, 0.11);
+    EXPECT_EQ(xbuf_[2].node, 2);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.1);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNodeExactlyOneImuIntervalBeforePrevious)
+TEST_F (Management, InsertOntIMUBeforePrev)
 {
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.09), 1);
 
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 3);
+    EXPECT_FLOAT_EQ(xbuf_[2].t, 0.1);
+    EXPECT_EQ(xbuf_[2].node, 2);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.09);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNodeHalfOfOneImuIntervalAfterPrevious)
+TEST_F (Management, InsertNHalfIMUAfterPrev)
 {
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.105), 2);
 
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 3);
+    EXPECT_FLOAT_EQ(xbuf_[2].t, 0.105);
+    EXPECT_EQ(xbuf_[2].node, 2);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.1);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNodeHalfOfOneImuIntervalBeforePrevious)
+TEST_F (Management, InsertHalfImuBeforePrev)
 {
+    createIMUString(0.2);
+    EXPECT_EQ(newNode(0.1), 1);
+    EXPECT_EQ(newNode(0.2), 2);
+    EXPECT_EQ(insertNode(0.095), 1);
 
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_FLOAT_EQ(xhead().t, 0.2);
+    EXPECT_EQ(xhead().node, 3);
+    EXPECT_FLOAT_EQ(xbuf_[2].t, 0.1);
+    EXPECT_EQ(xbuf_[2].node, 2);
+    EXPECT_FLOAT_EQ(xbuf_[1].t, 0.095);
+    EXPECT_EQ(xbuf_[1].node, 1);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
 }
 

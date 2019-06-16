@@ -223,18 +223,17 @@ ImuFunctor ImuFunctor::split(double _t)
         else
         {
             // interpolate
-            Vector6d z = (f0.u_ + meas_hist_.front().z)/2.0;
             if (single_imu0)
             {
                 // Handle single IMU case
                 double dt = _t - f0.t;
-                f0.integrate(f0.t+dt/2.0, z, meas_hist_.front().R);
-                f0.integrate(_t, z, meas_hist_.front().R);
+                f0.integrate(f0.t+dt/2.0, meas_hist_.front().z, meas_hist_.front().R);
+                f0.integrate(_t, meas_hist_.front().z, meas_hist_.front().R);
 
             }
             else
             {
-                f0.integrate(_t, z, meas_hist_.front().R);
+                f0.integrate(_t, meas_hist_.front().z, meas_hist_.front().R);
             }
         }
     }
