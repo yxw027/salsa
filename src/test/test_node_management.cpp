@@ -554,3 +554,166 @@ TEST_F (MeasManagement, RewindIMUVision)
     EXPECT_EQ(xbuf_[0].t, 0.1);
     EXPECT_EQ(xbuf_[0].type, State::Camera);
 }
+
+TEST_F (MeasManagement, MocapOnTopOfSlidImg)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.35);
+    addMeas(meas::Img(0.1, z_img, R_img, true));
+    addMeas(meas::Gnss(0.1, z_gnss));
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    addMeas(meas::Img(0.3, z_img, R_img, false));
+    addMeas(meas::Gnss(0.2, z_gnss));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera | State::Gnss | State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Camera);
+}
+
+TEST_F (MeasManagement, MocapOnTopOfSlidingContinued)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.85);
+    addMeas(meas::Img(0.1, z_img, R_img, true));
+    addMeas(meas::Gnss(0.1, z_gnss));
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    addMeas(meas::Img(0.3, z_img, R_img, false));
+    addMeas(meas::Gnss(0.2, z_gnss));
+    addMeas(meas::Img(0.4, z_img, R_img, false));
+    addMeas(meas::Img(0.5, z_img, R_img, false));
+    addMeas(meas::Img(0.6, z_img, R_img, false));
+    addMeas(meas::Gnss(0.5, z_gnss));
+    addMeas(meas::Img(0.7, z_img, R_img, false));
+
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera | State::Gnss | State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xbuf_[2].t, 0.5);
+    EXPECT_EQ(xbuf_[2].type, State::Gnss);
+    EXPECT_EQ(xbuf_[3].t, 0.7);
+    EXPECT_EQ(xbuf_[3].type, State::Camera);
+}
+
+TEST_F (MeasManagement, BetweenSliding)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.35);
+    addMeas(meas::Img(0.1, z_img, R_img, true));
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    addMeas(meas::Gnss(0.21, z_gnss));
+    addMeas(meas::Img(0.3, z_img, R_img, false));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera | State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.21);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xbuf_[2].t, 0.3);
+    EXPECT_EQ(xbuf_[2].type, State::Camera);
+}
+
+TEST_F (MeasManagement, RewindBetweenSliding)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.35);
+    addMeas(meas::Img(0.1, z_img, R_img, true));
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    addMeas(meas::Img(0.3, z_img, R_img, false));
+    addMeas(meas::Gnss(0.21, z_gnss));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera | State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.21);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xbuf_[2].t, 0.3);
+    EXPECT_EQ(xbuf_[2].type, State::Camera);
+}
+
+TEST_F (MeasManagement, RewindBeforeKeyframe)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.55);
+    addMeas(meas::Img(0.1, z_img, R_img, true));
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    addMeas(meas::Img(0.3, z_img, R_img, true));
+    addMeas(meas::Gnss(0.205, z_gnss));
+    addMeas(meas::Img(0.4, z_img, R_img, false));
+    addMeas(meas::Img(0.5, z_img, R_img, false));
+
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera | State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.205);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xbuf_[2].t, 0.3);
+    EXPECT_EQ(xbuf_[2].type, State::Camera);
+    EXPECT_EQ(xbuf_[3].t, 0.5);
+    EXPECT_EQ(xbuf_[3].type, State::Camera);
+}
+
+TEST_F (MeasManagement, JustAfterKeyframe)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.55);
+    addMeas(meas::Img(0.1, z_img, R_img, true));
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    addMeas(meas::Img(0.3, z_img, R_img, true));
+    addMeas(meas::Gnss(0.305, z_gnss));
+    addMeas(meas::Img(0.4, z_img, R_img, false));
+    addMeas(meas::Img(0.5, z_img, R_img, false));
+
+    EXPECT_EQ(xbuf_head_, 3);
+    EXPECT_EQ(imu_.size(), 3);
+    EXPECT_EQ(clk_.size(), 3);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera | State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.3);
+    EXPECT_EQ(xbuf_[1].type, State::Camera);
+    EXPECT_EQ(xbuf_[2].t, 0.305);
+    EXPECT_EQ(xbuf_[2].type, State::Gnss);
+    EXPECT_EQ(xbuf_[3].t, 0.5);
+    EXPECT_EQ(xbuf_[3].type, State::Camera);
+}

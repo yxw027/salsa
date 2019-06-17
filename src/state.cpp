@@ -28,6 +28,8 @@ State& State::operator=(const State& other)
     tau = other.tau;
     kf = other.kf;
     node = other.node;
+    type = other.type;
+    n_cam = other.n_cam;
 }
 
 Obs::Obs()

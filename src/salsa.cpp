@@ -278,9 +278,7 @@ void Salsa::handleMeas()
         {
             // If this is an image node, and if last node is also and image-only node,
             // and not a keyframe
-            if (((*mit)->type == meas::Base::IMG)
-                    && (xhead().type == State::Camera)
-                    && (xhead().kf < 0))
+            if ((xhead().type == State::Camera) && (xhead().kf < 0))
             {
                 node_idx = moveNode(t);
             }
@@ -301,7 +299,7 @@ void Salsa::handleMeas()
         }
 
         // If we have a valid index to apply the measurement
-        if (node_idx > 0)
+        if (node_idx >= 0)
         {
             update(*mit, node_idx);
         }
@@ -610,6 +608,7 @@ int Salsa::moveNode(double t)
     imu.estimateXj(xbuf_[from_idx].x, xbuf_[from_idx].v, xhead().x, xhead().v);
     xhead().tau(0) = xbuf_[from_idx].tau(0) + imu.delta_t_*xhead().tau(1);
     xhead().tau(1) = xbuf_[from_idx].tau(1);
+    xhead().type = State::None;
 
     return xbuf_head_;
 }
@@ -619,6 +618,13 @@ int Salsa::insertNode(double t)
     // Sanity Checks
     SALSA_ASSERT(le(t, xhead().t), "Trying to insert a future node"); // t <= t[node_max]
     SALSA_ASSERT(ge(t, xtail().t), "Tryint to insert a node that is too old"); // t >= t[node_min]
+
+    SD(2, "Inserting Node at t%.3f", t);
+    if (eq(xhead().t, t))
+    {
+        SD(2, "Lucky Insert on top of previous node");
+        return xbuf_head_;;
+    }
 
     auto imu_it = imu_.end()-1;
     auto clk_it = clk_.end()-1;
@@ -636,6 +642,7 @@ int Salsa::insertNode(double t)
     }
     else
     {
+        SD(2, "Splitting Interval t%.3f->t%.3f at t%3.f", imu_it->t0_, imu_it->t, t);
         int new_node_idx = imu_it->to_idx_;
         // insert new node
         State& new_node(insertNodeIntoBuffer(new_node_idx));
@@ -648,6 +655,7 @@ int Salsa::insertNode(double t)
         State& from_node(xbuf_[imu_it->from_idx_]);
         new_node.kf = -1;
         new_node.t = t;
+        new_node.type = State::None;
         imu_it->estimateXj(from_node.x, from_node.v, new_node.x, new_node.v);
         new_node.tau(0) = from_node.tau(0) + from_node.tau(1) * imu_it->delta_t_;
         new_node.tau(1) = from_node.tau(1);
