@@ -66,8 +66,14 @@ void Salsa::initializeStateImage(const meas::Img &m)
     initialize(m.t, x0_, v0_, Vector2d::Zero());
 }
 
-void Salsa::imageUpdate(const meas::Img &m)
+void Salsa::imageUpdate(const meas::Img &m, int idx)
 {
+    // Sanity Checks
+    SALSA_ASSERT(xbuf_[idx].kf < 0, "Cannot add measuremnts to keyframe");
+    SALSA_ASSERT(lastKfId() > 0 ? (xbuf_[idx].node > xbuf_[lastKfId()].node) : true,
+                 "Cannot add image measurements before keyframe");
+
+
     for (auto& ft : xfeat_)
         ft.second.updated_in_last_image_ = false;
 
@@ -80,12 +86,12 @@ void Salsa::imageUpdate(const meas::Img &m)
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
             {
                 SD(1, "Adding new measurement to feature %d", m.z.feat_ids[i]);
-                ft.addMeas(xbuf_head_, m.R_pix, x_b2c_, m.z.zetas[i]);
+                ft.addMeas(idx, m.R_pix, x_b2c_, m.z.zetas[i]);
             }
             else
             {
                 SD(1, "Moving feature measurement %d", m.z.feat_ids[i]);
-                ft.moveMeas(xbuf_head_, m.z.zetas[i]);
+                ft.moveMeas(idx, m.z.zetas[i]);
             }
             ft.updated_in_last_image_ = true;
             ft.funcs.back().rho_true_ = 1.0/m.z.depths[i];
@@ -99,13 +105,12 @@ void Salsa::imageUpdate(const meas::Img &m)
             xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});
         }
     }
-    //    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Camera) == 0, "Cannot double-up with Camera nodes");
-    xbuf_[xbuf_head_].type |= State::Camera;
-    xbuf_[xbuf_head_].n_cam++;;
+    xbuf_[idx].type |= State::Camera;
+    xbuf_[idx].n_cam++;;
 
     if (m.new_keyframe)
     {
-        setNewKeyframe();
+        setNewKeyframe(idx);
     }
     rmLostFeatFromKf();
 }

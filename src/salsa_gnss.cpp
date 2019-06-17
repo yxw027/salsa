@@ -122,8 +122,6 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
 
 void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
 {
-    initializeNodeWithImu();
-
     if (filtered_obs_.size() > 7 && use_point_positioning_)
     {
         // Use Iterated Least-Squares to estimate x_e2n and time offset
@@ -133,36 +131,35 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
         auto phat = pp_sol.segment<3>(0);
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
-
-//        Xformd x_e2bn = gnss_utils::WGS84::x_ecef2ned(phat);
-//        Xformd x_bn2b(Vector3d::Zero(), x0_.q());
-//        x_e2n_ = x_e2bn * x_bn2b * x0_.inverse();
         xbuf_[xbuf_head_].tau = that;
     }
 }
 
-void Salsa::gnssUpdate(const meas::Gnss &m)
+void Salsa::gnssUpdate(const meas::Gnss &m, int idx)
 {
-    SD(2, "Gnss Update on node %d, t=%.3f", xbuf_[xbuf_head_].node, m.t);
-    Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[xbuf_head_].p);
+    SD(2, "Gnss Update on node %d, t=%.3f", xbuf_[idx].node, m.t);
+
+    // Sanity Checks
+    SALSA_ASSERT((xbuf_[idx].type & State::Gnss) == 0, "Cannot double-up with Gnss nodes");
+
+    Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[idx].p);
     prange_.emplace_back(m.obs.size());
     int i = 0;
     for (auto& ob : m.obs)
     {
         Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
         prange_.back()[i++].init(m.obs[0].t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-                                 switch_Xi_, p_b2g_, current_node_, xbuf_head_);
+                                 switch_Xi_, p_b2g_, current_node_, idx);
     }
-    SALSA_ASSERT((xbuf_[xbuf_head_].type & State::Gnss) == 0, "Cannot double-up with Gnss nodes");
-    xbuf_[xbuf_head_].type |= State::Gnss;
+    xbuf_[idx].type |= State::Gnss;
 }
 
-void Salsa::initializeStateGnss(const meas::Gnss &m)
+bool Salsa::initializeStateGnss(const meas::Gnss &m)
 {
     if (sats_.size() < 8)
     {
         SD(5, "Waiting for Ephemeris, got %lu sats\n", sats_.size());
-        return;
+        return false;
     }
 
     if (use_point_positioning_)
@@ -177,12 +174,13 @@ void Salsa::initializeStateGnss(const meas::Gnss &m)
         Xformd x_e2bn = gnss_utils::WGS84::x_ecef2ned(phat);
         Xformd x_bn2b(Vector3d::Zero(), x0_.q());
         x_e2n_ = x_e2bn * x_bn2b * x0_.inverse();
-        initialize(current_state_.t, x0_, v0_, that);
+        initialize(m.t, x0_, v0_, that);
     }
     else
     {
-        initialize(current_state_.t, x0_, Vector3d::Zero(), Vector2d::Zero());
+        initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
     }
+    return true;
 }
 
 void Salsa::obsCallback(const ObsVec &obs)

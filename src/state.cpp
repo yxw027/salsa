@@ -17,6 +17,7 @@ State::State() :
     for (int i = 0; i < 13; i++)
         buf_[i] = NAN;
     kf = -1;
+    type = None;
 }
 
 State& State::operator=(const State& other)

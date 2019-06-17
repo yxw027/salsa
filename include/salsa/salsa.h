@@ -130,7 +130,7 @@ public:
 //    void endInterval(double t);
     void startNewInterval(double t);
     void cleanUpSlidingWindow();
-    void setNewKeyframe();
+    void setNewKeyframe(int idx);
     const State& lastKfState();
     bool calcNewKeyframeCondition(const Features& z);
     void cleanUpFeatureTracking(int oldest_kf_idx);
@@ -201,7 +201,7 @@ public:
     /*               Mocap              */
     /************************************/
     void mocapCallback(const double &t, const xform::Xformd &z, const Matrix6d &R) override;
-    void mocapUpdate(const meas::Mocap& m);
+    void mocapUpdate(const meas::Mocap& m, int idx);
     void initializeStateMocap(const meas::Mocap& m);
     bool update_on_mocap_;
 
@@ -217,8 +217,8 @@ public:
     void pointPositioning(const gnss_utils::GTime& t, const ObsVec &obs, SatVec &sat, Vector8d &xhat) const;
     void rawGnssCallback(const gnss_utils::GTime& t, const VecVec3& z, const VecMat3& R,
                          SatVec &sat, const std::vector<bool>& slip) override;
-    void gnssUpdate(const meas::Gnss& m);
-    void initializeStateGnss(const meas::Gnss& m);
+    void gnssUpdate(const meas::Gnss& m, int idx);
+    bool initializeStateGnss(const meas::Gnss& m);
     bool checkClkString();
     int ns_;
     bool update_on_gnss_;
@@ -236,9 +236,10 @@ public:
     void imageCallback(const double &tc, const cv::Mat& img, const Eigen::Matrix2d &R_pix);
     void imageCallback(const double& tc, const ImageFeat& z, const Eigen::Matrix2d& R_pix,
                        const Matrix1d& R_depth) override; // bindings for simulator image
-    void imageUpdate(const meas::Img& m);
+    void imageUpdate(const meas::Img& m, int idx);
     void initializeStateImage(const meas::Img& m);
     int numTotalFeat() const;
+    int lastKfId() const;
 
     enum {
         NOT_NEW_KEYFRAME = 0,
@@ -246,6 +247,7 @@ public:
         TOO_MUCH_PARALLAX = 2,
         INSUFFICIENT_MATCHES = 3
     };
+    int last_kf_id_;
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
     Features kf_feat_, current_feat_;
@@ -293,12 +295,12 @@ public:
     /************************************/
     /*            Meas Buffer           */
     /************************************/
-    void handleMeas();
-    void integrateTransition(double t);
-    void initializeNodeWithImu();
+//    void handleMeas();
+//    void integrateTransition(double t);
+//    void initializeNodeWithImu();
     void initializeNodeWithGnss(const meas::Gnss& m);
     void initializeNodeWithMocap(const meas::Mocap& mocap);
-    void initialize(const meas::Base* m);
+    bool initialize(const meas::Base* m);
     void addMeas(const meas::Mocap&& mocap);
     void addMeas(const meas::Gnss&& gnss);
     void addMeas(const meas::Img&& img);
@@ -311,7 +313,8 @@ public:
     /**************************************/
     /*            Meas Buffer 2           */
     /**************************************/
-    void handleMeas2();
+    void handleMeas();
+    void update(meas::Base* m, int idx);
     void alignIMU();
     void findInterval(double t);
     void splitInterval(int interval_idx, double t);

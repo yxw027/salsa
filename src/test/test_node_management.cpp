@@ -6,25 +6,14 @@
 #include "gnss_utils/gtime.h"
 
 using namespace salsa;
-using namespace multirotor_sim;
 using namespace Eigen;
 using namespace xform;
-using namespace gnss_utils;
 
-class Management : public ::testing::Test, public Salsa
+class NodeManagement : public ::testing::Test, public Salsa
 {
 public:
     Vector6d z_imu;
     Matrix6d R_imu;
-    ObsVec z_gnss;
-    Xformd z_mocap;
-    Matrix6d R_mocap;
-    Features z_img;
-    Matrix2d R_pix;
-    Matrix<double, 4, 3> l;
-
-    GTime log_start;
-    SatVec sats;
 
     double _dt;
     double _last_t;
@@ -38,17 +27,50 @@ public:
         _last_t = -_dt;
 
         initIMU();
-        initFeat();
-        initGNSS();
-        initMocap();
-
-        initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     }
 
     void initIMU()
     {
         z_imu << 0.00, 0.0, -9.80665, 0.0, 0, 0;
         R_imu = Matrix6d::Identity() * 1e-3;
+    }
+
+
+    void createIMUString(double t)
+    {
+        while (_last_t < t)
+        {
+            double t_new = _last_t + _dt;
+            imu_meas_buf_.push_back(meas::Imu(t_new, z_imu, R_imu));
+            _last_t = t_new;
+        }
+    }
+};
+
+class MeasManagement : public NodeManagement
+{
+public:
+    ObsVec z_gnss;
+    Xformd z_mocap;
+    Matrix6d R_mocap;
+    Features z_img;
+    Matrix2d R_img;
+    Matrix<double, 4, 3> l;
+
+    gnss_utils::GTime log_start;
+
+    void SetUp() override
+    {
+        init(default_params("/tmp/Salsa/ManualKFTest/"));
+        disable_solver_ = true;
+
+        _dt = 0.01;
+        _last_t = -_dt;
+
+        initIMU();
+        initFeat();
+        initGNSS();
+        initMocap();
     }
 
     void initFeat()
@@ -72,7 +94,7 @@ public:
         z_img.id = 0;
         z_img.t = 0.0;
 
-        R_pix = Matrix2d::Identity();
+        R_img = Matrix2d::Identity();
     }
 
     void initMocap()
@@ -85,28 +107,18 @@ public:
     void initGNSS()
     {
         std::vector<int> sat_ids = {3, 8, 10, 11, 14, 18, 22, 31, 32};
-        log_start = GTime(2026, 165029);
+        log_start = gnss_utils::GTime(2026, 165029);
         log_start += 200;
 
         for (int i = 1; i < sat_ids.size(); i++)
         {
-            sats.emplace_back(sat_ids[i], i);
-            sats.back().readFromRawFile(SALSA_DIR"/sample/eph.dat");
-        }
-    }
-
-    void createIMUString(double t)
-    {
-        while (_last_t < t)
-        {
-            double t_new = _last_t + _dt;
-            imu_meas_buf_.push_back(meas::Imu(t_new, z_imu, R_imu));
-            _last_t = t_new;
+            sats_.emplace_back(sat_ids[i], i);
+            sats_.back().readFromRawFile(SALSA_DIR"/sample/eph.dat");
         }
     }
 };
 
-TEST_F (Management, RoundOffHelpers)
+TEST (RoundOff, RoundOffHelpers)
 {
     double a = 1.0;
     double b = -1.0;
@@ -130,8 +142,9 @@ TEST_F (Management, RoundOffHelpers)
     EXPECT_TRUE(lt(bm, am));
 }
 
-TEST_F (Management, NewNodeEndOfString)
+TEST_F (NodeManagement, NewNodeEndOfString)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     newNode(0.2);
     EXPECT_TRUE(checkIMUString());
@@ -143,8 +156,9 @@ TEST_F (Management, NewNodeEndOfString)
     EXPECT_EQ(clk_.size(), 1);
 }
 
-TEST_F (Management, NodeBeforeEndOfString)
+TEST_F (NodeManagement, NodeBeforeEndOfString)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     newNode(0.1);
     EXPECT_EQ(imu_meas_buf_.size(), 10);
@@ -157,8 +171,9 @@ TEST_F (Management, NodeBeforeEndOfString)
 }
 
 
-TEST_F (Management, NodeBarelyAfterOtherNode)
+TEST_F (NodeManagement, NodeBarelyAfterOtherNode)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.2), 1);
     createIMUString(0.22);
@@ -174,8 +189,9 @@ TEST_F (Management, NodeBarelyAfterOtherNode)
     EXPECT_EQ(imu_meas_buf_.size(), 2);
 }
 
-TEST_F (Management, MoveNodeToEndOfString)
+TEST_F (NodeManagement, MoveNodeToEndOfString)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(moveNode(0.2), 1);
@@ -188,8 +204,9 @@ TEST_F (Management, MoveNodeToEndOfString)
     EXPECT_EQ(imu_meas_buf_.size(), 0);
 }
 
-TEST_F (Management, InsertNodeIntoBuffer)
+TEST_F (NodeManagement, InsertNodeIntoBuffer)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     for (int i = 0; i < 10; i ++)
     {
         xbuf_[i].t = i*0.1;
@@ -211,8 +228,9 @@ TEST_F (Management, InsertNodeIntoBuffer)
 
 }
 
-TEST_F (Management, InsertNode)
+TEST_F (NodeManagement, InsertNode)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.2), 1);
     EXPECT_EQ(insertNode(0.1), 1);
@@ -230,8 +248,9 @@ TEST_F (Management, InsertNode)
 
 }
 
-TEST_F (Management, InsertNodeOnTopOfPrevious)
+TEST_F (NodeManagement, InsertNodeOnTopOfPrevious)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -248,8 +267,9 @@ TEST_F (Management, InsertNodeOnTopOfPrevious)
     EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNodeOnTopOfCurrent)
+TEST_F (NodeManagement, InsertNodeOnTopOfCurrent)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -266,8 +286,9 @@ TEST_F (Management, InsertNodeOnTopOfCurrent)
     EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNodeBarelyBehindCurrent)
+TEST_F (NodeManagement, InsertNodeBarelyBehindCurrent)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -286,8 +307,9 @@ TEST_F (Management, InsertNodeBarelyBehindCurrent)
 
 
 
-TEST_F (Management, InsertOneIMUAfterPrev)
+TEST_F (NodeManagement, InsertOneIMUAfterPrev)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -306,8 +328,9 @@ TEST_F (Management, InsertOneIMUAfterPrev)
     EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertOntIMUBeforePrev)
+TEST_F (NodeManagement, InsertOntIMUBeforePrev)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -326,8 +349,9 @@ TEST_F (Management, InsertOntIMUBeforePrev)
     EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertNHalfIMUAfterPrev)
+TEST_F (NodeManagement, InsertNHalfIMUAfterPrev)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -346,8 +370,9 @@ TEST_F (Management, InsertNHalfIMUAfterPrev)
     EXPECT_TRUE(checkClkString());
 }
 
-TEST_F (Management, InsertHalfImuBeforePrev)
+TEST_F (NodeManagement, InsertHalfImuBeforePrev)
 {
+    initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     EXPECT_EQ(newNode(0.1), 1);
     EXPECT_EQ(newNode(0.2), 2);
@@ -366,3 +391,166 @@ TEST_F (Management, InsertHalfImuBeforePrev)
     EXPECT_TRUE(checkClkString());
 }
 
+TEST_F (MeasManagement, NominalIMUMocap)
+{
+    update_on_mocap_ = true;
+    createIMUString(0.1);
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    createIMUString(0.2);
+    addMeas(meas::Mocap(0.2, z_mocap, R_mocap));
+    createIMUString(0.3);
+    addMeas(meas::Mocap(0.3, z_mocap, R_mocap));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Mocap);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Mocap);
+}
+
+TEST_F (MeasManagement, NominalIMUGnss)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.1);
+    addMeas(meas::Gnss(0.1, z_gnss));
+    createIMUString(0.2);
+    addMeas(meas::Gnss(0.2, z_gnss));
+    createIMUString(0.3);
+    addMeas(meas::Gnss(0.3, z_gnss));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Gnss);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Gnss);
+}
+
+TEST_F (MeasManagement, NominalIMUVision)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.1);
+    addMeas(meas::Img(0.1, z_img, R_img, true)); // first image is always a keyframe
+    createIMUString(0.2);
+    addMeas(meas::Img(0.2, z_img, R_img, true)); // in nominal case, every frame is a keyframe!
+    createIMUString(0.3);
+    addMeas(meas::Img(0.3, z_img, R_img, true));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Camera);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Camera);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera);
+}
+
+TEST_F (MeasManagement, IMUVisionMoveNode)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.1);
+    addMeas(meas::Img(0.1, z_img, R_img, true)); // first image is always a keyframe
+    createIMUString(0.2);
+    addMeas(meas::Img(0.2, z_img, R_img, false));
+    createIMUString(0.3);
+    addMeas(meas::Img(0.3, z_img, R_img, false));
+
+    EXPECT_EQ(xbuf_head_, 1); // moved node means extended IMU
+    EXPECT_EQ(imu_.size(), 1);
+    EXPECT_FLOAT_EQ(imu_.back().delta_t_, 0.2);
+    EXPECT_EQ(clk_.size(), 1);
+    EXPECT_FLOAT_EQ(clk_.back().dt_, 0.2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Camera);
+    EXPECT_EQ(xbuf_[1].t, 0.3);
+    EXPECT_EQ(xbuf_[1].type, State::Camera);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera);
+}
+
+TEST_F (MeasManagement, RewindIMUMocap)
+{
+    update_on_mocap_ = true;
+    createIMUString(0.35);
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Mocap(0.2, z_mocap, R_mocap));
+    addMeas(meas::Mocap(0.3, z_mocap, R_mocap));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Mocap);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Mocap);
+}
+
+TEST_F (MeasManagement, RewindIMUGnss)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.35);
+    addMeas(meas::Gnss(0.1, z_gnss));
+    addMeas(meas::Gnss(0.2, z_gnss));
+    addMeas(meas::Gnss(0.3, z_gnss));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Gnss);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Gnss);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Gnss);
+}
+
+TEST_F (MeasManagement, RewindIMUVision)
+{
+    update_on_gnss_ = true;
+    createIMUString(0.35);
+    addMeas(meas::Img(0.1, z_img, R_img, true)); // first image is always a keyframe
+    addMeas(meas::Img(0.2, z_img, R_img, true)); // in nominal case, every frame is a keyframe!
+    addMeas(meas::Img(0.3, z_img, R_img, true));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Camera);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Camera);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Camera);
+}

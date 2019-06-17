@@ -7,7 +7,7 @@
 #define DEBUGPRINT 1
 #endif
 
-#define DEBUGPRINTLEVEL 4
+#define DEBUGPRINTLEVEL 0
 #define DEBUGLOGLEVEL 0
 
 #if DEBUGPRINT

@@ -68,15 +68,11 @@ void ImuIntegrator::integrateStateOnly(const double& _t, const Vector6d& u)
     y_ = yp;
 }
 
-void ImuIntegrator::estimateXj(const double* _xi, const double* _vi, double* _xj, double* _vj) const
+void ImuIntegrator::estimateXj(const Xformd &xi, const Vector3d &vi, Xformd &xj, Vector3d vj) const
 {
     VectorBlock<const Vector10d, 3> alpha = y_.segment<3>(ALPHA);
     VectorBlock<const Vector10d, 3> beta = y_.segment<3>(BETA);
     Quatd gamma(y_.data()+GAMMA);
-    Xformd xi(_xi);
-    Xformd xj(_xj);
-    Map<const Vector3d> vi(_vi);
-    Map<Vector3d> vj(_vj);
 
     SALSA_ASSERT(std::abs(1.0 - gamma.arr_.norm()) < 1e-8, "Quat left manifold");
     SALSA_ASSERT(std::abs(1.0 - xi.q_.arr_.norm()) < 1e-8, "Quat left manifold");

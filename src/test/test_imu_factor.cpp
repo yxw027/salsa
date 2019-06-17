@@ -160,7 +160,7 @@ TEST(ImuFactor, Propagation)
             next_reset += 1.0;
         }
 
-        imu->estimateXj(x0.data(), v0.data(), xhat.data(), vhat.data());
+        imu->estimateXj(x0, v0, xhat, vhat);
         log.log(multirotor.t_);
         log.logVectors(xhat.elements(), vhat, multirotor.state().X.elements(), multirotor.state().v, multirotor.imu());
         EXPECT_MAT_NEAR(xhat.t(), multirotor.state().X.t(), 0.076);

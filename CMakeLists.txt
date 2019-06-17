@@ -45,6 +45,7 @@ add_library(salsa
     src/salsa_vision.cpp
     src/salsa_log.cpp
     src/klt.cpp
+    src/graph.cpp
     src/feat.cpp
     src/num_diff.cpp)
 target_link_libraries(salsa
