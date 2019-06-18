@@ -511,20 +511,7 @@ int Salsa::newNode(double t)
         imu.cov_ = imu_meas_buf_.front().R;
     }
 
-
-    // figure out how many imu measurements we have to integrate before our measurement
-    int num_imu = 1; // Count any interpolation we have to take care of
-    for (auto& it : imu_meas_buf_)
-    {
-        if (lt(it.t, t)) // imu.t < t
-        {
-            ++num_imu;
-            break;
-        }
-        else // imu.t >= t
-            break;
-    }
-    SD(1, "We have %d imu measurements between t%.3f and t%.3f", num_imu, xhead().t, t);
+    bool single_imu = ge(imu_meas_buf_.front().t, t);
 
     // Integrate to the measurement
     while (lt(imu.t, t))
@@ -540,8 +527,9 @@ int Salsa::newNode(double t)
         else
         {
             // interpolate
-            if (num_imu == 1)
+            if (single_imu)
             {
+                SD(1, "Handling Single IMU Interpolation");
                 // IMU intervals need at least two updates otherwise we'll get NaNs when when
                 // invert the covariance, so we can just apply half the measurement, twice.
                 double dt = t - imu.t;
@@ -624,7 +612,7 @@ int Salsa::insertNode(double t)
 {
     // Sanity Checks
     SALSA_ASSERT(le(t, xhead().t), "Trying to insert a future node"); // t <= t[node_max]
-    if (ge(t, xtail().t))
+    if (lt(t, xtail().t))
     {
         SD(5, "Unable to fuse stale Measurement:  oldest_node t%.3f, z.t=t%.3f", xtail().t, t);
         return -1;

@@ -62,7 +62,8 @@ TEST (Vision, NewKFRotate)
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));
-    salsa.x_b2c_ = sim.x_b2c_;
+    salsa.x_b2c_ = sim.x_b2c_ = xform::Xformd::Identity();
+    salsa.x0_ = sim.state().X;
 
     salsa.cam_ = sim.cam_;
 
@@ -81,27 +82,26 @@ TEST (Vision, NewKFRotate)
     salsa.new_kf_cb_ = kf_cb;
 
     int rot = 0;
-    double t = 1.0;
     while (salsa.current_kf_== 0)
     {
         Vector3d w = Vector3d(0, -DEG2RAD * 5.0, 0);
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 50; i++)
         {
-            sim.t_ += 0.02;
-            sim.state().X.q_ += w * 0.02;
+            sim.t_ += 0.002;
             Vector6d imu;
-            imu << sim.state().X.q_.rotp(gravity_), w;
+            imu << salsa.current_state_.x.q_.rotp(-gravity_), w;
+            sim.state().X.q_ += w * 0.002;
             salsa.imuCallback(sim.t_, imu, sim.imu_R_);
+            salsa.current_state_.x = sim.state().X;
         }
         sim.update_camera_meas();
-        salsa.current_state_.x = sim.state().X;
-        EXPECT_LE(salsa.kf_parallax_, 15);
+        EXPECT_LE(salsa.kf_parallax_, 1);
         rot++;
     }
 
     EXPECT_EQ(kf_condition, Salsa::INSUFFICIENT_MATCHES);
     EXPECT_LE(salsa.kf_Nmatch_feat_, salsa.kf_feature_thresh_ * salsa.kf_num_feat_);
-    EXPECT_LE(salsa.kf_parallax_, 15);
+    EXPECT_LE(salsa.kf_parallax_, 1);
 }
 
 

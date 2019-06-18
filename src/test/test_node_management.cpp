@@ -142,6 +142,16 @@ TEST (RoundOff, RoundOffHelpers)
     EXPECT_TRUE(lt(bm, am));
 }
 
+TEST_F (NodeManagement, ImuBeforeFirstNode)
+{
+    createIMUString(0.2);
+    initialize(0.1, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
+    createIMUString(0.5);
+    EXPECT_EQ(newNode(0.3), 1);
+    EXPECT_EQ(imu_.size(), 1);
+    EXPECT_FLOAT_EQ(imu_.back().delta_t_, 0.2);
+}
+
 TEST_F (NodeManagement, NewNodeEndOfString)
 {
     initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
