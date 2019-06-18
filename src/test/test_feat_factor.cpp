@@ -9,6 +9,8 @@
 
 using namespace salsa;
 using namespace multirotor_sim;
+using namespace xform;
+using namespace quat;
 
 TEST (FeatFactor, ADvsANEval)
 {

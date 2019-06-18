@@ -99,7 +99,7 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
         else if (m.new_keyframe)
         {
             double rho0 = 0.1;
-            if (use_measured_depth_)
+            if (use_measured_depth_ && !std::isnan(m.z.depths[i]))
                 rho0 = 1.0/m.z.depths[i];
             SD(1, "Adding new feature %d", m.z.feat_ids[i]);
             xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});

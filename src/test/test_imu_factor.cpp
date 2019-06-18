@@ -23,6 +23,7 @@ using namespace ceres;
 using namespace Eigen;
 using namespace std;
 using namespace xform;
+using namespace quat;
 using namespace multirotor_sim;
 using namespace salsa;
 

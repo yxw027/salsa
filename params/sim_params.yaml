@@ -107,7 +107,7 @@ control_type: 0
 
 
 # Environment Setup
-wall_max_offset: 0.001 # Points are distributed normally about the wall
+wall_max_offset: 0.01 # Points are distributed normally about the wall
 
 
 # Wind Setup

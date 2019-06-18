@@ -135,6 +135,7 @@ public:
     bool calcNewKeyframeCondition(const Features& z);
     void cleanUpFeatureTracking(int oldest_kf_idx);
     void rmLostFeatFromKf();
+    bool checkFeatures();
     bool inWindow(int idx);
     State& xhead() { return xbuf_[xbuf_head_]; }
     State& xtail() { return xbuf_[xbuf_tail_]; }

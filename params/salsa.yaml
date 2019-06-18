@@ -47,22 +47,22 @@ pix_err_stdev: 1
 disable_vision: false
 tracker_freq: 10
 min_depth: 0.5
-use_measured_depth: true
+use_measured_depth: false
 
 focal_len: [189.288014941235, 188.89300027962554]
 cam_center: [189.57352223555952, 114.25998149460739]
 image_size: [376, 240]
 cam_skew: 0.0
 distortion: [-0.28839265926889596, 0.06052865219979488, 0.003175682270413171,  0.0014326472335837869, 0]
-kf_parallax_thresh: 30
+kf_parallax_thresh: 75
 kf_feature_thresh: 0.75
 update_on_camera: true
 
 show_matches: true
-get_feature_radius: 40
-track_feature_min_distance: 25
+get_feature_radius: 45
+track_feature_min_distance: 10
 feature_mask: ""
-simulate_klt: false
+simulate_klt: true
 tc: 0.0
 x_b2c: [0.01666044727690726, 0.06831908058722323, -0.3523408903053932, 
         0.7060646666507441, 0.004429725140391003, 0.001812721421084533, 0.7081311870576004]
@@ -104,5 +104,5 @@ state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-3, 1e-3] # clk_bias (nsec)
 x_e2n_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-8, 1e-8, 1e-2] # q
-bias_anchor_cov: [0.000001, 0.000001, 0.000001, # acc
-                 0.0000001, 0.0000001, 0.0000001] # gyro
+bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
+                 0.000001, 0.000001, 0.000001] # gyro

@@ -255,8 +255,8 @@ void Salsa::showImage()
     {
         const Scalar& color(colors_[current_feat_.feat_ids[i] % nf_]);
         circle(color_img_, prev_features_[i], 5, color, -1);
-        putText(color_img_, std::to_string(current_feat_.feat_ids[i]), prev_features_[i],
-                FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
+//        putText(color_img_, std::to_string(current_feat_.feat_ids[i]), prev_features_[i],
+//                FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
     }
 
     cv::imshow("tracked points", color_img_);

@@ -464,6 +464,14 @@ bool Salsa::checkIMUString()
     return it == imu_.end();
 }
 
+bool Salsa::checkFeatures()
+{
+    for (auto& ft : xfeat_)
+    {
+
+    }
+}
+
 bool Salsa::checkClkString()
 {
     if (clk_.size() == 0)
@@ -617,6 +625,7 @@ int Salsa::moveNode(double t)
     xhead().tau(0) = xbuf_[from_idx].tau(0) + imu.delta_t_*xhead().tau(1);
     xhead().tau(1) = xbuf_[from_idx].tau(1);
     xhead().type = State::None;
+    current_state_integrator_.reset(t);
 
     return xbuf_head_;
 }
