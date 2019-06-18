@@ -61,7 +61,7 @@ target_link_libraries(salsa
     pthread)
 
 
-option (BUILD_ROS "Build ROS Tools" ON)
+option (BUILD_ROS "Build ROS Tools" OFF)
 if (BUILD_ROS)
     find_package(catkin REQUIRED COMPONENTS
         rosbag
