@@ -59,7 +59,8 @@ kf_feature_thresh: 0.75
 update_on_camera: true
 
 show_matches: true
-feature_nearby_radius: 10
+get_feature_radius: 40
+track_feature_min_distance: 25
 feature_mask: ""
 simulate_klt: false
 tc: 0.0
@@ -103,5 +104,5 @@ state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-3, 1e-3] # clk_bias (nsec)
 x_e2n_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-8, 1e-8, 1e-2] # q
-bias_anchor_cov: [0.0001, 0.0001, 0.0001, # acc
-                 0.00001, 0.00001, 0.00001] # gyro
+bias_anchor_cov: [0.000001, 0.000001, 0.000001, # acc
+                 0.0000001, 0.0000001, 0.0000001] # gyro

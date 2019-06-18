@@ -531,7 +531,7 @@ int Salsa::newNode(double t)
         if (le(next_imu.t, t))
         {
             if (le(next_imu.t, imu.t))
-                SD(5, "Trying to integrate backwards");
+                SD((current_node_ > 1 ? 5 : 2), "Trying to integrate backwards");
             else
                 imu.integrate(next_imu.t, z, next_imu.R);
             imu_meas_buf_.pop_front();

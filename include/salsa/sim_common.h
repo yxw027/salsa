@@ -14,7 +14,10 @@ Salsa* initSalsa(const std::string& prefix, const std::string& label, Simulator&
     salsa->x_e2n_ = sim.X_e2n_;
     salsa->x_b2c_ = sim.x_b2c_;
     salsa->x_b2o_ = xform::Xformd::Identity();
+
     salsa->cam_ = sim.cam_;
+    salsa->mask_.create(cv::Size(salsa->cam_.image_size_(0), salsa->cam_.image_size_(1)), CV_8UC1);
+    salsa->mask_ = 255;
     sim.register_estimator(salsa);
     return salsa;
 }

@@ -269,7 +269,7 @@ public:
     void trackFeatures();
     void filterFeaturesRANSAC();
     void filterFeaturesOutOfBounds();
-    void filterFeaturesTooClose();
+    void filterFeaturesTooClose(double dist);
     void createNewKeyframe();
     int calcNewKeyframeConditionKLT();
     void calcCurrentZetas();
@@ -279,7 +279,8 @@ public:
     double tracker_freq_;
     int got_first_img_;
     bool show_matches_;
-    int feature_nearby_radius_;
+    int get_feature_radius_;
+    int track_feature_min_distance_;
     int next_feature_id_;
     std::vector<uchar> match_status_;
     std::vector<cv::Point2f> prev_features_;

@@ -15,7 +15,8 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);
     get_yaml_node("simulate_klt", filename, sim_KLT_);
     get_yaml_node("show_matches", filename, show_matches_);
-    get_yaml_node("feature_nearby_radius", filename, feature_nearby_radius_);
+    get_yaml_node("get_feature_radius", filename, get_feature_radius_);
+    get_yaml_node("track_feature_min_distance", filename, track_feature_min_distance_);
     get_yaml_node("tracker_freq", filename, tracker_freq_);
     get_yaml_node("disable_vision", filename, disable_vision_);
 
@@ -68,6 +69,7 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
     {
         trackFeatures();
         filterFeaturesOutOfBounds();
+        filterFeaturesTooClose(track_feature_min_distance_);
         filterFeaturesRANSAC();
         calcCurrentZetas();
     }
@@ -179,7 +181,7 @@ int Salsa::calcNewKeyframeConditionKLT()
     return NOT_NEW_KEYFRAME;
 }
 
-void Salsa::filterFeaturesTooClose()
+void Salsa::filterFeaturesTooClose(double dist)
 {
     for (int i = 0; i < current_feat_.size(); i++)
     {
@@ -187,7 +189,7 @@ void Salsa::filterFeaturesTooClose()
         {
             double dx = current_feat_.pix[i].x - current_feat_.pix[j].x;
             double dy = current_feat_.pix[i].y - current_feat_.pix[j].y;
-            if (std::sqrt(dx*dx + dy*dy) < feature_nearby_radius_)
+            if (std::sqrt(dx*dx + dy*dy) < dist)
             {
                 SD(1, "feature %d is too close to feature %d, dropping %d",
                    current_feat_.feat_ids[i], current_feat_.feat_ids[j], current_feat_.feat_ids[j]);
@@ -225,14 +227,14 @@ void Salsa::collectNewfeatures()
         mask_.copyTo(point_mask_);
         for (int i = 0; i < current_feat_.size(); i++)
         {
-            circle(point_mask_, current_feat_.pix[i], feature_nearby_radius_, 0, -1, 0);
+            circle(point_mask_, current_feat_.pix[i], get_feature_radius_, 0, -1, 0);
         }
 
         // Now find a bunch of points, not in the mask
         int num_new_features = nf_ - current_feat_.size();
         std::vector<Point2f> new_corners;
         goodFeaturesToTrack(current_img_, new_corners, num_new_features, 0.3,
-                            feature_nearby_radius_, point_mask_, 7);
+                            get_feature_radius_, point_mask_, 7);
 
         for (int i = 0; i < new_corners.size(); i++)
         {

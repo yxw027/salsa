@@ -107,7 +107,7 @@ control_type: 0
 
 
 # Environment Setup
-wall_max_offset: 1.0 # Points are distributed normally about the wall
+wall_max_offset: 0.001 # Points are distributed normally about the wall
 
 
 # Wind Setup
@@ -156,7 +156,7 @@ p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
 
 ## Camera
-num_features: 100
+num_features: 200
 camera_time_offset: 0.0
 camera_transmission_time: 0.0
 camera_transmission_noise: 0.0
@@ -166,6 +166,7 @@ focal_len: [250.0, 250.0]
 cam_center: [320, 240]
 image_size: [640, 480]
 loop_closure: false
+feat_too_close_thresh: 25
 q_b_c: [1, 0, 0, 0]
 #q_b_c: [ 0.923879659447, 0.0, 0.382683125915, 0.0 ] # Pitch down 45 deg
 # q_b_c: [0.712301460669, -0.00770717975554, 0.0104993233706, 0.701752800292]

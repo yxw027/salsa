@@ -177,11 +177,11 @@ def plotFeatRes(allFeat=False):
 def plotFeatDepths():
     f = plt.figure()
     plt.suptitle("Feat Pos")
-    p = plt.plot(featPos['t'], featPos['ft']['rho'], alpha=0.7)
+    p = plt.plot(data[0].featPos['t'], data[0].featPos['ft']['rho'], alpha=0.7)
     for i in range(len(p)):
-        plt.plot(featPos['t'], featPos['ft']['rho_true'][:,i], linestyle='--', color=p[i].get_color(), alpha=0.5)
-        slide_idx = np.hstack((np.diff(featPos['ft']['slide_count'][:,i]) > 0, False))
-        plt.plot(featPos['t'][slide_idx], featPos['ft']['rho_true'][slide_idx, i], marker='x', linestyle=' ', color=p[i].get_color(), alpha=0.5)
+        plt.plot(data[0].featPos['t'], data[0].featPos['ft']['rho_true'][:,i], linestyle='--', color=p[i].get_color(), alpha=0.5)
+        slide_idx = np.hstack((np.diff(data[0].featPos['ft']['slide_count'][:,i]) > 0, False))
+        plt.plot(data[0].featPos['t'][slide_idx], data[0].featPos['ft']['rho_true'][slide_idx, i], marker='x', linestyle=' ', color=p[i].get_color(), alpha=0.5)
     plt.ylim([0, 2])
     pw.addPlot("Depth", f)
 
@@ -521,9 +521,9 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
         saveMultipath()
         # plotAzel()
     #
-    # if len(featPos) > 0 and max(featPos['size']) > 0:
-    #     plotFeatRes()
-    #     plotFeatDepths()
+    if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
+        # plotFeatRes()
+        plotFeatDepths()
     #
     if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
         plotMocapRes()
