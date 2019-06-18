@@ -124,6 +124,7 @@ inline std::string small_feat_test(const std::string& prefix, bool init_depth=tr
     YAML::Node node = YAML::LoadFile(SALSA_DIR"/params/salsa.yaml");
     node["x_b2m"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["x_b2c"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
+    node["x_b2o"] = std::vector<double>{0, 0, 0, 1, 0, 0, 0};
     node["tm"] = 0.0;
     node["tc"] = 0.0;
     node["log_prefix"] = prefix;

@@ -489,8 +489,8 @@ public:
             simulateIMUDelay();
             if (i > 2)
             {
-                EXPECT_EQ(salsa.xbuf_head_, i);
-                EXPECT_EQ(salsa.current_node_, i);
+                EXPECT_EQ(salsa.xbuf_head_, 2*i);
+                EXPECT_EQ(salsa.current_node_, 2*i);
                 EXPECT_EQ(salsa.current_kf_, i);
                 EXPECT_EQ(salsa.xbuf_[salsa.xbuf_head_].kf, i);
             }

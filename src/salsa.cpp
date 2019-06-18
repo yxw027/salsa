@@ -114,14 +114,13 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     if (std::isnan(current_state_integrator_.t))
         current_state_integrator_.reset(t);
 
+    SD(1, "Got IMU t: %.3f", t);
+    imu_meas_buf_.push_back({t, z, R});
+
     if (imu_.empty())
     {
         return;
     }
-
-    SD(1, "Got IMU t: %.3f", t);
-    imu_meas_buf_.push_back({t, z, R});
-
 
     current_state_integrator_.b_ = imu_bias_;
     for (auto& z : imu_meas_buf_)
@@ -268,13 +267,17 @@ void Salsa::handleMeas()
         double t = (*mit)->t;
         double t_max_node = xhead().t;
         double t_min_node = xtail().t;
-        double t_max_imu = imu_meas_buf_.back().t;
-        double t_min_imu = imu_meas_buf_.front().t;
+        double t_max_imu = imu_meas_buf_.size() > 0 ? imu_meas_buf_.back().t : t_max_node;
         int node_idx = -1; // idx to apply the update to
 
+        // This happens a lot, so catch it specifically
+        if (eq(t, t_max_node))
+        {
+            node_idx = xbuf_head_;
+        }
         // If our next measurement is less than our max IMU meas, but greater than
         // our most recent node
-        if (gt(t, t_max_node) && le(t, t_max_imu))
+        else if (gt(t, t_max_node) && le(t, t_max_imu))
         {
             // If this is an image node, and if last node is also and image-only node,
             // and not a keyframe
@@ -287,8 +290,12 @@ void Salsa::handleMeas()
                 node_idx = newNode(t);
             }
         }
+        else if (lt(t, t_min_node))
+        {
+            node_idx = -1;
+        }
         // otherwise The measurement occurs either on or before our current node
-        else if (le(t, t_max_node))
+        else if (lt(t, t_max_node))
         {
             node_idx = insertNode(t);
         }
@@ -617,19 +624,23 @@ int Salsa::insertNode(double t)
 {
     // Sanity Checks
     SALSA_ASSERT(le(t, xhead().t), "Trying to insert a future node"); // t <= t[node_max]
-    SALSA_ASSERT(ge(t, xtail().t), "Tryint to insert a node that is too old"); // t >= t[node_min]
+    if (ge(t, xtail().t))
+    {
+        SD(5, "Unable to fuse stale Measurement:  oldest_node t%.3f, z.t=t%.3f", xtail().t, t);
+        return -1;
+    }
 
     SD(2, "Inserting Node at t%.3f", t);
-    if (eq(xhead().t, t))
-    {
-        SD(2, "Lucky Insert on top of previous node");
-        return xbuf_head_;;
-    }
 
     auto imu_it = imu_.end()-1;
     auto clk_it = clk_.end()-1;
     while (le(t, imu_it->t0_)) // t < imu.t_start
     {
+        if (imu_it == imu_.begin())
+        {
+            SD(5, "Unable to find proper IMU interval to split for node insertion at %.3f", t);
+            return -1;
+        }
         // work backwards through buffer
         --imu_it;
         --clk_it;

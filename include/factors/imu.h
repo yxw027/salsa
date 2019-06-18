@@ -19,7 +19,7 @@ public:
     void reset(const double& _t);
     void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot);
     void estimateXj(const xform::Xformd& _xi, const Eigen::Vector3d& _vi,
-                    xform::Xformd& _xj, Eigen::Vector3d _vj) const;
+                    xform::Xformd& _xj, const Eigen::Ref<Eigen::Vector3d> &_vj) const;
     void integrateStateOnly(const double& _t, const Vector6d& u);
     static void boxplus(const Vector10d& y, const Vector9d& dy, Vector10d& yp);
     static void boxminus(const Vector10d& y1, const Vector10d& y2, Vector9d& d);

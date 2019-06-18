@@ -717,3 +717,27 @@ TEST_F (MeasManagement, JustAfterKeyframe)
     EXPECT_EQ(xbuf_[3].t, 0.5);
     EXPECT_EQ(xbuf_[3].type, State::Camera);
 }
+
+
+TEST_F (MeasManagement, DelayedIMUMocap)
+{
+    update_on_mocap_ = true;
+    addMeas(meas::Mocap(0.1, z_mocap, R_mocap));
+    addMeas(meas::Mocap(0.2, z_mocap, R_mocap));
+    createIMUString(0.3);
+    addMeas(meas::Mocap(0.3, z_mocap, R_mocap));
+
+    EXPECT_EQ(xbuf_head_, 2);
+    EXPECT_EQ(imu_.size(), 2);
+    EXPECT_EQ(clk_.size(), 2);
+    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkClkString());
+
+    EXPECT_EQ(xhead().t, 0.3);
+    EXPECT_EQ(xhead().type, State::Mocap);
+    EXPECT_EQ(xbuf_[1].t, 0.2);
+    EXPECT_EQ(xbuf_[1].type, State::Mocap);
+    EXPECT_EQ(xbuf_[0].t, 0.1);
+    EXPECT_EQ(xbuf_[0].type, State::Mocap);
+}
+
