@@ -17,7 +17,7 @@ int main()
     Simulator sim(true);
     sim.load(imu_mocap());
 
-    Salsa* salsa = initSalsa(prefix + "Mocap/", "M", sim);
+    Salsa* salsa = initSalsa(prefix + "Mocap/", "$\\hat{x}$", sim);
     salsa->update_on_mocap_ = true;
     salsa->disable_mocap_ = false;
     salsa->disable_solver_ = false;
