@@ -112,6 +112,7 @@ inline std::string default_params(const std::string& prefix, std::string label="
     node["log_prefix"] = prefix;
     node["enable_out_of_order"] = false;
     node["label"] = label;
+    node["simulate_klt"] = false;
     tmp << node;
     tmp.close();
     return filename;

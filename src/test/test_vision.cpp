@@ -68,7 +68,6 @@ TEST (Vision, NewKFRotate)
 
     salsa.cam_ = sim.cam_;
 
-
     sim.register_estimator(&salsa);
 
     salsa.imu_[0].cov_= sim.imu_R_;
@@ -443,7 +442,7 @@ TEST (Vision, HandleWindowSlide)
                 expected_kf = true;
             salsa.addMeas(meas::Img(t, feat, R_pix, salsa.calcNewKeyframeCondition(feat)));
             EXPECT_FALSE(expected_kf);
-            EXPECT_LT(salsa.summary_.initial_cost, 1e-8);
+            EXPECT_LT(salsa.summary_.initial_cost, 1e-6);
             if (i == 0)
             {
                 EXPECT_EQ(salsa.xbuf_tail_, k < salsa.max_kf_window_ ? 0 : k - salsa.max_kf_window_);
