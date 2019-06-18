@@ -288,6 +288,7 @@ void Salsa::handleMeas()
             else
             {
                 node_idx = newNode(t);
+                current_state_integrator_.reset(t);
             }
         }
         else if (lt(t, t_min_node))
@@ -345,6 +346,8 @@ void Salsa::update(meas::Base *m, int idx)
         SD(5, "Unknown measurement type %d at t%.3f", m->type, m->t);
         break;
     }
+    if (!disable_solver_)
+        solve();
 }
 
 
@@ -384,6 +387,7 @@ bool Salsa::initialize(const meas::Base *m)
         SALSA_ASSERT(false, "Unknown Measurement Type %d at t%.3f", m->type, m->t);
         return false;
     }
+    current_state_integrator_.reset(m->t);
 }
 void Salsa::addMeas(const meas::Mocap &&mocap)
 {
@@ -446,6 +450,11 @@ bool Salsa::checkIMUString()
         if (std::abs(it->t0_-t0) > 1e-8)
         {
             SD(5, "Time Gap in IMU String end: %.3f, start: %.3f", it->t0_, t0);
+            return false;
+        }
+        if (ne(it->t-it->t0_, it->delta_t_))
+        {
+            SD(5, "Time Gap in IMU String start: %.3f, end: %.3f, dt %.3f", it->t0_, it->t, it->delta_t_);
             return false;
         }
         from = it->to_idx_;
@@ -521,7 +530,10 @@ int Salsa::newNode(double t)
 
         if (le(next_imu.t, t))
         {
-            imu.integrate(next_imu.t, z, next_imu.R);
+            if (le(next_imu.t, imu.t))
+                SD(5, "Trying to integrate backwards");
+            else
+                imu.integrate(next_imu.t, z, next_imu.R);
             imu_meas_buf_.pop_front();
         }
         else
@@ -547,6 +559,7 @@ int Salsa::newNode(double t)
     int next_idx = (xbuf_head_ + 1) % STATE_BUF_SIZE;
     SALSA_ASSERT(next_idx != xbuf_tail_, "Overfull State Buffer");
 
+    xbuf_[next_idx].type = State::None;
     xbuf_[next_idx].kf = -1;
     xbuf_[next_idx].node = ++current_node_;
     xbuf_[next_idx].t = t;

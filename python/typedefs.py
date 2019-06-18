@@ -35,9 +35,11 @@ SimStateType = np.dtype([
 
 StateType = np.dtype([
     ('t', np.float64),
+    ('xb', XType),
+    ('vb', (np.float64, 3)),
+    ('tau', (np.float64, 2)),
     ('x', XType),
     ('v', (np.float64, 3)),
-    ('tau', (np.float64, 2)),
     ('kf', np.int32),
     ('node', np.int32)
 ])

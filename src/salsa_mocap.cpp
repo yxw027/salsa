@@ -35,5 +35,5 @@ void Salsa::initializeNodeWithMocap(const meas::Mocap& mocap)
 void Salsa::initializeStateMocap(const meas::Mocap &m)
 {
     SD_S(5, "x_b2m_" << 180.0/M_PI *x_b2m_.q_.euler().transpose() << " z_I2m " << 180.0/M_PI*m.z.q_.euler().transpose());
-    initialize(m.t, m.z*x_b2m_.inverse(), Vector3d::Zero(), Vector2d::Zero());
+    initialize(m.t, m.z*x_b2m_.inverse(), v0_, Vector2d::Zero());
 }

@@ -162,8 +162,15 @@ void ImuFunctor::integrate(const double& _t, const Vector6d& u, const Matrix6d& 
 {
     SALSA_ASSERT((cov.array() == cov.array()).all(), "NaN detected in covariance on propagation");
     SALSA_ASSERT((u.array() == u.array()).all(), "NaN detected in covariance on propagation");
-    n_updates_++;
+    SALSA_ASSERT(ge(_t, t), "Trying to integrate backwards");
+//    if(le(_t, t))
+//    {
+//        SD(5, "Trying to integrate backwards z.t%.3f, y.t%.3f", _t, t);
+//        return;
+//    }
+
     double dt = _t - t;
+    n_updates_++;
     t = _t;
     delta_t_ = t - t0_;
     Vector9d ydot;

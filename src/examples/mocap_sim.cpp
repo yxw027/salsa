@@ -1,5 +1,6 @@
 #include "salsa/salsa.h"
 #include "salsa/test_common.h"
+#include "salsa/sim_common.h"
 
 #include "multirotor_sim/simulator.h"
 
@@ -10,24 +11,23 @@ using namespace multirotor_sim;
 
 int main()
 {
-  Simulator sim(true);
-  sim.load(imu_mocap());
-#ifndef NDEBUG
-  sim.tmax_ = 10;
-#endif
+    std::string prefix = "/tmp/Salsa/mocapSimulation/";
+    std::experimental::filesystem::remove_all(prefix);
 
-  Salsa salsa;
-  salsa.init(default_params("/tmp/Salsa/MocapSimulation/", "$\\hat{x}$"));
+    Simulator sim(true);
+    sim.load(imu_mocap());
 
-  sim.register_estimator(&salsa);
+    Salsa* salsa = initSalsa(prefix + "Mocap/", "M", sim);
+    salsa->update_on_mocap_ = true;
+    salsa->disable_mocap_ = false;
+    salsa->disable_solver_ = false;
 
-  Logger true_state_log(salsa.log_prefix_ + "Truth.log");
+    Logger true_state_log(prefix + "Truth.log");
 
-  while (sim.run())
-  {
-    true_state_log.log(sim.t_);
-    true_state_log.logVectors(sim.state().X.arr(), sim.state().v, sim.accel_bias_,
-                              sim.gyro_bias_, Vector2d{sim.clock_bias_, sim.clock_bias_rate_},
-                              sim.X_e2n_.arr(), sim.x_b2c_.arr());
-  }
+    while (sim.run())
+    {
+        logTruth(true_state_log, sim, *salsa);
+        setInit(salsa, sim);
+    }
+    delete salsa;
 }

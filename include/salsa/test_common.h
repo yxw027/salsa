@@ -159,7 +159,7 @@ inline std::string imu_only()
     return filename;
 }
 
-inline std::string imu_mocap()
+inline std::string imu_mocap(bool noise=true)
 {
   std::string filename = "/tmp/Salsa.imu_only.yaml";
   std::ofstream tmp(filename);
@@ -173,6 +173,18 @@ inline std::string imu_mocap()
   node["gnss_enabled"] =  false;
   node["raw_gnss_enabled"] =  false;
   node["enable_out_of_order"] = false;
+
+  if (!noise)
+  {
+      node["use_accel_truth"] = !noise;
+      node["use_mocap_truth"] = !noise;
+      node["use_gyro_truth"] = !noise;
+      node["use_camera_truth"] = !noise;
+      node["use_depth_truth"] = !noise;
+      node["use_gnss_truth"] = !noise;
+      node["use_raw_gnss_truth"] = !noise;
+  }
+
 
   tmp << node;
   tmp.close();
