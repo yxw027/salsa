@@ -1,4 +1,4 @@
-tmax: 5.0 # Simulation total time
+tmax: 60.0 # Simulation total time
 dt: 0.004 # Sim step rate
 log_filename: ""
 seed: 15 # 0 initializes seed with time
