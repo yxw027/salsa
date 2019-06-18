@@ -10,28 +10,23 @@ using namespace multirotor_sim;
 
 int main()
 {
+    std::string prefix = "/tmp/Salsa/gnssSimulation/";
+    std::experimental::filesystem::remove_all(prefix);
+
     Simulator sim(true);
     sim.load(imu_raw_gnss());
-//#ifndef NDEBUG
-//    sim.tmax_ = 10;
-//#endif
-    std::string prefix = "/tmp/Salsa/RawGNSSSimulation/";
 
-    Salsa salsa;
-    salsa.init(default_params(prefix + "Main/", "$\\hat{x}$"));
-    salsa.x0_ = sim.state().X;
-    salsa.x_e2n_ = sim.X_e2n_;
-    salsa.update_on_gnss_ = true;
-
-    sim.register_estimator(&salsa);
+    Salsa* salsa = initSalsa(prefix + "GNSS/", "$\\hat{x}$", sim);
+    salsa->update_on_gnss_ = true;
+    salsa->disable_gnss_ = false;
+    salsa->disable_solver_ = false;
 
     Logger true_state_log(prefix + "Truth.log");
 
     while (sim.run())
     {
-        salsa.x0_ = sim.state().X;
-        salsa.v0_ = sim.state().v;
-        salsa.x_e2n_ = sim.X_e2n_;
-        logTruth(true_state_log, sim, salsa);
+        logTruth(true_state_log, sim, *salsa);
+        setInit(salsa, sim);
     }
+    delete salsa;
 }

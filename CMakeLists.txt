@@ -13,6 +13,7 @@ find_package(lin_alg_tools REQUIRED)
 find_package(geometry REQUIRED)
 find_package(gnss_utils REQUIRED)
 find_package(multirotor_sim REQUIRED)
+find_package(Threads REQUIRED)
 
 add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
 
@@ -29,7 +30,8 @@ target_link_libraries(factors
     ${geometry_LIBRARIES}
     ${gnss_utils_LIBRARIES}
     ${OpenCV_LIBRARIES}
-    ${CERES_LIBRARIES})
+    ${CERES_LIBRARIES}
+    pthread)
 target_include_directories(factors PUBLIC
     include
     ${OpenCV_INCLUDE_DIRS}
@@ -55,7 +57,8 @@ target_link_libraries(salsa
     ${gnss_utils_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
     ${OpenCV_LIBS}
-    ${CERES_LIBRARIES})
+    ${CERES_LIBRARIES}
+    pthread)
 
 
 option (BUILD_ROS "Build ROS Tools" ON)
