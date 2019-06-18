@@ -14,7 +14,7 @@ int main()
     std::experimental::filesystem::remove_all(prefix);
 
     Simulator sim(true);
-    sim.load(imu_feat(false));
+    sim.load(imu_feat());
 
     Salsa* salsa = initSalsa(prefix + "Feat/", "$\\hat{x}$", sim);
     salsa->update_on_camera_ = true;
