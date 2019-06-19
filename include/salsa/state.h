@@ -20,7 +20,7 @@ public:
         None = 0x00,
         Gnss = 0x01,
         Mocap = 0x02,
-        Camera = 0x04
+        Camera = 0x04,
     };
     typedef Eigen::Matrix<double, dxSize, dxSize> dxMat;
     double buf_[13];

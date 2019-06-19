@@ -24,6 +24,7 @@
 #include "factors/clock_dynamics.h"
 #include "factors/anchor.h"
 #include "factors/feat.h"
+#include "factors/static_start.h"
 
 #include "salsa/logger.h"
 #include "salsa/state.h"
@@ -54,6 +55,7 @@ public:
     typedef std::deque<ClockBiasFunctor, Eigen::aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
     typedef std::vector<gnss_utils::Satellite, Eigen::aligned_allocator<gnss_utils::Satellite>> SatVec;
     typedef std::map<int,Feat,std::less<int>,Eigen::aligned_allocator<std::pair<const int,Feat>>> FeatMap;
+    typedef std::deque<StaticStartFunctor, Eigen::aligned_allocator<StaticStartFunctor>> StaticStartDeque;
 
     Salsa();
     ~Salsa();
@@ -167,7 +169,6 @@ public:
     Eigen::Matrix2d clk_bias_Xi_;
     double switch_Xi_;
     double switchdot_Xi_;
-    Matrix6d imu_bias_xi_;
     MocapDeque mocap_;
     PseudorangeDeque prange_;
 
@@ -182,6 +183,7 @@ public:
     void setAnchors(ceres::Problem& problem);
     void addRawGnssFactors(ceres::Problem& problem);
     void addFeatFactors(ceres::Problem& problem);
+    void addZeroVelFactors(ceres::Problem& problem);
     bool disable_solver_;
     bool disable_mocap_;
     bool disable_gnss_;
@@ -190,10 +192,26 @@ public:
     ceres::Solver::Summary summary_;
 
     /************************************/
+    /*           Static Start           */
+    /************************************/
+    bool enable_static_start_;
+    double static_start_imu_thresh_;
+    double camera_start_delay_;
+    double static_start_end_;
+    double static_start_freq_;
+    Matrix7d static_start_Xi_;
+    Matrix6d imu_bias_Xi_;
+    Matrix6d imu_bias_Xif_;
+    void zeroVelUpdate(const meas::ZeroVel& m, int idx);
+    void initializeStateZeroVel(const meas::ZeroVel& m);
+
+
+    /************************************/
     /*               IMU                */
     /************************************/
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
     bool checkIMUString();
+    bool checkTransitions();
     double acc_wander_weight_;
     double gyro_wander_weight_;
 
@@ -306,11 +324,13 @@ public:
     void addMeas(const meas::Mocap&& mocap);
     void addMeas(const meas::Gnss&& gnss);
     void addMeas(const meas::Img&& img);
+    void addMeas(const meas::ZeroVel&& zv);
     std::multiset<meas::Base*, std::function<bool(const meas::Base*, const meas::Base*)>> new_meas_;
     std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> imu_meas_buf_;
     std::deque<meas::Mocap, Eigen::aligned_allocator<meas::Mocap>> mocap_meas_buf_;
     std::deque<meas::Gnss, Eigen::aligned_allocator<meas::Gnss>> gnss_meas_buf_;
     std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
+    std::deque<meas::ZeroVel, Eigen::aligned_allocator<meas::ZeroVel>> zv_meas_buf_;
 
     /**************************************/
     /*            Meas Buffer 2           */

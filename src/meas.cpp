@@ -27,6 +27,9 @@ std::string Base::Type() const
     case IMG:
         return "Img";
         break;
+    case ZERO_VEL:
+        return "ZeroVel";
+        break;
     }
 }
 
@@ -83,6 +86,12 @@ Img::Img(double _t, const Features &_z, const Eigen::Matrix2d &_R, bool _new_key
 //    new_keyframe = _new_keyframe;
 //    type = IMG;
 //}
+
+ZeroVel::ZeroVel(double _t)
+{
+    t = _t;
+    type = ZERO_VEL;
+}
 
 }
 }

@@ -48,7 +48,7 @@ public:
     bool operator() (const T* _b, T* _res) const;
 
     Vector6d bias_prev_;
-    const Matrix6d Xi_;
+    Matrix6d Xi_;
 };
 typedef ceres::AutoDiffCostFunction<FunctorShield<ImuBiasAnchor>, 6, 6> ImuBiasAnchorFactorAD;
 

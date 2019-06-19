@@ -9,7 +9,7 @@ namespace salsa
 
 void Salsa::initFactors()
 {
-    bias_ = new ImuBiasAnchor(imu_bias_, imu_bias_xi_);
+    bias_ = new ImuBiasAnchor(imu_bias_, imu_bias_Xi_);
     state_anchor_ = new StateAnchor(state_anchor_xi_);
     x_e2n_anchor_ = new XformAnchor(x_e2n_anchor_xi_);
 }
@@ -191,6 +191,28 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
     }
 }
 
+void Salsa::addZeroVelFactors(ceres::Problem &problem)
+{
+    if (!enable_static_start_)
+        return;
+
+    int end = (xbuf_head_ + 1) % STATE_BUF_SIZE;
+    for (int idx = xbuf_tail_; idx != end; idx = (idx + 1) % STATE_BUF_SIZE)
+    {
+        if (xbuf_[idx].t > static_start_end_)
+            break;
+        else
+        {
+            StaticStartFunctor* ptr = new StaticStartFunctor(x0_, v0_, static_start_Xi_);
+            problem.AddResidualBlock(new StaticStartFactorAD(ptr),
+                                     NULL,
+                                     xbuf_[idx].x.data(),
+                                     xbuf_[idx].v.data());
+        }
+    }
+
+}
+
 void Salsa::initSolverOptions()
 {
     options_.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
@@ -207,6 +229,7 @@ void Salsa::solve()
     addFeatFactors(problem);
     addMocapFactors(problem);
     addRawGnssFactors(problem);
+    addZeroVelFactors(problem);
 
     if (!disable_solver_)
         ceres::Solve(options_, &problem, &summary_);

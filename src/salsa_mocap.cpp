@@ -14,7 +14,7 @@ void Salsa::mocapCallback(const double &t, const Xformd &z, const Matrix6d &R)
 
 void Salsa::mocapUpdate(const meas::Mocap &m, int idx)
 {
-    SD(2, "Mocap Update, t=%.2f", m.t);
+    SD(2, "Mocap Update, t=%.3f", m.t);
     SALSA_ASSERT((xbuf_[idx].type & State::Mocap) == 0, "Cannot double-up with Mocap nodes");
 
     int prev_x_idx = (idx + STATE_BUF_SIZE - 1) % STATE_BUF_SIZE;

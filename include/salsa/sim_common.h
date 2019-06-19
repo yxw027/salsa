@@ -1,6 +1,8 @@
 #pragma once
 
 #include "salsa/salsa.h"
+#include "salsa/test_common.h"
+
 #include "multirotor_sim/simulator.h"
 using namespace salsa;
 using namespace multirotor_sim;

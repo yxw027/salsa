@@ -17,16 +17,19 @@ int main()
     sim.load(imu_feat());
 
     Salsa* salsa = initSalsa(prefix + "Feat/", "$\\hat{x}$", sim);
+    salsa->enable_static_start_ = true;
+    salsa->sim_KLT_ = true;
     salsa->update_on_camera_ = true;
     salsa->disable_vision_ = false;
     salsa->disable_solver_ = false;
 
     Logger true_state_log(prefix + "Truth.log");
 
+    setInit(salsa, sim);
+
     while (sim.run())
     {
         logTruth(true_state_log, sim, *salsa);
-        setInit(salsa, sim);
     }
     delete salsa;
 }

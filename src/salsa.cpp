@@ -21,6 +21,7 @@ Salsa::Salsa() :
     start_time_.tow_sec = -1.0;  // flags as uninitialized
     x_e2n_ = xform::Xformd::Identity();
     x_b2c_ = xform::Xformd::Identity();
+    static_start_end_ = INFINITY;
 }
 
 Salsa::~Salsa()
@@ -78,9 +79,8 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("x_e2n_anchor_cov", filename, cov_diag);
     x_e2n_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
-    get_yaml_eigen("bias_anchor_cov", filename, cov_diag);
-    imu_bias_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
+    get_yaml_diag("bias_anchor_xi", filename, imu_bias_Xi_);
     get_yaml_diag("clk_bias_xi", filename, clk_bias_Xi_);
 
     get_yaml_node("update_on_camera", filename, update_on_camera_);
@@ -90,6 +90,12 @@ void Salsa::load(const string& filename)
     get_yaml_node("switch_xi", filename, switch_Xi_);
     get_yaml_node("switchdot_xi", filename, switchdot_Xi_);
     get_yaml_node("enable_switching_factors", filename, enable_switching_factors_);
+
+    get_yaml_node("enable_static_start", filename, enable_static_start_);
+    get_yaml_diag("static_start_Xi", filename, static_start_Xi_);
+    get_yaml_node("static_start_imu_thresh", filename, static_start_imu_thresh_);
+    get_yaml_node("camera_start_delay", filename, camera_start_delay_);
+    get_yaml_node("static_start_freq", filename, static_start_freq_);
 }
 
 void Salsa::initState()
@@ -117,6 +123,18 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     SD(1, "Got IMU t: %.3f", t);
     imu_meas_buf_.push_back({t, z, R});
 
+    if (enable_static_start_ && le(t, static_start_end_))
+    {
+        if (z.head<3>().norm() > static_start_imu_thresh_)
+        {
+            static_start_end_ = t;
+        }
+        else if(gt(t, xhead().t + static_start_freq_) || (current_node_ == -1))
+        {
+            addMeas(meas::ZeroVel(t));
+        }
+    }
+
     if (imu_.empty())
     {
         return;
@@ -135,6 +153,8 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     SALSA_ASSERT((current_state_.x.arr().array() == current_state_.x.arr().array()).all()
                  || (current_state_.v.array() == current_state_.v.array()).all(),
                  "NaN Detected in propagation");
+
+
 
     handleMeas();
     logCurrentState();
@@ -160,7 +180,7 @@ void Salsa::cleanUpSlidingWindow()
 
     // Figure out which condition needs to be used by traversing the window and see where we
     // meet our criteria
-    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf <= oldest_kf_ || xbuf_[kf_idx].kf < 0))
+    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf <= oldest_kf_))
     {
         kf_idx = (kf_idx + 1) % STATE_BUF_SIZE;
     }
@@ -225,6 +245,13 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     xbuf_[0].kf = current_state_.kf = current_kf_ = -1;
     xbuf_[0].node = current_state_.node = current_node_ = 0;
     oldest_node_ = 0;
+    x0_ = x0;
+    v0_ = v0;
+
+    if (enable_static_start_)
+        static_start_end_ = INFINITY;
+    else
+        static_start_end_ = -INFINITY;
 
     assert((current_state_.x.arr().array() == current_state_.x.arr().array()).all()
            && (current_state_.v.array() == current_state_.v.array()).all());
@@ -342,6 +369,12 @@ void Salsa::update(meas::Base *m, int idx)
         mocapUpdate(*z, idx);
         break;
     }
+    case meas::Base::ZERO_VEL:
+    {
+        const meas::ZeroVel* z = dynamic_cast<const meas::ZeroVel*>(m);
+        zeroVelUpdate(*z, idx);
+        break;
+    }
     default:
         SD(5, "Unknown measurement type %d at t%.3f", m->type, m->t);
         break;
@@ -383,6 +416,13 @@ bool Salsa::initialize(const meas::Base *m)
         mocapUpdate(*z, xbuf_head_);
         return true;
     }
+    case meas::Base::ZERO_VEL:
+    {
+        SD(5, "Initialized Using ZeroVel\n");
+        const meas::ZeroVel* z = dynamic_cast<const meas::ZeroVel*>(m);
+        initializeStateZeroVel(*z);
+        return false;
+    }
     default:
         SALSA_ASSERT(false, "Unknown Measurement Type %d at t%.3f", m->type, m->t);
         return false;
@@ -414,6 +454,14 @@ void Salsa::addMeas(const meas::Img &&img)
     new_meas_.insert(new_meas_.end(), &img_meas_buf_.back());
     if (update_on_camera_)
         handleMeas();
+}
+
+void Salsa::addMeas(const meas::ZeroVel &&zv)
+{
+    SD(2, "Got new ZeroVel Measurement t: %.3f", zv.t);
+    zv_meas_buf_.push_back(zv);
+    new_meas_.insert(new_meas_.end(), &zv_meas_buf_.back());
+    handleMeas();
 }
 
 bool Salsa::inWindow(int idx)
@@ -506,6 +554,11 @@ bool Salsa::checkClkString()
     return it == clk_.end();
 }
 
+bool Salsa::checkTransitions()
+{
+    return checkIMUString() && checkClkString();
+}
+
 int Salsa::newNode(double t)
 {
     // Sanity Checks
@@ -515,6 +568,7 @@ int Salsa::newNode(double t)
     SD(2, "New Transition Factors from %d", xhead().node);
     ClockBiasFunctor& clk = clk_.emplace_back(clk_bias_Xi_, xbuf_head_, xhead().node);
     ImuFunctor& imu = imu_.emplace_back(xhead().t, imu_bias_, xbuf_head_, xhead().node);
+
     if (imu_.size() > 1)
     {
         SD(2, "Using previous IMU meas to initialize new imu functor");
@@ -593,7 +647,6 @@ int Salsa::moveNode(double t)
     SALSA_ASSERT(le(t, imu_meas_buf_.back().t) , "Not enough IMU to move node"); // t <= t[imu_max]
 
     // Grab the Transition Factors
-    ClockBiasFunctor& clk = clk_.back();
     ImuFunctor& imu = imu_.back();
 
     // Integrate to the measurement
@@ -616,7 +669,7 @@ int Salsa::moveNode(double t)
     }
 
     imu.finished(xbuf_head_);
-    clk.finished(imu.delta_t_, xbuf_head_);
+    clk_.back().finished(imu.delta_t_, xbuf_head_);
 
     SD(2, "Sliding node %d from t%.3f -> t%.3f", xhead().node, xhead().t, t);
     int from_idx = imu.from_idx_;
@@ -746,6 +799,17 @@ State& Salsa::insertNodeIntoBuffer(int idx)
 int Salsa::lastKfId() const
 {
     return last_kf_id_;
+}
+
+void Salsa::zeroVelUpdate(const meas::ZeroVel& m, int idx)
+{
+    (void)idx;
+    SD(2, "ZeroVel Update, t=%.3f", m.t);
+}
+
+void Salsa::initializeStateZeroVel(const meas::ZeroVel &m)
+{
+    initialize(m.t, x0_, v0_, Vector2d::Zero());
 }
 
 //void Salsa::endInterval(double t)

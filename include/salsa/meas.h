@@ -23,7 +23,8 @@ struct Base
         GNSS,
         IMU,
         MOCAP,
-        IMG
+        IMG,
+        ZERO_VEL
     };
     double t;
     int type;
@@ -64,6 +65,11 @@ struct Img : public Base
     Features z;
     Eigen::Matrix2d R_pix;
     bool new_keyframe;
+};
+
+struct ZeroVel: public Base
+{
+    ZeroVel(double _t);
 };
 }
 

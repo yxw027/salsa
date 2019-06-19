@@ -113,6 +113,7 @@ inline std::string default_params(const std::string& prefix, std::string label="
     node["enable_out_of_order"] = false;
     node["label"] = label;
     node["simulate_klt"] = false;
+    node["enable_static_start"] = false;
     tmp << node;
     tmp.close();
     return filename;
@@ -135,6 +136,7 @@ inline std::string small_feat_test(const std::string& prefix, bool init_depth=tr
     node["num_feat"] = 4;
     node["use_measured_depth"] = init_depth;
     node["enable_out_of_order"] = false;
+    node["enable_static_start"] = false;
     tmp << node;
     tmp.close();
     return filename;

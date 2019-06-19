@@ -50,6 +50,7 @@ traj_yaw_period: 20
 
 
 # Controller Configuration
+takeoff_wait_time: 10
 throttle_eq: 0.5
 mass: 1.0
 max_thrust: 19.6133
@@ -62,7 +63,7 @@ waypoint_velocity_threshold: 0.7
 drag_constant: 0.1
 angular_drag_constant: 0.01
 
-Kp: [1, 1, 1]
+Kp: [2, 2, 2]
 Kd: [0, 0, 0]
 Kv: [2, 2, 2]
 sh_kv: 50 # Hover throttle velocity gain

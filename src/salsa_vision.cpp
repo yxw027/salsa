@@ -19,8 +19,16 @@ bool Salsa::isTrackedFeature(int id) const
 void Salsa::imageCallback(const double& tc, const ImageFeat& z,
                           const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
+    SD(3, "IMG CB t%.3f", tc);
     if (disable_vision_)
         return;
+
+    if (enable_static_start_ && (lt(tc, static_start_end_ + camera_start_delay_)))
+    {
+        SD(2, "Waiting for Camera delay after static start");
+        return;
+    }
+
 
     if (sim_KLT_)
     {

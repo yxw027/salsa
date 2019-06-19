@@ -157,7 +157,7 @@ TEST_F (NodeManagement, NewNodeEndOfString)
     initialize(0, Xformd::Identity(), Vector3d::Zero(), Vector2d::Zero());
     createIMUString(0.2);
     newNode(0.2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_EQ(xbuf_head_, 1);
     EXPECT_EQ(xbuf_tail_, 0);
     EXPECT_FLOAT_EQ(xhead().t, 0.2);
@@ -253,7 +253,7 @@ TEST_F (NodeManagement, InsertNode)
     EXPECT_FLOAT_EQ(xhead().t, 0.2);
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_FLOAT_EQ(xbuf_[1].t, 0.1);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
 }
@@ -273,7 +273,7 @@ TEST_F (NodeManagement, InsertNodeOnTopOfPrevious)
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -292,7 +292,7 @@ TEST_F (NodeManagement, InsertNodeOnTopOfCurrent)
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -311,7 +311,7 @@ TEST_F (NodeManagement, InsertNodeBarelyBehindCurrent)
     EXPECT_EQ(xbuf_[2].node, 2);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -334,7 +334,7 @@ TEST_F (NodeManagement, InsertOneIMUAfterPrev)
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -355,7 +355,7 @@ TEST_F (NodeManagement, InsertOntIMUBeforePrev)
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -376,7 +376,7 @@ TEST_F (NodeManagement, InsertNHalfIMUAfterPrev)
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -397,7 +397,7 @@ TEST_F (NodeManagement, InsertHalfImuBeforePrev)
     EXPECT_EQ(xbuf_[1].node, 1);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 }
 
@@ -414,7 +414,7 @@ TEST_F (MeasManagement, NominalIMUMocap)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -438,7 +438,7 @@ TEST_F (MeasManagement, NominalIMUGnss)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -462,7 +462,7 @@ TEST_F (MeasManagement, NominalIMUVision)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -488,7 +488,7 @@ TEST_F (MeasManagement, IMUVisionMoveNode)
     EXPECT_FLOAT_EQ(imu_.back().delta_t_, 0.2);
     EXPECT_EQ(clk_.size(), 1);
     EXPECT_FLOAT_EQ(clk_.back().dt_, 0.2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -510,7 +510,7 @@ TEST_F (MeasManagement, RewindIMUMocap)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -532,7 +532,7 @@ TEST_F (MeasManagement, RewindIMUGnss)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -554,7 +554,7 @@ TEST_F (MeasManagement, RewindIMUVision)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);
@@ -579,7 +579,7 @@ TEST_F (MeasManagement, MocapOnTopOfSlidImg)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xbuf_[0].t, 0.1);
@@ -609,7 +609,7 @@ TEST_F (MeasManagement, MocapOnTopOfSlidingContinued)
     EXPECT_EQ(xbuf_head_, 3);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xbuf_[0].t, 0.1);
@@ -635,7 +635,7 @@ TEST_F (MeasManagement, BetweenSliding)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xbuf_[0].t, 0.1);
@@ -659,7 +659,7 @@ TEST_F (MeasManagement, RewindBetweenSliding)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xbuf_[0].t, 0.1);
@@ -685,7 +685,7 @@ TEST_F (MeasManagement, RewindBeforeKeyframe)
     EXPECT_EQ(xbuf_head_, 3);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
 
@@ -714,7 +714,7 @@ TEST_F (MeasManagement, JustAfterKeyframe)
     EXPECT_EQ(xbuf_head_, 3);
     EXPECT_EQ(imu_.size(), 3);
     EXPECT_EQ(clk_.size(), 3);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
 
@@ -740,7 +740,7 @@ TEST_F (MeasManagement, DelayedIMUMocap)
     EXPECT_EQ(xbuf_head_, 2);
     EXPECT_EQ(imu_.size(), 2);
     EXPECT_EQ(clk_.size(), 2);
-    EXPECT_TRUE(checkIMUString());
+    EXPECT_TRUE(checkTransitions());
     EXPECT_TRUE(checkClkString());
 
     EXPECT_EQ(xhead().t, 0.3);

@@ -325,6 +325,8 @@ void Salsa::logImu()
 
 void Salsa::printGraph()
 {
+    if (DEBUGLOGLEVEL < 3)
+        return;
     // head: 10   tail: 5   kf_condition: 1  nkf_feat: 50   nft_window: 150  nfeat_meas_window: 250 nfeat_tot:
     // t -- 000.2 -- 000.4 -- 000.5 --
     // K --   0   --       --   1   --
@@ -403,6 +405,8 @@ void Salsa::printGraph()
 
 void Salsa::printImuIntervals()
 {
+    if (DEBUGLOGLEVEL < 3)
+        return;
     logs_[log::Graph]->file_ << "\nIMU: ";
     for (auto& imu : imu_)
     {

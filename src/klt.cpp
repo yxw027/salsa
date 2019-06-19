@@ -60,6 +60,12 @@ void Salsa::setFeatureMask(const std::string& filename)
 
 void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2d& R_pix)
 {
+    if (enable_static_start_ && (lt(tc, static_start_end_ + camera_start_delay_)))
+    {
+        SD(2, "Waiting for Camera delay after static start");
+        return;
+    }
+
     if (img.channels() > 1)
         cvtColor(img, current_img_, COLOR_BGR2GRAY);
     else
