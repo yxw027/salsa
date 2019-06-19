@@ -203,8 +203,8 @@ void Salsa::addZeroVelFactors(ceres::Problem &problem)
             break;
         else
         {
-            StaticStartFunctor* ptr = new StaticStartFunctor(x0_, v0_, static_start_Xi_);
-            problem.AddResidualBlock(new StaticStartFactorAD(ptr),
+            ZeroVelFunctor* ptr = new ZeroVelFunctor(x0_, v0_, zero_vel_Xi_);
+            problem.AddResidualBlock(new ZeroVelFactorAD(ptr),
                                      NULL,
                                      xbuf_[idx].x.data(),
                                      xbuf_[idx].v.data());

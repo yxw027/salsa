@@ -1,4 +1,4 @@
-#include "factors/static_start.h"
+#include "factors/zero_vel.h"
 
 using namespace xform;
 using namespace Eigen;
@@ -6,7 +6,7 @@ using namespace Eigen;
 namespace salsa
 {
 
-StaticStartFunctor::StaticStartFunctor(const xform::Xformd& x0, const Eigen::Vector3d& v0,
+ZeroVelFunctor::ZeroVelFunctor(const xform::Xformd& x0, const Eigen::Vector3d& v0,
                                        const Matrix7d& _Xi) :
     v0_(v0),
     Xi_(_Xi)
@@ -16,7 +16,7 @@ StaticStartFunctor::StaticStartFunctor(const xform::Xformd& x0, const Eigen::Vec
 }
 
 template <typename T>
-bool StaticStartFunctor::operator()(const T* _x, const T* _v, T* _r) const
+bool ZeroVelFunctor::operator()(const T* _x, const T* _v, T* _r) const
 {
     typedef Matrix<T,3,1> Vec3;
     typedef Matrix<T,7,1> Vec7;
@@ -39,8 +39,8 @@ bool StaticStartFunctor::operator()(const T* _x, const T* _v, T* _r) const
     return true;
 }
 
-template bool StaticStartFunctor::operator()<double>(const double* _xj, const double* _vj, double* _res) const;
+template bool ZeroVelFunctor::operator()<double>(const double* _xj, const double* _vj, double* _res) const;
 typedef ceres::Jet<double, 10> jactype;
-template bool StaticStartFunctor::operator()<jactype>(const jactype* _xj, const jactype* _vj, jactype* _res) const;
+template bool ZeroVelFunctor::operator()<jactype>(const jactype* _xj, const jactype* _vj, jactype* _res) const;
 
 }

@@ -92,7 +92,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("enable_switching_factors", filename, enable_switching_factors_);
 
     get_yaml_node("enable_static_start", filename, enable_static_start_);
-    get_yaml_diag("static_start_Xi", filename, static_start_Xi_);
+    get_yaml_diag("static_start_Xi", filename, zero_vel_Xi_);
     get_yaml_node("static_start_imu_thresh", filename, static_start_imu_thresh_);
     get_yaml_node("camera_start_delay", filename, camera_start_delay_);
     get_yaml_node("static_start_freq", filename, static_start_freq_);

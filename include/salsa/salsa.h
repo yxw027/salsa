@@ -24,7 +24,7 @@
 #include "factors/clock_dynamics.h"
 #include "factors/anchor.h"
 #include "factors/feat.h"
-#include "factors/static_start.h"
+#include "factors/zero_vel.h"
 
 #include "salsa/logger.h"
 #include "salsa/state.h"
@@ -55,7 +55,7 @@ public:
     typedef std::deque<ClockBiasFunctor, Eigen::aligned_allocator<ClockBiasFunctor>> ClockBiasDeque;
     typedef std::vector<gnss_utils::Satellite, Eigen::aligned_allocator<gnss_utils::Satellite>> SatVec;
     typedef std::map<int,Feat,std::less<int>,Eigen::aligned_allocator<std::pair<const int,Feat>>> FeatMap;
-    typedef std::deque<StaticStartFunctor, Eigen::aligned_allocator<StaticStartFunctor>> StaticStartDeque;
+    typedef std::deque<ZeroVelFunctor, Eigen::aligned_allocator<ZeroVelFunctor>> StaticStartDeque;
 
     Salsa();
     ~Salsa();
@@ -167,6 +167,7 @@ public:
     XformAnchor* x_e2n_anchor_;
     Matrix6d x_e2n_anchor_xi_;
     Eigen::Matrix2d clk_bias_Xi_;
+    Matrix6d imu_bias_Xi_;
     double switch_Xi_;
     double switchdot_Xi_;
     MocapDeque mocap_;
@@ -199,9 +200,7 @@ public:
     double camera_start_delay_;
     double static_start_end_;
     double static_start_freq_;
-    Matrix7d static_start_Xi_;
-    Matrix6d imu_bias_Xi_;
-    Matrix6d imu_bias_Xif_;
+    Matrix7d zero_vel_Xi_;
     void zeroVelUpdate(const meas::ZeroVel& m, int idx);
     void initializeStateZeroVel(const meas::ZeroVel& m);
 

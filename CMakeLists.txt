@@ -25,7 +25,7 @@ add_library(factors
     src/factors/anchor.cpp
     src/factors/clock_dynamics.cpp
     src/factors/switch_dynamics.cpp
-    src/factors/static_start.cpp
+    src/factors/zero_vel.cpp
     src/factors/pseudorange.cpp)
 target_link_libraries(factors
     ${geometry_LIBRARIES}
