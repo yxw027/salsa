@@ -281,6 +281,7 @@ public:
     /*               KLT                */
     /************************************/
     bool dropFeature(int idx);
+    void createDistortionMask();
     void setFeatureMask(const std::string& filename);
     void showImage();
     void collectNewfeatures();
@@ -308,7 +309,7 @@ public:
     cv::Mat prev_img_;
     cv::Mat current_img_;
     cv::Mat color_img_;
-    cv::Mat mask_;
+    cv::Mat mask_, mask_overlay_;
     cv::Mat point_mask_;
 
     /************************************/
@@ -331,9 +332,6 @@ public:
     std::deque<meas::Img, Eigen::aligned_allocator<meas::Img>> img_meas_buf_;
     std::deque<meas::ZeroVel, Eigen::aligned_allocator<meas::ZeroVel>> zv_meas_buf_;
 
-    /**************************************/
-    /*            Meas Buffer 2           */
-    /**************************************/
     void handleMeas();
     void update(meas::Base* m, int idx);
     void alignIMU();

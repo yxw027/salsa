@@ -21,6 +21,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("tracker_freq", filename, tracker_freq_);
     get_yaml_node("disable_vision", filename, disable_vision_);
 
+
     got_first_img_ = false;
     next_feature_id_ = 0;
     prev_features_.clear();
@@ -33,17 +34,18 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
         colors_.push_back(Scalar(std::rand()/(RAND_MAX/255), std::rand()/(RAND_MAX/255), std::rand()/(RAND_MAX/255)));
     }
 
-    std::string mask_filename;
-    get_yaml_node("feature_mask", filename, mask_filename, false);
-    if (!mask_filename.empty())
-    {
-        setFeatureMask(mask_filename);
-    }
-    else
-    {
-        mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
-        mask_ = 255;
-    }
+    createDistortionMask();
+//    std::string mask_filename;
+//    get_yaml_node("feature_mask", filename, mask_filename, false);
+//    if (!mask_filename.empty())
+//    {
+//        setFeatureMask(mask_filename);
+//    }
+//    else
+//    {
+//        mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
+//        mask_ = 255;
+//    }
     t_next_klt_output_ = NAN;
 }
 
@@ -52,6 +54,33 @@ bool Salsa::dropFeature(int idx)
     kf_feat_.rm(idx);
     current_feat_.rm(idx);
     prev_features_.erase(prev_features_.begin() + idx);
+}
+
+void Salsa::createDistortionMask()
+{
+    using namespace Eigen;
+    Camera<double> calibrated_cam = cam_;
+    // Define undistorted image boundary
+    const int num_ppe = 10; // number of points per edge
+    double width = cam_.image_size_.x();
+    double height = cam_.image_size_.y();
+    Matrix<double, num_ppe*4, 2, RowMajor> boundary;
+    int row = 0;
+    for (uint32_t i = 0; i < num_ppe; i++)
+        boundary.row(row++) = cam_.proj(calibrated_cam.invProj(Vector2d(i*(width/num_ppe), 0.0), 1.0)); // bottom
+    for (uint32_t i = 0; i < num_ppe; i++)
+        boundary.row(row++) = cam_.proj(calibrated_cam.invProj(Vector2d(width, i*(height/num_ppe)), 1.0)); // right
+    for (uint32_t i = 0; i < num_ppe; i++)
+        boundary.row(row++) = cam_.proj(calibrated_cam.invProj(Vector2d(width - i*(width/num_ppe), height), 1.0)); // top
+    for (uint32_t i = 0; i < num_ppe; i++)
+        boundary.row(row++) = cam_.proj(calibrated_cam.invProj(Vector2d(0, height - i*(height/num_ppe)), 1.0)); // left
+
+    // Convert boundary to mat and create the mask by filling in a polygon defined by the boundary
+    cv::Mat boundary_mat(cv::Size(2, num_ppe*4), CV_64F, boundary.data());
+    boundary_mat.convertTo(boundary_mat, CV_32SC1);
+    mask_ = cv::Mat(cv::Size(cam_.image_size_.x(), cam_.image_size_.y()), CV_8UC1, cv::Scalar(0));
+    cv::fillConvexPoly(mask_, boundary_mat, cv::Scalar(255));
+    cvtColor(cv::Scalar::all(255) - mask_, mask_overlay_, COLOR_GRAY2BGR);
 }
 
 void Salsa::setFeatureMask(const std::string& filename)
@@ -258,6 +287,7 @@ void Salsa::collectNewfeatures()
 void Salsa::showImage()
 {
     cvtColor(prev_img_, color_img_, COLOR_GRAY2BGR);
+    color_img_ = color_img_ - 0.2*mask_overlay_;
     // draw features and ids
     for (int i = 0; i < current_feat_.size(); i++)
     {

@@ -6,8 +6,8 @@ log_prefix: "/tmp/Salsa/"
 imu_topic: "/imu"
 image_topic: "/left/compressed"
 mocap_topic: "/Ragnarok_ned"
-start_time: 0
-duration: 48
+start_time: 21
+duration: 10
 bag_name: "/home/superjax/rosbag/mocap_ned1.bag"
 mocap_rate: 10
 bias0: [0, 0, 0, 0, 0, 0]
