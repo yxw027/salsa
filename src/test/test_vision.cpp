@@ -222,7 +222,7 @@ TEST (Vision, SlideAnchor)
 TEST (Vision, KeyframeCleanup)
 {
     Simulator sim(false);
-    sim.load(imu_feat(false, 10.0));
+    sim.load(imu_feat(false));
 
     Salsa salsa;
     salsa.init(default_params("/tmp/Salsa/FeatSimulation/"));

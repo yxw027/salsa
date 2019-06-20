@@ -77,8 +77,8 @@ TEST (FeatFactor, FDvsANJac1)
     param.ComputeJacobian(xi.data(), param_jac.data());
     drdx1a = drdx1a_global * param_jac;
 
-    std::cout << "FD:\n" << drdx1fd << std::endl;
-    std::cout << "AN:\n" << drdx1a << std::endl;
+//    std::cout << "FD:\n" << drdx1fd << std::endl;
+//    std::cout << "AN:\n" << drdx1a << std::endl;
 
     EXPECT_MAT_NEAR(drdx1fd, drdx1a, 1e-6);
 }
@@ -124,8 +124,8 @@ TEST (FeatFactor, FDvsANJac2)
     param.ComputeJacobian(xj.data(), param_jac.data());
     drdxja = drdxja_global * param_jac;
 
-    std::cout << "FD:\n" << drdxjfd << std::endl;
-    std::cout << "AN:\n" << drdxja << std::endl;
+//    std::cout << "FD:\n" << drdxjfd << std::endl;
+//    std::cout << "AN:\n" << drdxja << std::endl;
 
     EXPECT_MAT_NEAR(drdxjfd, drdxja, 1e-6);
 }
@@ -160,8 +160,8 @@ TEST (FeatFactor, FDvsANJac3)
 
     an.Evaluate(p, res.data(), j);
 
-    std::cout << "FD:\n" << drdxjfd << std::endl;
-    std::cout << "AN:\n" << drdxja << std::endl;
+//    std::cout << "FD:\n" << drdxjfd << std::endl;
+//    std::cout << "AN:\n" << drdxja << std::endl;
 
     EXPECT_MAT_NEAR(drdxjfd, drdxja, 1e-6);
 }

@@ -233,8 +233,8 @@ void Salsa::cleanUpSlidingWindow()
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
-    SD_S(4, "Initialize State: pos = " << x0.t_.transpose() << " euler = "
-         << 180.0/M_PI * x0.q_.euler().transpose() << " q = " << x0.q_);
+    SD_S(3, "Initialize State: pos = " << x0.t_.transpose() << " euler = "
+           << 180.0/M_PI * x0.q_.euler().transpose() << " q = " << x0.q_);
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
     xbuf_[0].t = current_state_.t = t;

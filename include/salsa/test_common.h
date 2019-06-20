@@ -114,6 +114,7 @@ inline std::string default_params(const std::string& prefix, std::string label="
     node["label"] = label;
     node["simulate_klt"] = false;
     node["enable_static_start"] = false;
+    node["max_kf_window"] = 10;
     tmp << node;
     tmp.close();
     return filename;

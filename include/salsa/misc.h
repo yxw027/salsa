@@ -4,11 +4,11 @@
 #include <stdio.h>
 
 #ifndef DEBUGPRINT
-#define DEBUGPRINT 1
+#define DEBUGPRINT 0
 #endif
 
 #define DEBUGPRINTLEVEL 4
-#define DEBUGLOGLEVEL 2
+#define DEBUGLOGLEVEL 4
 
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl
@@ -41,7 +41,7 @@
 #define SD_S(...)
 #endif
 
-//#ifndef NDEBUG
+#ifdef NDEBUG
 #define SALSA_ASSERT(condition, ...) \
     do { \
         if (! (condition)) { \
@@ -53,9 +53,9 @@
             throw std::runtime_error("ERROR:"); \
         } \
     } while (false)
-//#else
-//#   define SALSA_ASSERT(...)
-//#endif
+#else
+#   define SALSA_ASSERT(...)
+#endif
 
 /*************************************/
 /*          Round-Off helpers        */
