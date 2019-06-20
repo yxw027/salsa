@@ -168,10 +168,11 @@ int Salsa::calcNewKeyframeConditionKLT()
     Eigen::Matrix3d R_cj2ci = q_cj2ci.R();
 
     assert(kf_feat_.size() == current_feat_.size());
+    Camera<double> calibrated_cam = cam_; // Don't use distortion model here
     for (int i = 0; i < kf_feat_.size(); i++)
     {
         Eigen::Vector3d zihat = R_cj2ci * current_feat_.zetas[i];
-        Eigen::Vector2d lihat = cam_.proj(zihat);
+        Eigen::Vector2d lihat = calibrated_cam.proj(zihat);
         Eigen::Vector2d li(kf_feat_.pix[i].x, kf_feat_.pix[i].y);
         double err = (lihat - li).norm();
         kf_parallax_ += err;
