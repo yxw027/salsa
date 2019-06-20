@@ -7,7 +7,7 @@ imu_topic: "/imu"
 image_topic: "/left/compressed"
 mocap_topic: "/Ragnarok_ned"
 start_time: 0
-duration: 41
+duration: 48
 bag_name: "/home/superjax/rosbag/mocap_ned1.bag"
 mocap_rate: 10
 bias0: [0, 0, 0, 0, 0, 0]

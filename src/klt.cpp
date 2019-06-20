@@ -10,6 +10,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_eigen("focal_len", filename, cam_.focal_len_);
     get_yaml_eigen("cam_center", filename, cam_.cam_center_);
     get_yaml_eigen("image_size", filename, cam_.image_size_);
+    get_yaml_eigen("distortion", filename, cam_.distortion_);
     get_yaml_node("cam_skew", filename, cam_.s_);
     get_yaml_node("kf_parallax_thresh", filename, kf_parallax_thresh_);
     get_yaml_node("kf_feature_thresh", filename, kf_feature_thresh_);

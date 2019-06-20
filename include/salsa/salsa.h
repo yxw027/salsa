@@ -74,7 +74,7 @@ public:
     // Constants
     xform::Xformd x0_;
     Eigen::Vector3d v0_;
-    Camera<double> cam_;
+    UncalibratedCamera<double> cam_;
     xform::Xformd x_b2m_; // transform from imu to mocap frame
     xform::Xformd x_b2c_; // transform from imu to camera frame
     double dt_m_; // time offset of mocap  (t_m(stamped) - dt_m = t(true))
