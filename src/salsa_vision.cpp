@@ -204,7 +204,7 @@ void Salsa::cleanUpFeatureTracking(int oldest_kf_idx)
 
 void Salsa::createNewKeyframe()
 {
-    filterFeaturesTooClose(get_feature_radius_);
+    filterFeaturesTooClose(track_feature_min_distance_);
     collectNewfeatures();
     kf_feat_ = current_feat_;
     kf_num_feat_ = kf_feat_.size();
