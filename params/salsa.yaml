@@ -6,19 +6,19 @@ log_prefix: "/tmp/Salsa/"
 imu_topic: "/imu"
 image_topic: "/left/compressed"
 mocap_topic: "/Ragnarok_ned"
-start_time: 23
+start_time: 0
 duration: 41
-bag_name: "/home/superjax/rosbag/mocap_ned1_adjust.bag"
+bag_name: "/home/superjax/rosbag/mocap_ned1.bag"
 mocap_rate: 10
-# bias0: [0, 0, 0, 0, 0, 0]
-bias0: [-0.04717741613721455, -0.07034896670337663, -0.03231176628010501,
-       -0.004936014393538678, 0.006832230548126756, 0.003299054277444827]
+bias0: [0, 0, 0, 0, 0, 0]
+# bias0: [-0.04717741613721455, -0.07034896670337663, -0.03231176628010501,
+#        -0.004936014393538678, 0.006832230548126756, 0.003299054277444827]
 
 ######################################
 ### OPT SETUP
 ######################################
 max_node_window: 50
-max_kf_window: 10
+max_kf_window: 25
 state_buf_size: 200
 num_feat: 75
 num_sat: 15
@@ -40,8 +40,8 @@ x_b2o: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
 #####################################
 enable_static_start: true
 static_start_freq: 0.1 # how often to drop static-start nodes
-static_start_imu_thresh: 10.5 # if imu mag exceeds this, then stop static start
-camera_start_delay: 0.5 # wait this long after static start to start fusing images
+static_start_imu_thresh: 15 # if imu mag exceeds this, then stop static start
+camera_start_delay: 0.75 # wait this long after static start to start fusing images
 static_start_Xi: [1e8, 1e8, 1e8, # pos
                   1e8,           # yaw
                   1e8, 1e8, 1e8] # vel
@@ -66,13 +66,13 @@ cam_center: [189.57352223555952, 114.25998149460739]
 image_size: [376, 240]
 cam_skew: 0.0
 distortion: [-0.28839265926889596, 0.06052865219979488, 0.003175682270413171,  0.0014326472335837869, 0]
-kf_parallax_thresh: 75
-kf_feature_thresh: 0.75
+kf_parallax_thresh: 7
+kf_feature_thresh: 0.8
 update_on_camera: true
 
 show_matches: true
-get_feature_radius: 45
-track_feature_min_distance: 10
+get_feature_radius: 5
+track_feature_min_distance: 6
 feature_mask: ""
 simulate_klt: true
 tc: 0.0

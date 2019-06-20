@@ -181,7 +181,7 @@ void Salsa::addFeatFactors(ceres::Problem &problem)
             SALSA_ASSERT(inWindow(func->to_idx_), "Trying to add factor to node outside of window: %d", func->to_idx_);
             FeatFactor* ptr = new FeatFactor(&*func);
             problem.AddResidualBlock(ptr,
-                                     NULL,
+                                     new ceres::CauchyLoss(1.0),
                                      xbuf_[ft->second.idx0].x.data(),
                     xbuf_[func->to_idx_].x.data(),
                     &ft->second.rho);

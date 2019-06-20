@@ -129,7 +129,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
         {
             static_start_end_ = t;
         }
-        else if(gt(t, xhead().t + static_start_freq_) || (current_node_ == -1))
+        else if(gt(t, xhead().t + static_start_freq_) || (current_node_ == -1 && t > 1.0))
         {
             addMeas(meas::ZeroVel(t));
         }
@@ -180,7 +180,7 @@ void Salsa::cleanUpSlidingWindow()
 
     // Figure out which condition needs to be used by traversing the window and see where we
     // meet our criteria
-    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf <= oldest_kf_))
+    while (kf_idx != xbuf_head_ && (xbuf_[kf_idx].kf <= oldest_kf_ || xbuf_[kf_idx].kf < 0))
     {
         kf_idx = (kf_idx + 1) % STATE_BUF_SIZE;
     }
@@ -198,7 +198,7 @@ void Salsa::cleanUpSlidingWindow()
         SD(2, "Using Max Node Constraint To determine number of nodes to optimize");
     }
 
-    SD(2, "Clean Up Sliding Window, oldest_node = %d, oldest_kf = %d", oldest_node_, oldest_kf_);
+    SD(2, "Clean Up Sliding Window, oldest_node=n%d/i%d, oldest_kf=k%d/i%d", oldest_node_, xbuf_tail_, oldest_kf_, kf_idx);
 
 
     while (imu_.begin()->from_node_ < oldest_node_)
@@ -247,6 +247,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     oldest_node_ = 0;
     x0_ = x0;
     v0_ = v0;
+    current_state_integrator_.reset(t);
 
     if (enable_static_start_)
         static_start_end_ = INFINITY;
@@ -495,7 +496,7 @@ bool Salsa::checkIMUString()
             SD(5, "Misaligned from_node in Clk");
             return false;
         }
-        if (std::abs(it->t0_-t0) > 1e-8)
+        if (ne(it->t0_, t0))
         {
             SD(5, "Time Gap in IMU String end: %.3f, start: %.3f", it->t0_, t0);
             return false;

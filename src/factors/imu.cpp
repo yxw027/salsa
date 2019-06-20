@@ -20,6 +20,7 @@ ImuIntegrator::ImuIntegrator()
 
 void ImuIntegrator::reset(const double &_t)
 {
+    delta_t_ = 0.0;
     t0_ = _t;
     t = _t;
     y_.setZero();

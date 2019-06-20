@@ -325,7 +325,7 @@ void Salsa::logImu()
 
 void Salsa::printGraph()
 {
-    if (DEBUGLOGLEVEL < 3)
+    if (DEBUGLOGLEVEL > 3)
         return;
     // head: 10   tail: 5   kf_condition: 1  nkf_feat: 50   nft_window: 150  nfeat_meas_window: 250 nfeat_tot:
     // t -- 000.2 -- 000.4 -- 000.5 --
@@ -405,18 +405,18 @@ void Salsa::printGraph()
 
 void Salsa::printImuIntervals()
 {
-    if (DEBUGLOGLEVEL < 3)
+    if (DEBUGLOGLEVEL > 3)
         return;
     logs_[log::Graph]->file_ << "\nIMU: ";
     for (auto& imu : imu_)
-    {
-        logs_[log::Graph]->file_ << std::setw(5) << std::setprecision(3) << imu.t0_ << " -> " << std::setw(5) << std::setprecision(3) << imu.t << " | ";
-    }
+        logs_[log::Graph]->file_ << std::setw(5) << std::setprecision(3) << imu.t0_ << " | ";
+    for (auto& imu : imu_)
+        logs_[log::Graph]->file_ << std::setw(5) << std::setprecision(3) << imu.t  << " | ";
     logs_[log::Graph]->file_ << "\n     ";
     for (auto& imu : imu_)
-    {
-        logs_[log::Graph]->file_ << std::setw(5) << imu.from_idx_ << " -> " << std::setw(5) << imu.to_idx_ << " | ";
-    }
+        logs_[log::Graph]->file_ << std::setw(5) << imu.from_idx_ << " | ";
+    for (auto& imu : imu_)
+        logs_[log::Graph]->file_ << std::setw(5) << imu.to_idx_ << " | ";
     logs_[log::Graph]->file_ << "\n";
     logs_[log::Graph]->file_.flush();
 
