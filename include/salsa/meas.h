@@ -37,7 +37,6 @@ struct Gnss : public Base
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Gnss(double _t, const ObsVec& _z);
-    Gnss(double _t, ObsVec&& _z);
     ObsVec obs;
 };
 
