@@ -27,7 +27,8 @@ add_library(factors
     src/factors/clock_dynamics.cpp
     src/factors/switch_dynamics.cpp
     src/factors/zero_vel.cpp
-    src/factors/pseudorange.cpp)
+    src/factors/pseudorange.cpp
+    src/factors/carrier_phase.cpp)
 target_link_libraries(factors
     ${geometry_LIBRARIES}
     ${gnss_utils_LIBRARIES}
@@ -112,6 +113,7 @@ if (BUILD_TESTS)
         src/test/test_klt.cpp
         src/test/test_xform_local_param.cpp
         src/test/test_pseudorange_factor.cpp
+        src/test/test_cphase_factor.cpp
         src/test/test_node_management.cpp
      )
      target_link_libraries(test_salsa
