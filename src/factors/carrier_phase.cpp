@@ -51,8 +51,8 @@ bool CarrierPhaseFunctor::operator()(const T* _x0, const T*_x1, const T* _clk0,
     T dtau0 = (clk0(0) - sat_clk0_(0));
     T dtau1 = (clk1(0) - sat_clk1_(0));
 
-    T dPhi_hat = (T)gnss_utils::Satellite::C_LIGHT/lambda_ * ((dist1 + dtau1) - (dist0 + dtau0));
-    (*_res) = Xi_ * dPhi_hat;
+    T dPhi_hat = (T)(1.0/lambda_) * ((dist1 + dtau1) - (dist0 + dtau0));
+    (*_res) = Xi_ * (dPhi_hat - (T)dPhi_bar_);
     return true;
 }
 
