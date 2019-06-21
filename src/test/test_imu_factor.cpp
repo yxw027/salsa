@@ -25,6 +25,7 @@ using namespace std;
 using namespace xform;
 using namespace multirotor_sim;
 using namespace salsa;
+using namespace quat;
 
 TEST(ImuFactor, compile)
 {

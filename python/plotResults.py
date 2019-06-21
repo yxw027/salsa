@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import yaml
 import os
 from scipy import interpolate
+import scipy
 
 sim_params = yaml.load(open("../params/sim_params.yaml"))
 
@@ -325,50 +326,108 @@ def getDeniedTime():
 
 def plotMultipathTime():
     for row in multipathTime:
-        plt.axvspan(row[0], row[1], alpha=0.2, color='black')
+        plt.axvspan(row[0], row[1], alpha=0.2, color='black', label="multipath")
     for row in deniedTime:
-        plt.axvspan(row[0], row[1], alpha=0.2, color='red')
+        plt.axvspan(row[0], row[1], alpha=0.2, color='red', label="denied")
 
 def plotMultipath():
     nsat = truth["mp"][0].size
     f = plt.figure()
-    cmap = plt.cm.get_cmap('tab10', len(data)+1)
+    plt.suptitle("$\kappa$ estimation")
+    legend_entries = list()
+    legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[0], label=r'$x$'))
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
-        plt.plot(truth["t"], truth["mp"][:,i], color=cmap(0), label=r'$x$')
+        plt.plot(truth["t"], truth["mp"][:,i], color=colors[0], label=r'$x$')
         for l, log in enumerate(data):
-            plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], alpha=0.3, color=cmap(l+1), label=log.label)
+            plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], linewidth=1, alpha=0.2, color=colors[l+1])
+            if i == 0:
+                legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[l+1], label=log.label))
         if i == 0:
-            plt.legend()
+            plt.legend(handles=legend_entries, ncol=7)
+        if i != nsat-1:
+            plt.xticks([])
         plt.ylim([-0.05, 1.05])
+        # plotMultipathTime()
     pw.addPlot("Multipath", f)
 
-def plotPosError():
-    f = plt.figure()
-    plt.suptitle('Position Error')
-    for i in range(3):
-        plt.subplot(3, 1, i + 1)
-        plt.title(xtitles[i])
-        plt.plot([np.nan, np.nan], [np.nan, np.nan]) # empty plot so the colors match
-        for log in data:
-            plt.plot(log.state['t'], np.abs(log.state['x']['p'][:, i] - truth_pos_interp(log.state['t'])[i,:]), label=log.label)
+def saveMultipath():
+    nsat = truth["mp"][0].size
+    f = plt.figure(figsize=[8, 6], dpi=600)
+    plt.suptitle("$\kappa$ estimation")
+    # cmap = plt.cm.get_cmap('tab10', len(data)+1)
+    legend_entries = []
+    legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[0], label=r'$x$'))
+    nplot = 8
+    for i in range(nsat):
+        if i >= nplot: continue
+        plt.subplot(nplot, 1, i + 1)
+        # plt.subplots_adjust(right=0.8)
+        plt.plot(truth["t"], truth["mp"][:, i], color=colors[0], label=r'$x$')
+        for l, log in enumerate(data):
+            if "kappa" not in log.label or "GV" not in log.label: continue
+            plt.plot(log.swParams['p']['t'][:, :, i], log.swParams['p']['s'][:, :, i], linewidth=1, alpha=0.2,
+                     color=colors[l + 1])
+            if i == 0:
+                legend_entries.append(
+                    plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[l + 1], label=log.label))
         if i == 0:
-            plt.legend()
-        plotMultipathTime()
+            plt.legend(handles=legend_entries, ncol=4, loc="upper left", bbox_to_anchor=(0, 1.04, 1, 0.7))
+        if i != nplot - 1:
+            plt.xticks([])
+        plt.ylim([-0.05, 1.05])
+        # plotMultipathTime()
+
+    if savePlots:
+        plt.savefig(filePrefix + "multipath.pdf", dpi=600, facecolor='w', bbox_inches='tight')
+
+def plotPosError():
+    f = plt.figure(figsize=[9,6])
+    plt.suptitle('Position Error')
+    # for i in range(3):
+    #     plt.subplot(4, 1, i + 1)
+    #     plt.title(xtitles[i])
+    #     plt.plot([np.nan, np.nan], [np.nan, np.nan]) # empty plot so the colors match
+    #     for log in data:
+    #         plt.plot(log.state['t'], np.abs(log.state['x']['p'][:, i] - truth_pos_interp(log.state['t'])[i,:]), label=log.label)
+    #     if i == 0:
+    #         plt.legend()
+    # plt.subplot(4,1,4)
+    plt.xlabel('s')
+    plt.ylabel('m')
+    plt.plot([np.nan, np.nan], [np.nan, np.nan])  # empty plot so the colors match
+    for log in data:
+        plt.plot(log.state['t'], scipy.linalg.norm(log.state['x']['p'][:, :] - truth_pos_interp(log.state['t'])[:, :].T, axis=1), label=log.label)
+    plotMultipathTime()
+    plt.ylim([0,4.5])
+    plt.legend(ncol=2, framealpha=1)
+
+    if savePlots:
+        plt.savefig(filePrefix + "pos_error.pdf", dpi=600, facecolor='w', bbox_inches='tight') 
     pw.addPlot("Position Error", f)
 
 def plotVelError():
-    f = plt.figure()
+    f = plt.figure(figsize=[9,6])
     plt.suptitle('Velocity Error')
-    for i in range(3):
-        plt.subplot(3, 1, i + 1)
-        plt.title(xtitles[i])
-        plt.plot([np.nan, np.nan], [np.nan, np.nan]) # empty plot so the colors match
-        for log in data:
-            plt.plot(log.state['t'], np.abs(log.state['v'][:, i] - truth_vel_interp(log.state['t'])[i,:]), label=log.label)
-        if i == 0:
-            plt.legend()
-        plotMultipathTime()
+    # for i in range(3):
+    #     plt.subplot(3, 1, i + 1)
+    #     plt.title(xtitles[i])
+    #     plt.plot([np.nan, np.nan], [np.nan, np.nan]) # empty plot so the colors match
+    #     for log in data:
+    #         plt.plot(log.state['t'], np.abs(log.state['v'][:, i] - truth_vel_interp(log.state['t'])[i,:]), label=log.label)
+    #     if i == 0:
+    #         plt.legend()
+    #     plotMultipathTime()
+    plt.xlabel("s")
+    plt.ylabel("m/s")
+    plt.plot([np.nan, np.nan], [np.nan, np.nan])  # empty plot so the colors match
+    for log in data:
+        plt.plot(log.state['t'], scipy.linalg.norm(log.state['v'][:, :] - truth_vel_interp(log.state['t'])[:, :].T, axis=1), label=log.label)
+    plotMultipathTime()
+    plt.ylim([0,1.5])
+    plt.legend(ncol=2, framealpha=1)
+    if savePlots:
+        plt.savefig(filePrefix + "vel_error.pdf", dpi=600, facecolor='w', bbox_inches='tight')
     pw.addPlot("Velocity Error", f)
 
 
@@ -400,15 +459,19 @@ def interpolateTruth():
     truth_vel_interp = interpolate.interp1d(truth['t'], truth['v'].T)
 
 
-def plotResults(directory, plotKeyframes=True):
+def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-    global data, truth, pw, xtitles, imu_titles, vtitles, plotKF
+    global data, truth, pw, xtitles, imu_titles, vtitles, plotKF, colors
+    global savePlots, filePrefix
+    savePlots = saveFig
+    filePrefix = prefix
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     plotKF = plotKeyframes
 
     subdirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory,o))]
@@ -430,14 +493,15 @@ def plotResults(directory, plotKeyframes=True):
     plotPosError()
     plotVelError()
     plotImuBias()
-    plotImu()
-    plotXe2n()
+    # plotImu()
+    # plotXe2n()
     # plotXb2c()
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
         # plotPRangeRes()
         plotClockBias()
         plotMultipath()
+        saveMultipath()
         # plotAzel()
     #
     # if len(featPos) > 0 and max(featPos['size']) > 0:

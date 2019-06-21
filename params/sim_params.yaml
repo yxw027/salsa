@@ -33,6 +33,7 @@ velocity_magnitude: 1.0
 traj_altitude: -5.0
 traj_heading_walk: 10.0
 traj_heading_straight_gain: 0.01
+takeoff_wait_time: 0.0
 
 # Follow the carrot trajectory parameters
 traj_delta_north: 10
@@ -167,6 +168,7 @@ cam_center: [320, 240]
 image_size: [640, 480]
 loop_closure: false
 q_b_c: [1, 0, 0, 0]
+feat_too_close_thresh: 25
 #q_b_c: [ 0.923879659447, 0.0, 0.382683125915, 0.0 ] # Pitch down 45 deg
 # q_b_c: [0.712301460669, -0.00770717975554, 0.0104993233706, 0.701752800292]
 # p_b_c: [1.0, 0.0, 0.0 ]

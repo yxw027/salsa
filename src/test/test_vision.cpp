@@ -8,6 +8,7 @@
 
 using namespace salsa;
 using namespace multirotor_sim;
+using namespace xform;
 
 
 TEST (Vision, isTrackedFeature)

@@ -8,4 +8,4 @@ directory = "/tmp/Salsa/compareSimulation/"
 # subprocess.call(("ninja", "compareSim"), cwd="../build")
 # subprocess.call(("./compareSim"), cwd="../build")
 
-plotResults(directory, False)
+plotResults(directory, False, saveFig=True)
