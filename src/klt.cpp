@@ -36,17 +36,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     }
 
     createDistortionMask();
-//    std::string mask_filename;
-//    get_yaml_node("feature_mask", filename, mask_filename, false);
-//    if (!mask_filename.empty())
-//    {
-//        setFeatureMask(mask_filename);
-//    }
-//    else
-//    {
-//        mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
-//        mask_ = 255;
-//    }
+
     t_next_klt_output_ = NAN;
 }
 
