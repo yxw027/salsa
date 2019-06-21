@@ -6,8 +6,8 @@ log_prefix: "/tmp/Salsa/"
 imu_topic: "/imu"
 image_topic: "/left/compressed"
 mocap_topic: "/Ragnarok_ned"
-start_time: 21
-duration: 10
+start_time: 10
+duration: 40
 bag_name: "/home/superjax/rosbag/mocap_ned1.bag"
 mocap_rate: 10
 bias0: [0, 0, 0, 0, 0, 0]
@@ -39,7 +39,7 @@ x_b2o: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
 ### Static Start
 #####################################
 enable_static_start: true
-static_start_freq: 0.1 # how often to drop static-start nodes
+static_start_freq: 0.5 # how often to drop static-start nodes
 static_start_imu_thresh: 15 # if imu mag exceeds this, then stop static start
 camera_start_delay: 1.0 # wait this long after static start to start fusing images
 static_start_Xi: [1e8, 1e8, 1e8, # pos
