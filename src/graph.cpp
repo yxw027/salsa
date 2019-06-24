@@ -17,7 +17,8 @@ void Salsa::initFactors()
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParam());
-    problem.SetParameterBlockConstant(x_e2n_.data());
+    if (!enable_static_start_ || xhead().t > static_start_end_)
+        problem.SetParameterBlockConstant(x_e2n_.data());
     problem.AddParameterBlock(imu_bias_.data(), 6);
 
     int idx = xbuf_tail_;
@@ -126,17 +127,21 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
         for (int i = 0; i < pvec->size(); i++)
         {
             PseudorangeFunctor &p((*pvec)[i]);
-            SALSA_ASSERT(inWindow(p.idx_), "Trying to add factor to node outside of window");
+            if(!inWindow(p.idx_))
+            {
+                SD(5, "Trying to add factor to node outside of window. idx=%d, tail=%d, head=%d", p.idx_, xbuf_tail_, xbuf_head_);
+                pvec_prev = nullptr;
+                continue;
+            }
             //            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
             //            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
             problem.AddResidualBlock(new PseudorangeFactor(&p),
                                      NULL,
                                      xbuf_[p.idx_].x.data(),
-                    xbuf_[p.idx_].v.data(),
-                    xbuf_[p.idx_].tau.data(),
-                    x_e2n_.data(),
-                    &(p.sw));
-
+                                     xbuf_[p.idx_].v.data(),
+                                     xbuf_[p.idx_].tau.data(),
+                                     x_e2n_.data(),
+                                     &(p.sw));
             if (pvec_prev)
             {
                 PseudorangeFunctor& pprev((*pvec_prev)[i]);
@@ -156,7 +161,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
         problem.AddResidualBlock(new ClockBiasFactorAD(ptr),
                                  NULL,
                                  xbuf_[it->from_idx_].tau.data(),
-                xbuf_[it->to_idx_].tau.data());
+                                 xbuf_[it->to_idx_].tau.data());
     }
 
 }
@@ -221,20 +226,24 @@ void Salsa::initSolverOptions()
 
 void Salsa::solve()
 {
-    ceres::Problem problem;
+    ceres::Problem* problem = new ceres::Problem();
 
-    addParameterBlocks(problem);
-    setAnchors(problem);
-    addImuFactors(problem);
-    addFeatFactors(problem);
-    addMocapFactors(problem);
-    addRawGnssFactors(problem);
-    addZeroVelFactors(problem);
+    addParameterBlocks(*problem);
+    setAnchors(*problem);
+    addImuFactors(*problem);
+//    addFeatFactors(*problem);
+//    addMocapFactors(*problem);
+    addRawGnssFactors(*problem);
+//    addZeroVelFactors(*problem);
 
     if (!disable_solver_)
-        ceres::Solve(options_, &problem, &summary_);
+        ceres::Solve(options_, problem, &summary_);
     //    std::cout << summary_.FullReport() << std::endl;
 
+    delete problem;
+
+    SD_S(3, "Finished Solve Iteration t: " << xhead().t << " p: [" << xhead().x.t().transpose()
+             << "] att: [" << xhead().x.q().euler().transpose() << "]");
 
     logState();
     logOptimizedWindow();

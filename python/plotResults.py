@@ -326,6 +326,11 @@ def getMultipathTime():
     switch_on = truth['t'][np.where(truth['multipath'][:-1] < truth['multipath'][1:])[0]]
     switch_off = truth['t'][np.where(truth['multipath'][:-1] > truth['multipath'][1:])[0]]
 
+    print switch_on
+    print switch_off
+    if len(switch_on) == 0 and len(switch_off) == 0:
+        multipathTime = None
+
     if switch_on.size > switch_off.size:
         switch_off = np.append(switch_off, np.max(truth['t']))
     elif switch_off.size > switch_on.size:
@@ -446,6 +451,26 @@ def plotVelError():
         plt.savefig(filePrefix + "vel_error.png", dpi=600, facecolor='w', bbox_inches='tight')
     pw.addPlot("Velocity Error", f)
 
+def plotPosLla():
+    f = plt.figure()
+    plt.suptitle("PP LLA")
+    for i in range(3):
+        plt.subplot(3, 2,2*i+1)
+        for log in data:
+            if i == 2:
+                plt.plot(log.Lla['t'], log.Lla['pp_lla'][:,i], label=log.label+"pp")
+                plt.plot(log.Lla['t'], log.Lla['est_lla'][:,i], label=log.label + "est")
+            else:
+                plt.plot(log.Lla['t'], log.Lla['pp_lla'][:,i]*180.0/np.pi, label=log.label + "pp")
+                plt.plot(log.Lla['t'], log.Lla['est_lla'][:,i]*180.0/np.pi, label=log.label)
+        if i == 0:
+            plt.legend()
+    plt.subplot(1,2,2)
+    for log in data:
+        plt.plot(log.Lla['pp_lla'][:,1]*180/np.pi, log.Lla['pp_lla'][:,0]*180.0/np.pi, label=log.label + "pp")
+        plt.plot(log.Lla['est_lla'][:,1]*180/np.pi, log.Lla['est_lla'][:,0]*180.0/np.pi, label=log.label + "est")
+    pw.addPlot("Lla", f);
+
 
 class Log:
     def __init__(self, prefix):
@@ -465,6 +490,7 @@ class Log:
         setattr(self, "prangeRes", np.fromfile(os.path.join(prefix, "PRangeRes.log"), dtype=PRangeResType))
         setattr(self, "Imu", np.fromfile(os.path.join(prefix, "Imu.log"), dtype=ImuType))
         setattr(self, "swParams", np.fromfile(os.path.join(prefix, "SwParams.log"), dtype=SwParamsType))
+        setattr(self, "Lla", np.fromfile(os.path.join(prefix, "PP_LLA.log"), dtype=LlaType))
         setattr(self, "label", open(os.path.join(prefix, "label.txt"), "r").read().splitlines()[0])
         self.label.replace(r"//", r"/")
 
@@ -507,11 +533,12 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plotAttitude()
     plotEuler()
     plotVelocity()
+    plotPosLla()
     # plotPosError()
     # plotVelError()
     plotImuBias()
     plotImu()
-    # plotXe2n()
+    plotXe2n()
     # plotXb2c()
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
@@ -520,16 +547,16 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
         plotMultipath()
         saveMultipath()
         # plotAzel()
+    # #
+    # if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
+    #     # plotFeatRes()
+    #     plotFeatDepths()
+    # #
+    # if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
+    #     plotMocapRes()
     #
-    if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
-        # plotFeatRes()
-        plotFeatDepths()
-    #
-    if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
-        plotMocapRes()
-    #
-    # # if len(satPos) > 0 and max(satPos['size']) > 0:
-    # #     plotSatPos()
+    # if len(satPos) > 0 and max(satPos['size']) > 0:
+    #     plotSatPos()
     pw.show()
 
 if __name__ == '__main__':

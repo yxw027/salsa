@@ -120,7 +120,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
     obsCallback(obsvec);
 }
 
-void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
+void Salsa::initializeNodeWithGnss(const meas::Gnss& m, int idx)
 {
     if (filtered_obs_.size() > 7 && use_point_positioning_)
     {
@@ -131,7 +131,9 @@ void Salsa::initializeNodeWithGnss(const meas::Gnss& m)
         auto phat = pp_sol.segment<3>(0);
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
-        xbuf_[xbuf_head_].tau = that;
+        pp_lla_ = phat;
+        logPointPosLla();
+        xbuf_[idx].tau = that;
     }
 }
 
@@ -141,6 +143,7 @@ void Salsa::gnssUpdate(const meas::Gnss &m, int idx)
 
     // Sanity Checks
     SALSA_ASSERT((xbuf_[idx].type & State::Gnss) == 0, "Cannot double-up with Gnss nodes");
+    initializeNodeWithGnss(m, idx);
 
     Vector3d rec_pos_ecef = WGS84::ned2ecef(x_e2n_, xbuf_[idx].p);
     prange_.emplace_back(m.obs.size());
@@ -170,16 +173,14 @@ bool Salsa::initializeStateGnss(const meas::Gnss &m)
         auto phat = pp_sol.segment<3>(0);
         auto vhat = pp_sol.segment<3>(3);
         auto that = pp_sol.segment<2>(6);
+        pp_lla_ = phat;
+        logPointPosLla();
 
         Xformd x_e2bn = gnss_utils::WGS84::x_ecef2ned(phat);
         Xformd x_bn2b(Vector3d::Zero(), x0_.q());
         x_e2n_ = x_e2bn * x_bn2b * x0_.inverse();
-        initialize(m.t, x0_, v0_, that);
     }
-    else
-    {
-        initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
-    }
+    initialize(m.t, x0_, Vector3d::Zero(), Vector2d::Zero());
     return true;
 }
 
@@ -189,9 +190,11 @@ void Salsa::obsCallback(const ObsVec &obs)
         start_time_ = obs[0].t - current_state_.t;
 
     filterObs(obs);
-    GTime& t(filtered_obs_[0].t);
-
-    addMeas(meas::Gnss((t - start_time_).toSec(), filtered_obs_));
+    if (filtered_obs_.size() > 0)
+    {
+      GTime& t(filtered_obs_[0].t);
+      addMeas(meas::Gnss((t - start_time_).toSec(), filtered_obs_));
+    }
 }
 
 void Salsa::pointPositioning(const GTime &t, const ObsVec &obs, SatVec &sats, Vector8d &xhat) const

@@ -20,6 +20,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("track_feature_min_distance", filename, track_feature_min_distance_);
     get_yaml_node("tracker_freq", filename, tracker_freq_);
     get_yaml_node("disable_vision", filename, disable_vision_);
+    get_yaml_node("show_skip", filename, show_skip_);
 
 
     got_first_img_ = false;
@@ -132,7 +133,8 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
     }
     if (tc > t_next_klt_output_)
     {
-        addMeas(meas::Img(tc, current_feat_, R_pix, new_keyframe));
+        if (!disable_vision_)
+            addMeas(meas::Img(tc, current_feat_, R_pix, new_keyframe));
         t_next_klt_output_ += 1.0/tracker_freq_;
     }
 }
@@ -286,19 +288,23 @@ void Salsa::collectNewfeatures()
 
 void Salsa::showImage()
 {
-    cvtColor(prev_img_, color_img_, COLOR_GRAY2BGR);
-    color_img_ = color_img_ - 0.2*mask_overlay_;
-    // draw features and ids
-    for (int i = 0; i < current_feat_.size(); i++)
+    if (show_skip_count_ == 0)
     {
-        const Scalar& color(colors_[current_feat_.feat_ids[i] % nf_]);
-        circle(color_img_, prev_features_[i], 3, color, -1);
-//        putText(color_img_, std::to_string(current_feat_.feat_ids[i]), prev_features_[i],
-//                FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
-    }
+        cvtColor(prev_img_, color_img_, COLOR_GRAY2BGR);
+        color_img_ = color_img_ - 0.2*mask_overlay_;
+        // draw features and ids
+        for (int i = 0; i < current_feat_.size(); i++)
+        {
+            const Scalar& color(colors_[current_feat_.feat_ids[i] % nf_]);
+            circle(color_img_, prev_features_[i], 3, color, -1);
+            //        putText(color_img_, std::to_string(current_feat_.feat_ids[i]), prev_features_[i],
+            //                FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
+        }
 
-    cv::imshow("tracked points", color_img_);
-    cv::waitKey(1);
+        cv::imshow("tracked points", color_img_);
+        cv::waitKey(1);
+    }
+    show_skip_count_ = (show_skip_count_+1)%show_skip_;
 }
 
 

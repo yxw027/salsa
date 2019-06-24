@@ -93,6 +93,7 @@ public:
     void logFeatures();
     void logOptimizedWindow();
     void logState();
+    void logPointPosLla();
     void logSwParams();
     void logSatPos();
     void logPrangeRes();
@@ -119,6 +120,7 @@ public:
             Imu,
             Xe2n,
             Graph,
+            PP_LLA,
             NumLogs,
         };
     };
@@ -172,6 +174,7 @@ public:
     double switchdot_Xi_;
     MocapDeque mocap_;
     PseudorangeDeque prange_;
+    XformParam local_param_;
 
 
     /************************************/
@@ -247,6 +250,7 @@ public:
     ObsVec filtered_obs_;
     int n_obs_;
     bool enable_switching_factors_;
+    Eigen::Vector3d pp_lla_;
 
     /************************************/
     /*              Image               */
@@ -293,6 +297,8 @@ public:
     int calcNewKeyframeConditionKLT();
     void calcCurrentZetas();
     bool isTrackedFeature(int id) const;
+    int show_skip_;
+    int show_skip_count_;
     bool sim_KLT_;
     double t_next_klt_output_;
     double tracker_freq_;
@@ -318,7 +324,7 @@ public:
 //    void handleMeas();
 //    void integrateTransition(double t);
 //    void initializeNodeWithImu();
-    void initializeNodeWithGnss(const meas::Gnss& m);
+    void initializeNodeWithGnss(const meas::Gnss& m, int idx);
     void initializeNodeWithMocap(const meas::Mocap& mocap);
     bool initialize(const meas::Base* m);
     void addMeas(const meas::Mocap&& mocap);

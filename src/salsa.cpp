@@ -127,6 +127,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     {
         if (z.head<3>().norm() > static_start_imu_thresh_)
         {
+            SD(5, "Static Start end: t%.3f", t);
             static_start_end_ = t;
         }
         else if(gt(t, xhead().t + static_start_freq_) || (current_node_ == -1 && t > 1.0))
@@ -233,7 +234,7 @@ void Salsa::cleanUpSlidingWindow()
 
 void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, const Vector2d& tau0)
 {
-    SD_S(3, "Initialize State: pos = " << x0.t_.transpose() << " euler = "
+      SD_S(3, "Initialize State: pos = " << x0.t_.transpose() << " euler = "
            << 180.0/M_PI * x0.q_.euler().transpose() << " q = " << x0.q_);
     xbuf_tail_ = 0;
     xbuf_head_ = 0;
@@ -493,17 +494,17 @@ bool Salsa::checkIMUString()
         }
         if (xbuf_[it->from_idx_].node != it->from_node_)
         {
-            SD(5, "Misaligned from_node in Clk");
+            SD(5, "Misaligned from_node in IMU");
             return false;
         }
         if (ne(it->t0_, t0))
         {
-            SD(5, "Time Gap in IMU String end: %.3f, start: %.3f", it->t0_, t0);
+            SD(5, "Time Gap in IMU String end: %.8f, start: %.8f", it->t0_, t0);
             return false;
         }
         if (ne(it->t-it->t0_, it->delta_t_))
         {
-            SD(5, "Time Gap in IMU String start: %.3f, end: %.3f, dt %.3f", it->t0_, it->t, it->delta_t_);
+            SD(5, "Time Gap in IMU String start: %.3f, end: %.8f, dt %.8f", it->t0_, it->t, it->delta_t_);
             return false;
         }
         from = it->to_idx_;

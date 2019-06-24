@@ -1,4 +1,5 @@
 #include "salsa/salsa.h"
+#include "gnss_utils/wgs84.h"
 
 namespace fs = std::experimental::filesystem;
 using namespace gnss_utils;
@@ -39,6 +40,7 @@ void Salsa::initLog(const std::string& filename)
     logs_[log::Imu] = new Logger(log_prefix_ + "Imu.log");
     logs_[log::Xe2n] = new Logger(log_prefix_ + "Xe2n.log");
     logs_[log::Graph] = new Logger(log_prefix_ + "Graph.log");
+    logs_[log::PP_LLA] = new Logger(log_prefix_ + "PP_LLA.log");
 }
 
 
@@ -113,6 +115,15 @@ void Salsa::logSwParams()
             }
         }
     }
+}
+
+void Salsa::logPointPosLla()
+{
+    logs_[log::PP_LLA]->log(current_state_.t);
+    Vector3d p_e2b = Vector3d::Ones() * NAN;
+    if (xhead().t > static_start_end_)
+        p_e2b = WGS84::ecef2lla(x_e2n_.transforma(xhead().x.t_));
+    logs_[log::PP_LLA]->logVectors(WGS84::ecef2lla(pp_lla_), p_e2b);
 }
 
 void Salsa::logCurrentState()

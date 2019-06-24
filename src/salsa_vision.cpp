@@ -65,7 +65,8 @@ void Salsa::imageCallback(const double& tc, const ImageFeat& z,
             zfeat.pix.emplace_back(pix.x(), pix.y());
         }
         bool new_keyframe = calcNewKeyframeCondition(zfeat);
-        addMeas(meas::Img(tc, zfeat, R_pix, new_keyframe));
+        if (!disable_vision_)
+            addMeas(meas::Img(tc, zfeat, R_pix, new_keyframe));
     }
 }
 

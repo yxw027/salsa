@@ -4,11 +4,11 @@
 #include <stdio.h>
 
 #ifndef DEBUGPRINT
-#define DEBUGPRINT 0
+#define DEBUGPRINT 1
 #endif
 
 #define DEBUGPRINTLEVEL 4
-#define DEBUGLOGLEVEL 4
+#define DEBUGLOGLEVEL 2
 
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl
@@ -60,7 +60,7 @@
 /*************************************/
 /*          Round-Off helpers        */
 /*************************************/
-constexpr double eps = 1e-4;
+constexpr double eps = 5e-4;
 inline bool lt(double t0, double t1) { return t0 < t1-2.0*eps; }
 inline bool le(double t0, double t1) { return t0-2.0*eps <= t1; }
 inline bool gt(double t0, double t1) { return t0 > t1+2.0*eps; }

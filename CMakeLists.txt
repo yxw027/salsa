@@ -81,6 +81,11 @@ if (BUILD_ROS)
     target_include_directories(salsa_rosbag PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
     target_link_libraries(salsa_rosbag salsa_ros ${catkin_LIBRARIES})
 
+    add_executable(rosbag_decompressor src/rosbag_decompressor.cpp)
+    target_include_directories(rosbag_decompressor PUBLIC include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(rosbag_decompressor ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+
 #    add_executable(salsa_node src/salsa_node.cpp)
 #    target_link_libraries(salsa_node salsa_ros ${catkin_LIBRARIES})
 #    target_include_directories(salsa_node PUBLIC ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})

@@ -31,6 +31,7 @@ public:
     void displayHelp();
     void openBag();
     void parseBag();
+    void loadEph();
 
 //    void getMocapOffset();
 
@@ -75,6 +76,10 @@ public:
 
     Logger truth_log_;
     Logger imu_log_;
+
+    std::vector<rosbag::MessageInstance> eph_;
+
+    xform::Xformd INS_ref_;
 };
 
 }

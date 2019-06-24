@@ -153,6 +153,11 @@ ImuType = np.dtype([
     ('omega', (np.float64, 3))
 ])
 
+LlaType = np.dtype([
+    ('t', np.float64),
+    ('pp_lla', (np.float64, 3)),
+    ('est_lla', (np.float64, 3))
+])
 
 
 

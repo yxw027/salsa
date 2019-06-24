@@ -12,10 +12,14 @@ if not os.path.exists(os.path.join(directory, prefix)):
     os.makedirs(os.path.join(directory, prefix))
 
 params = yaml.load(file("../params/salsa.yaml"))
+params['bagfile'] = "/home/superjax/rosbag/mynt_mocap/mocap2.bag"
 params['log_prefix'] = os.path.join(directory, prefix)
 params['update_on_mocap'] = False
 params['disable_mocap'] = True
 params['disable_vision'] = False
+params['static_start_imu_thresh'] = 15
+params['start_time'] = 10
+params['duration'] = 40
 param_filename = os.path.join(directory, "tmp.yaml")
 yaml.dump(params, file(param_filename, 'w'))
 

@@ -4,11 +4,11 @@ log_prefix: "/tmp/Salsa/"
 ### ROSbag Setup
 ######################################
 imu_topic: "/imu"
-image_topic: "/left/compressed"
+image_topic: "/left"
 mocap_topic: "/Ragnarok_ned"
 start_time: 10
 duration: 40
-bag_name: "/home/superjax/rosbag/mocap_ned1.bag"
+bag_name: "/home/superjax/rosbag/mynt_outdoors_walk/walk1_uc.bag"
 mocap_rate: 10
 bias0: [0, 0, 0, 0, 0, 0]
 # bias0: [-0.04717741613721455, -0.07034896670337663, -0.03231176628010501,
@@ -39,12 +39,12 @@ x_b2o: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
 ### Static Start
 #####################################
 enable_static_start: true
-static_start_freq: 0.5 # how often to drop static-start nodes
+static_start_freq: 0.1 # how often to drop static-start nodes
 static_start_imu_thresh: 15 # if imu mag exceeds this, then stop static start
 camera_start_delay: 1.0 # wait this long after static start to start fusing images
-static_start_Xi: [1e8, 1e8, 1e8, # pos
-                  1e8,           # yaw
-                  1e8, 1e8, 1e8] # vel
+static_start_Xi: [1e9, 1e9, 1e9, # pos
+                  1e9,           # yaw
+                  1e9, 1e9, 1e9] # vel
 
 #####################################
 ### IMU
@@ -71,6 +71,7 @@ kf_feature_thresh: 0.8
 update_on_camera: true
 
 show_matches: true
+show_skip: 25
 get_feature_radius: 10
 track_feature_min_distance: 5
 feature_mask: ""
@@ -114,7 +115,7 @@ state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-5, 1e-5, 1e-5, # q
                    5e-5, 5e-5, 5e-5, # v
                    1e-3, 1e-3] # clk_bias (nsec)
-x_e2n_anchor_cov: [1e-6, 1e-6, 1e-6, # p
+x_e2n_anchor_cov: [1e-5, 1e-5, 1e-5, # p
                    1e-8, 1e-8, 1e-2] # q
 # bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
 #                  0.000001, 0.000001, 0.000001] # gyro

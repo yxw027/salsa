@@ -98,6 +98,8 @@ void SalsaRosbag::openBag()
 
 void SalsaRosbag::parseBag()
 {
+    loadEph();
+
     ProgressBar prog(view_->size(), 80);
     int i = 0;
     for(rosbag::MessageInstance const m  : (*view_))
@@ -108,12 +110,10 @@ void SalsaRosbag::parseBag()
         if (m.getTime() > bag_end_)
             break;
 
+        prog.print(i++, (m.getTime() - bag_start_).toSec());
 
         if (m.isType<sensor_msgs::Imu>() && m.getTopic().compare(imu_topic_) == 0)
-        {
-            prog.print(i++, (m.getTime() - bag_start_).toSec());
             imuCB(m);
-        }
         else if (m.isType<geometry_msgs::PoseStamped>() && m.getTopic().compare(mocap_topic_) == 0)
             poseCB(m);
         else if (m.isType<nav_msgs::Odometry>())
@@ -124,8 +124,8 @@ void SalsaRosbag::parseBag()
             compressedImgCB(m);
         else if (m.isType<inertial_sense::GNSSObsVec>())
             obsCB(m);
-        else if (m.isType<inertial_sense::GNSSEphemeris>())
-            ephCB(m);
+//        else if (m.isType<inertial_sense::GNSSEphemeris>())
+//            ephCB(m);
     }
     prog.finished();
     cout << endl;
@@ -178,6 +178,12 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
         z.push_back(new_obs);
     }
     salsa_.obsCallback(z);
+
+    while (eph_.size())
+    {
+        ephCB(eph_.back());
+        eph_.pop_back();
+    }
 }
 
 void SalsaRosbag::ephCB(const rosbag::MessageInstance &m)
@@ -287,8 +293,15 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
             odom->pose.pose.orientation.x,
             odom->pose.pose.orientation.y,
             odom->pose.pose.orientation.z;
-    if (salsa_.current_node_ < 0)
-        salsa_.setInitialState(z);
+
+    if (INS_ref_.t().norm() < 1e-8)
+    {
+        INS_ref_ = z;
+    }
+
+//    z = INS_ref_.inverse() * z;
+    //    if (salsa_.current_node_ < 0)
+    //        salsa_.setInitialState(z);
 
     //    double t = (m.getTime() - bag_start_).toSec();
     //    if (imu_count_between_nodes_ > 20)
@@ -303,12 +316,20 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
     v << odom->twist.twist.linear.x,
             odom->twist.twist.linear.y,
             odom->twist.twist.linear.z;
+//    v = INS_ref_.rotp(v);
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
     Vector7d x_e2n = Vector7d::Ones() * NAN;
     Vector7d x_b2c = Vector7d::Ones() * NAN;
     truth_log_.log((odom->header.stamp - bag_start_).toSec());
-    truth_log_.logVectors(z.arr(), v, b, tau, x_e2n, x_b2c);
+    truth_log_.logVectors(z.arr(), z.q().euler(), v, b, tau, x_e2n, x_b2c);
+    int32_t multipath = 0;
+    int32_t denied = 0;
+    truth_log_.log(multipath, denied);
+    for (int i = 0; i < salsa_.ns_; i++)
+    {
+        truth_log_.log((double)NAN);
+    }
 }
 
 void SalsaRosbag::imgCB(const rosbag::MessageInstance &m)
@@ -358,8 +379,17 @@ void SalsaRosbag::imgCB(double tc, const cv_bridge::CvImageConstPtr &img)
 //    mocap_offset_ = biggest_dt;
 //    prev_mocap_ = ros::Time(0,0);
 //}
+void SalsaRosbag::loadEph()
+{
+    for(rosbag::MessageInstance const m  : (*view_))
+    {
+        if (m.isType<inertial_sense::GNSSEphemeris>())
+            eph_.push_back(m);
+    }
+}
 
 }
+
 
 int main(int argc, char** argv)
 {

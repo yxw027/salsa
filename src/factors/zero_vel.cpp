@@ -7,7 +7,7 @@ namespace salsa
 {
 
 ZeroVelFunctor::ZeroVelFunctor(const xform::Xformd& x0, const Eigen::Vector3d& v0,
-                                       const Matrix7d& _Xi) :
+                               const Matrix7d& _Xi) :
     v0_(v0),
     Xi_(_Xi)
 {
