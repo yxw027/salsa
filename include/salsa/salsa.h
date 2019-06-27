@@ -7,6 +7,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/StdVector>
+#include <boost/circular_buffer.hpp>
 
 #include "geometry/xform.h"
 #include "multirotor_sim/estimator_base.h"

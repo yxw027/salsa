@@ -14,6 +14,7 @@ find_package(geometry REQUIRED)
 find_package(gnss_utils REQUIRED)
 find_package(multirotor_sim REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Boost REQUIRED)
 
 add_definitions(-DSALSA_DIR="${CMAKE_CURRENT_LIST_DIR}")
 
@@ -59,7 +60,10 @@ target_link_libraries(salsa
     ${YAML_CPP_LIBRARIES}
     ${OpenCV_LIBS}
     ${CERES_LIBRARIES}
+    ${Boost_LIBRARIES}
     pthread)
+target_include_directories(salsa PUBLIC
+    ${Boost_INCLUDE_DIRS})
 
 
 option (BUILD_ROS "Build ROS Tools" OFF)

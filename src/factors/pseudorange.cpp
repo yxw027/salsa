@@ -19,6 +19,7 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& 
                               const Vector3d& _rec_pos_ecef, const Matrix2d& cov, double sw_xi,
                               const Vector3d &_p_b2g, int node, int idx)
 {
+    sat_id_ = sat.id_;
     node_ = node;
     idx_ = idx;
     p_b2g = _p_b2g;

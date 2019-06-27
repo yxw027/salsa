@@ -8,7 +8,7 @@
 #endif
 
 #define DEBUGPRINTLEVEL 4
-#define DEBUGLOGLEVEL 2
+#define DEBUGLOGLEVEL 1
 
 #if DEBUGPRINT
 #define SL std::cout << __LINE__ << std::endl

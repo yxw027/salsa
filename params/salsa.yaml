@@ -92,8 +92,8 @@ update_on_gnss: false
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, 0]
-switch_xi: 10
-switchdot_xi: 2
+switch_xi: 5
+switchdot_xi: 50
 enable_switching_factors: true
 
 

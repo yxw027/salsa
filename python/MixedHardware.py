@@ -27,10 +27,8 @@ params['duration'] = 300
 param_filename = os.path.join(directory, "tmp.yaml")
 yaml.dump(params, file(param_filename, 'w'))
 
-#
-# process = subprocess.call(("cmake", "..", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-GNinja", "-DBUILD_ROS=ON"), cwd="../build")
-# process = subprocess.call(("ninja", "salsa_rosbag"), cwd="../build")
-# process = subprocess.call(("./salsa_rosbag", "-f", param_filename), cwd="../build")
-#
+process = subprocess.call(("cmake", "..", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-GNinja", "-DBUILD_ROS=ON"), cwd="../build")
+process = subprocess.call(("ninja", "salsa_rosbag"), cwd="../build")
+process = subprocess.call(("./salsa_rosbag", "-f", param_filename), cwd="../build")
 
 plotResults(directory, False)

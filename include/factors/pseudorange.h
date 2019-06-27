@@ -24,6 +24,7 @@ public:
     bool operator()(const T* _x, const T* _v, const T* _clk,
                     const T* _x_e2n, const T* _sw, T* _res) const;
 
+    int sat_id_;
     bool active_ = false;
     int node_;
     int idx_;

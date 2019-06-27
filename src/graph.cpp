@@ -121,7 +121,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
     if (disable_gnss_)
         return;
 
-    PseudorangeVec* pvec_prev = nullptr;
+    std::unordered_map<int, double*> prev_sw;
     for (auto pvec = prange_.begin(); pvec != prange_.end(); pvec++)
     {
         for (int i = 0; i < pvec->size(); i++)
@@ -130,11 +130,8 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
             if(!inWindow(p.idx_))
             {
                 SD(5, "Trying to add factor to node outside of window. idx=%d, tail=%d, head=%d", p.idx_, xbuf_tail_, xbuf_head_);
-                pvec_prev = nullptr;
                 continue;
             }
-            //            FunctorShield<PseudorangeFunctor>* ptr = new FunctorShield<PseudorangeFunctor>(&p);
-            //            problem.AddResidualBlock(new PseudorangeFactorAD(ptr),
             problem.AddResidualBlock(new PseudorangeFactor(&p),
                                      NULL,
                                      xbuf_[p.idx_].x.data(),
@@ -142,16 +139,20 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
                                      xbuf_[p.idx_].tau.data(),
                                      x_e2n_.data(),
                                      &(p.sw));
-            if (pvec_prev)
+
+            // If we had a previous switching factor on this satellite,
+            // then add the switching factor dynamics
+            auto prev_sw_it = prev_sw.find(p.sat_id_);
+            if (prev_sw_it != prev_sw.end())
             {
-                PseudorangeFunctor& pprev((*pvec_prev)[i]);
                 problem.AddResidualBlock(new SwitchFactor(switchdot_Xi_),
                                          NULL,
-                                         &pprev.sw,
-                                         &p.sw);
+                                         &(p.sw),
+                                         prev_sw_it->second);
             }
+            prev_sw[p.sat_id_] = &(p.sw);
         }
-        pvec_prev = &*pvec;
+
     }
     for (auto it = clk_.begin(); it != clk_.end(); it++)
     {
