@@ -121,25 +121,20 @@ public:
 TEST (RoundOff, RoundOffHelpers)
 {
     double a = 1.0;
-    double b = -1.0;
+    double ap = a + EPS - std::numeric_limits<double>::epsilon();
+    double am = a - EPS + std::numeric_limits<double>::epsilon();
 
-    double ap = a + eps - std::numeric_limits<double>::epsilon();
-    double am = a - eps + std::numeric_limits<double>::epsilon();
-    double bp = b + eps - std::numeric_limits<double>::epsilon();
-    double bm = b - eps + std::numeric_limits<double>::epsilon();
-
-    EXPECT_TRUE(eq(ap, am));
-    EXPECT_TRUE(eq(bp, bm));
-    EXPECT_TRUE(le(ap, am));
-    EXPECT_TRUE(le(bp, bm));
-    EXPECT_TRUE(ge(ap, am));
-    EXPECT_TRUE(ge(bp, bm));
-    EXPECT_FALSE(gt(ap, am));
-    EXPECT_FALSE(lt(am, ap));
-    EXPECT_FALSE(gt(bp, bm));
-    EXPECT_FALSE(lt(bm, bp));
-    EXPECT_TRUE(gt(am, bm));
-    EXPECT_TRUE(lt(bm, am));
+    EXPECT_TRUE(le(am, a));
+    EXPECT_TRUE(ge(ap, a));
+    EXPECT_TRUE(eq(ap, ap));
+    EXPECT_FALSE(ne(ap, ap));
+    EXPECT_FALSE(ne(ap, am));
+    EXPECT_FALSE(gt(ap, a));
+    EXPECT_FALSE(lt(am, a));
+    EXPECT_TRUE(gt(ap, am));
+    EXPECT_TRUE(lt(am, ap));
+    EXPECT_FALSE(le(ap, am));
+    EXPECT_FALSE(ge(am, ap));
 }
 
 TEST_F (NodeManagement, ImuBeforeFirstNode)
