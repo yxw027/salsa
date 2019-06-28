@@ -1,10 +1,12 @@
 #pragma once
 #include <vector>
+#include <deque>
 #include <Eigen/Core>
 
 #include "geometry/xform.h"
 
 #include "gnss_utils/gtime.h"
+#include "factors/carrier_phase.h"
 
 namespace salsa
 {
@@ -57,5 +59,22 @@ struct Obs
     bool operator < (const Obs& other);
 };
 typedef std::vector<Obs> ObsVec;
+
+typedef std::deque<CarrierPhaseFunctor, Eigen::aligned_allocator<CarrierPhaseFunctor>> PhaseDeque;
+class Phase
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    int id; // sat_id
+    int idx0; // origin node
+    double Phi0; // origin measurement
+    int slide_count;
+    PhaseDeque funcs;
+
+    Phase(int _idx, double _Phi0);
+
+    void addMeas(int to_idx, double cov, const Eigen::Vector3d& p_b2c, double _Phi1);
+    bool slideAnchor(int new_from_idx);
+};
 
 }

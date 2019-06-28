@@ -41,7 +41,12 @@ bool Obs::operator <(const Obs& other)
     return sat_idx < other.sat_idx;
 }
 
+void Phase::Phase(int _idx, double _Phi0) :
+    idx0(_idx),
+    Phi0(_Phi0)
+{
 
+}
 
 
 
