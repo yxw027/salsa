@@ -43,15 +43,15 @@ void Features::rm(const int &idx)
     pix.erase(pix.begin() + idx);
 }
 
-Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, double _rho, double _rho_true) :
-    kf0(_kf0), idx0(_idx), z0(_z0), rho(_rho), rho_true(_rho_true), slide_count(0)
+Feat::Feat(int _idx, int _kf0, const Vector3d &_z0, const Vector2d &_pix0, double _rho, double _rho_true) :
+    kf0(_kf0), idx0(_idx), z0(_z0), pix0(_pix0), rho(_rho), rho_true(_rho_true), slide_count(0)
 {}
 
-void Feat::addMeas(int to_idx, const Matrix2d &cov, const xform::Xformd& x_b2c, const Vector3d &zj)
+void Feat::addMeas(int to_idx, const Matrix2d &cov, const xform::Xformd& x_b2c, const Vector3d &zj, const Vector2d & pixj)
 {
     SALSA_ASSERT(to_idx != idx0, "Cannot Point to the same id");
     SALSA_ASSERT(funcs.size() > 0 ? funcs.back().to_idx_ != to_idx : true, "cannot add duplicate feat meas");
-    funcs.emplace_back(cov, x_b2c, z0, zj, to_idx);
+    funcs.emplace_back(cov, x_b2c, z0, zj, pixj, to_idx);
 }
 
 void Feat::moveMeas(int to_idx, const Vector3d &zj)
@@ -81,6 +81,7 @@ bool Feat::slideAnchor(int new_from_idx, const StateVec &xbuf, const Xformd &x_b
     rho_true = funcs.front().rho_true_;
     idx0 = new_from_idx;
     kf0 = new_from_kf;
+    pix0 = funcs.front().pixj_;
     funcs.pop_front();
     slide_count++;
     SALSA_ASSERT (funcs.front().to_idx_ != idx0, "Trying to slide to zero");

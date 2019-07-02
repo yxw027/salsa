@@ -65,6 +65,7 @@ public:
     double mocap_rate_;
     ros::Time prev_mocap_, prev_mocap_run_;
     xform::Xformd x_I2m_prev_;
+    Eigen::Vector3d v_I2m_prev_;
     Salsa salsa_;
 
     std::string imu_topic_;

@@ -563,5 +563,5 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
-    plotResults("/tmp/Salsa/GNSSHardware", False)
+    plotResults("/tmp/Salsa/MocapFeatHardware", False)
     # plotResults("/tmp/Salsa/FeatSimulation/")

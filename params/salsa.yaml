@@ -19,8 +19,8 @@ wait_key: false
 ### OPT SETUP
 ######################################
 max_node_window: 50
-max_kf_window: 25
-state_buf_size: 200
+max_kf_window: 15
+state_buf_size: 1000
 num_feat: 75
 num_sat: 15
 disable_solver: false
@@ -40,27 +40,28 @@ x_b2o: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
 ### Static Start
 #####################################
 enable_static_start: true
-static_start_freq: 0.05 # how often to drop static-start nodes
+static_start_freq: 0.02 # how often to drop static-start nodes
 static_start_imu_thresh: 15 # if imu mag exceeds this, then stop static start
-camera_start_delay: 1.0 # wait this long after static start to start fusing images
-static_start_Xi: [1e14, 1e14, 1e14, # pos
-                  1e14,           # yaw
-                  1e14, 1e14, 1e14] # vel
+camera_start_delay: 1.3 # wait this long after static start to start fusing images
+static_start_Xi: [1e9, 1e9, 1e9, # pos
+                  1e9,           # yaw
+                  1e9, 1e9, 1e9] # vel
 
 #####################################
 ### IMU
 #####################################
-accel_noise_stdev:  3.0
-gyro_noise_stdev: 0.5
+accel_noise_stdev: 3.0
+gyro_noise_stdev: 1.0
 
 #####################################
 ### Camera
 #####################################
-pix_err_stdev: 1
+pix_err_stdev: 0.2
 disable_vision: false
 tracker_freq: 10
-min_depth: 0.5
+min_depth: 0.01
 use_measured_depth: false
+use_distort_mask: true
 
 
 # Small Camera
@@ -78,16 +79,18 @@ cam_skew: 0.0
 distortion: [-0.2816241410812369, 0.05758000227344342, 0.000913492516598625, 0.0011916159178065463, 0.0]
 
 
-kf_parallax_thresh: 7
-kf_feature_thresh: 0.8
+kf_parallax_thresh: 40
+kf_feature_thresh: 0.80
 update_on_camera: true
 klt_quality: 0.3
-klt_block_size: 7
+klt_block_size: 5
+ransac_thresh: 0.02
+ransac_prob: 0.999
 
 show_matches: true
 show_skip: 1
-get_feature_radius: 10
-track_feature_min_distance: 5
+get_feature_radius: 50
+track_feature_min_distance: 30
 feature_mask: ""
 simulate_klt: true
 tc: 0.0
@@ -127,11 +130,11 @@ update_on_mocap: true
 #####################################
 state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-5, 1e-5, 1e-5, # q
-                   5e-5, 5e-5, 5e-5, # v
+                   5e-6, 5e-6, 5e-6, # v
                    1e-3, 1e-3] # clk_bias (nsec)
 x_e2n_anchor_cov: [1e-3, 1e-3, 1e-3, # p
                    1e-6, 1e-6, 1e-6] # q
 # bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
 #                  0.000001, 0.000001, 0.000001] # gyro
-bias_anchor_xi: [5e2, 5e2, 5e2, # acc
-                 1e3, 1e3, 1e3] # gyro
+bias_anchor_xi: [5e3, 5e3, 5e3, # acc
+                 1e4, 1e4, 1e4] # gyro

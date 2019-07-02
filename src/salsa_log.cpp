@@ -370,9 +370,9 @@ void Salsa::printGraph()
     while (tmp != end)
     {
         if (xbuf_[tmp].kf >= 0)
-            logs_[log::Graph]->file_ << std::fixed << std::setw(5) << xbuf_[tmp].kf << " -- ";
+            logs_[log::Graph]->file_ << std::fixed << std::setw(6) << xbuf_[tmp].kf << " -- ";
         else
-            logs_[log::Graph]->file_ << "     " << " -- ";
+            logs_[log::Graph]->file_ << "      " << " -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
 
@@ -380,7 +380,7 @@ void Salsa::printGraph()
     tmp = xbuf_tail_;
     while (tmp != end)
     {
-        logs_[log::Graph]->file_ << std::fixed << std::setw(5) << xbuf_[tmp].node << " -- ";
+        logs_[log::Graph]->file_ << std::fixed << std::setw(6) << xbuf_[tmp].node << " -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
 
@@ -389,9 +389,9 @@ void Salsa::printGraph()
     while (tmp != end)
     {
         if (xbuf_[tmp].type & State::Gnss)
-            logs_[log::Graph]->file_ << "    X -- ";
+            logs_[log::Graph]->file_ << "     X -- ";
         else
-            logs_[log::Graph]->file_ << "      -- ";
+            logs_[log::Graph]->file_ << "       -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
 
@@ -400,9 +400,9 @@ void Salsa::printGraph()
     while (tmp != end)
     {
         if (xbuf_[tmp].type & State::Camera)
-            logs_[log::Graph]->file_ << std::fixed << std::setw(5) << (int)xbuf_[tmp].n_cam << " -- ";
+            logs_[log::Graph]->file_ << std::fixed << std::setw(6) << (int)xbuf_[tmp].n_cam << " -- ";
         else
-            logs_[log::Graph]->file_ << "      -- ";
+            logs_[log::Graph]->file_ << "       -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
 
@@ -411,9 +411,9 @@ void Salsa::printGraph()
     while (tmp != end)
     {
         if (xbuf_[tmp].type & State::Mocap)
-            logs_[log::Graph]->file_ << "    X -- ";
+            logs_[log::Graph]->file_ << "     X -- ";
         else
-            logs_[log::Graph]->file_ << "      -- ";
+            logs_[log::Graph]->file_ << "       -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
     logs_[log::Graph]->file_ << "\n\n";
@@ -457,6 +457,16 @@ void Salsa::printFeat()
         logs_[log::Graph]->file_ << std::fixed << std::setw(4) << tmp << " ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
+
+    logs_[log::Graph]->file_ << "\nkf:   ";
+    tmp = xbuf_tail_;
+    end = (xbuf_head_+1)%STATE_BUF_SIZE;
+    while (tmp != end)
+    {
+        logs_[log::Graph]->file_ << std::fixed << std::setw(4) << xbuf_[tmp].kf << " ";
+        tmp = (tmp + 1) % STATE_BUF_SIZE;
+    }
+
 
     logs_[log::Graph]->file_ << "\n";
     for (FeatMap::iterator f = xfeat_.begin(); f != xfeat_.end(); f++)

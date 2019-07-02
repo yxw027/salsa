@@ -69,6 +69,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("max_iter", filename, options_.max_num_iterations);
     get_yaml_node("num_threads", filename, options_.num_threads);
     get_yaml_eigen("bias0", filename, imu_bias_);
+    get_yaml_node("min_depth", filename, min_depth_);
 
     xbuf_.resize(STATE_BUF_SIZE);
 
@@ -738,41 +739,77 @@ int Salsa::insertNode(double t)
         new_node.tau(1) = from_node.tau(1);
 
         // Fix all the indices
-        // -- finish the first half of the split
-        int to_idx = new_node_idx;
-        imu_it->finished(to_idx);
-        clk_it->finished(imu_it->delta_t_, to_idx);
-
-        // -- finish the second half of split
-        int from_idx = new_node_idx;
-        ++imu_it; ++clk_it;
-        to_idx = (to_idx + 1) % STATE_BUF_SIZE;
-        clk_it->from_idx_ = imu_it->from_idx_ = from_idx;
-        clk_it->from_node_ = imu_it->from_node_ = xbuf_[from_idx].node;
-        imu_it->finished(to_idx);
-        clk_it->finished(imu_it->delta_t_, to_idx);
-
-        // -- The rest of the factors don't need to be finished, they just need updated idx-es
-        ++imu_it; ++clk_it;
-        from_idx = to_idx;
-        while (imu_it != imu_.end())
-        {
-            to_idx = (to_idx + 1) % STATE_BUF_SIZE;
-            clk_it->from_idx_ = imu_it->from_idx_ = from_idx;
-            clk_it->from_node_ = imu_it->from_node_ = xbuf_[from_idx].node;
-            clk_it->to_idx_ = imu_it->to_idx_ = to_idx;
-            from_idx = to_idx;
-            ++imu_it; ++clk_it;
-        }
+        reWireTransitionFactors(new_node_idx, imu_it, clk_it);
+        reWireGnssFactors(new_node_idx);
+        reWireFeatFactors(new_node_idx);
 
         // Cleanup/Make sure it worked correctly
         printImuIntervals();
         checkIMUString();
         printGraph();
 
-        SALSA_ASSERT(to_idx == xbuf_head_, "Misalinged nodes/IMUs after insertion");
-        SALSA_ASSERT(clk_it == clk_.end(), "Misalinged clk/IMUs after insertion");
         return new_node_idx;
+    }
+}
+
+void Salsa::reWireTransitionFactors(int new_node_idx, ImuDeque::iterator& imu_it, ClockBiasDeque::iterator& clk_it)
+{
+    // -- finish the first half of the split
+    int to_idx = new_node_idx;
+    imu_it->finished(to_idx);
+    clk_it->finished(imu_it->delta_t_, to_idx);
+
+    // -- finish the second half of split
+    int from_idx = new_node_idx;
+    ++imu_it; ++clk_it;
+    to_idx = (to_idx + 1) % STATE_BUF_SIZE;
+    clk_it->from_idx_ = imu_it->from_idx_ = from_idx;
+    clk_it->from_node_ = imu_it->from_node_ = xbuf_[from_idx].node;
+    imu_it->finished(to_idx);
+    clk_it->finished(imu_it->delta_t_, to_idx);
+
+    // -- The rest of the factors don't need to be finished, they just need updated idx-es
+    ++imu_it; ++clk_it;
+    from_idx = to_idx;
+    while (imu_it != imu_.end())
+    {
+        to_idx = (to_idx + 1) % STATE_BUF_SIZE;
+        clk_it->from_idx_ = imu_it->from_idx_ = from_idx;
+        clk_it->from_node_ = imu_it->from_node_ = xbuf_[from_idx].node;
+        clk_it->to_idx_ = imu_it->to_idx_ = to_idx;
+        from_idx = to_idx;
+        ++imu_it; ++clk_it;
+    }
+    SALSA_ASSERT(to_idx == xbuf_head_, "Misalinged nodes/IMUs after insertion");
+    SALSA_ASSERT(clk_it == clk_.end(), "Misalinged clk/IMUs after insertion");
+}
+
+void Salsa::reWireGnssFactors(int inserted_idx)
+{
+    for (auto& pvec : prange_)
+    {
+        for (auto& p : pvec)
+        {
+            if (stateIdxGe(p.idx_, inserted_idx))
+            {
+                p.idx_ = nextIdx(p.idx_);
+                p.node_ += 1;
+            }
+        }
+    }
+}
+
+void Salsa::reWireFeatFactors(int inserted_idx)
+{
+    for (auto& ft : xfeat_)
+    {
+        if (stateIdxGe(ft.second.idx0, inserted_idx))
+            ft.second.idx0 = nextIdx(ft.second.idx0);
+        for (auto& f : ft.second.funcs)
+        {
+            if (stateIdxGe(f.to_idx_, inserted_idx))
+                f.to_idx_ = nextIdx(f.to_idx_);
+        }
     }
 }
 
@@ -824,6 +861,21 @@ void Salsa::zeroVelUpdate(const meas::ZeroVel& m, int idx)
 void Salsa::initializeStateZeroVel(const meas::ZeroVel &m)
 {
     initialize(m.t, x0_, v0_, Vector2d::Zero());
+}
+
+bool Salsa::stateIdxGe(int idx0, int idx1)
+{
+    SALSA_ASSERT(inWindow(idx0) && inWindow(idx1), "Cannot check idx not in window");
+    return  (xbuf_head_ >= xbuf_tail_ && idx0 >= idx1) ? true :
+            (idx0 <= xbuf_head_ && idx1 >= xbuf_tail_) ? true :
+            (idx0 >= xbuf_tail_ && idx0 >= idx1)       ? true :
+            (idx0 <= xbuf_head_ && idx0 >= idx1)       ? true :
+                                                         false;
+}
+
+int Salsa::nextIdx(int idx)
+{
+    return (idx + 1) % STATE_BUF_SIZE;
 }
 
 //void Salsa::endInterval(double t)

@@ -233,10 +233,10 @@ void Salsa::solve()
     addParameterBlocks(*problem);
     setAnchors(*problem);
     addImuFactors(*problem);
-//    addFeatFactors(*problem);
-//    addMocapFactors(*problem);
+    addFeatFactors(*problem);
+    addMocapFactors(*problem);
     addRawGnssFactors(*problem);
-//    addZeroVelFactors(*problem);
+    addZeroVelFactors(*problem);
 
     if (!disable_solver_)
         ceres::Solve(options_, problem, &summary_);

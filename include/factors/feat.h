@@ -17,7 +17,7 @@ class FeatFunctor
 public:
     FeatFunctor(const Eigen::Matrix2d& cov, const xform::Xformd& x_b2c,
                 const Eigen::Vector3d &zetai_, const Eigen::Vector3d &zetaj_,
-                int to_idx);
+                const Eigen::Vector2d &pixj, int to_idx);
 
     template<typename T>
     bool operator() (const T* _xi, const T* _xj, const T* _rho, T* _res) const;
@@ -26,6 +26,7 @@ public:
     const Eigen::Vector3d& zetai_;
     Eigen::Vector3d zetaj_;
     Eigen::Matrix2d Xi_;
+    Eigen::Vector2d pixj_;
     Eigen::Matrix<double, 2, 3> Pz_;
     const xform::Xformd& x_b2c_;
 

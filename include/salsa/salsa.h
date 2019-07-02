@@ -271,6 +271,7 @@ public:
         TOO_MUCH_PARALLAX = 2,
         INSUFFICIENT_MATCHES = 3
     };
+    double min_depth_;
     int last_kf_id_;
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
@@ -299,6 +300,7 @@ public:
     int calcNewKeyframeConditionKLT();
     void calcCurrentZetas();
     bool isTrackedFeature(int id) const;
+    void drawX(cv::Mat& img, cv::Point2f& center, int size, const cv::Scalar &color);
     int show_skip_;
     int show_skip_count_;
     bool sim_KLT_;
@@ -311,6 +313,8 @@ public:
     int next_feature_id_;
     double klt_quality_;
     int klt_block_size_;
+    double ransac_thresh_;
+    double ransac_prob_;
     std::vector<uchar> match_status_;
     std::vector<cv::Point2f> prev_features_;
     std::vector<cv::Scalar> colors_;
@@ -350,6 +354,11 @@ public:
     int moveNode(double t);
     int newNode(double t);
     int insertNode(double t);
+    void reWireFeatFactors(int inserted_idx);
+    void reWireGnssFactors(int inserted_idx);
+    void reWireTransitionFactors(int new_idx, ImuDeque::iterator& imu_it, ClockBiasDeque::iterator& clk_it);
     State& insertNodeIntoBuffer(int idx);
+    bool stateIdxGe(int idx0, int idx1);
+    inline int nextIdx(int idx);
 };
 }

@@ -23,6 +23,10 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("show_skip", filename, show_skip_);
     get_yaml_node("klt_quality", filename, klt_quality_);
     get_yaml_node("klt_block_size", filename, klt_block_size_);
+    get_yaml_node("ransac_thresh", filename, ransac_thresh_);
+    get_yaml_node("ransac_prob", filename, ransac_prob_);
+    bool use_distort_mask;
+    get_yaml_node("use_distort_mask", filename, use_distort_mask);
 
 
     got_first_img_ = false;
@@ -37,18 +41,13 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
         colors_.push_back(Scalar(std::rand()/(RAND_MAX/255), std::rand()/(RAND_MAX/255), std::rand()/(RAND_MAX/255)));
     }
 
-    createDistortionMask();
-//    std::string mask_filename;
-//    get_yaml_node("feature_mask", filename, mask_filename, false);
-//    if (!mask_filename.empty())
-//    {
-//        setFeatureMask(mask_filename);
-//    }
-//    else
-//    {
-//        mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
-//        mask_ = 255;
-//    }
+    if (use_distort_mask)
+        createDistortionMask();
+    else
+    {
+        mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
+        mask_ = 255;
+    }
     t_next_klt_output_ = NAN;
 
     if (show_matches_)
@@ -127,11 +126,6 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
         createNewKeyframe();
     }
 
-    current_img_.copyTo(prev_img_);
-    std::swap(current_feat_.pix, prev_features_);
-
-    if (show_matches_)
-        showImage();
     if (std::isnan(t_next_klt_output_))
     {
         t_next_klt_output_ = tc - 0.01;
@@ -142,6 +136,12 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
             addMeas(meas::Img(tc, current_feat_, R_pix, new_keyframe));
         t_next_klt_output_ += 1.0/tracker_freq_;
     }
+
+    current_img_.copyTo(prev_img_);
+    prev_features_ = current_feat_.pix;
+
+    if (show_matches_)
+        showImage();
 }
 
 void Salsa::trackFeatures()
@@ -249,7 +249,7 @@ void Salsa::filterFeaturesRANSAC()
         return;
 
     Mat mask;
-    cv::findFundamentalMat(kf_feat_.pix, current_feat_.pix, mask, cv::RANSAC, 0.1, 0.999);
+    cv::findFundamentalMat(kf_feat_.pix, current_feat_.pix, mask, cv::RANSAC, ransac_thresh_, ransac_prob_);
     //    cv::findEssentialMat(prev_features_, new_features_, cam_.focal_len_(0),
     //                         cv::Point2d(cam_.cam_center_(0), cam_.cam_center_(1)),
     //                         RANSAC, 0.999, 1.0, mask);
@@ -301,15 +301,33 @@ void Salsa::showImage()
         for (int i = 0; i < current_feat_.size(); i++)
         {
             const Scalar& color(colors_[current_feat_.feat_ids[i] % nf_]);
-            circle(color_img_, prev_features_[i], 3, color, -1);
-            //        putText(color_img_, std::to_string(current_feat_.feat_ids[i]), prev_features_[i],
-            //                FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
+            auto ftit = xfeat_.find(current_feat_.feat_ids[i]);
+            if (ftit != xfeat_.end() && ftit->second.funcs.size() > 0)
+            {
+                cv::Point2f center = current_feat_.pix[i];
+                double rho = ftit->second.rho;
+                double width = 0.2*cam_.focal_len_[0] * rho;
+                cv::Point2f offset(width/2.0, width/2.0);
+                cv::Rect box(center + offset, center - offset);
+                circle(color_img_, current_feat_.pix[i], 3, color, -1);
+                rectangle(color_img_, box, color, 1);
+            }
+            else
+            {
+                drawX(color_img_, prev_features_[i], 5, Scalar(0, 0, 0));
+            }
         }
 
         cv::imshow("tracked points", color_img_);
         cv::waitKey(1);
     }
     show_skip_count_ = (show_skip_count_+1)%show_skip_;
+}
+
+void Salsa::drawX(Mat &img, Point2f &center, int size, const Scalar& color)
+{
+    line(img, cv::Point2f(center.x+size/2, center.y+size/2), cv::Point2f(center.x-size/2, center.y-size/2), color);
+    line(img, cv::Point2f(center.x-size/2, center.y+size/2), cv::Point2f(center.x+size/2, center.y-size/2), color);
 }
 
 

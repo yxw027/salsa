@@ -95,7 +95,7 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
             {
                 SD(1, "Adding new measurement to feature %d", m.z.feat_ids[i]);
-                ft.addMeas(idx, m.R_pix, x_b2c_, m.z.zetas[i]);
+                ft.addMeas(idx, m.R_pix, x_b2c_, m.z.zetas[i], Vector2d(m.z.pix[i].x, m.z.pix[i].y));
             }
             else
             {
@@ -107,11 +107,11 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
         }
         else if (m.new_keyframe)
         {
-            double rho0 = 0.1;
+            double rho0 = min_depth_;
             if (use_measured_depth_ && !std::isnan(m.z.depths[i]))
                 rho0 = 1.0/m.z.depths[i];
             SD(1, "Adding new feature %d", m.z.feat_ids[i]);
-            xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], rho0, 1.0/m.z.depths[i])});
+            xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], Vector2d(m.z.pix[i].x, m.z.pix[i].y), rho0, 1.0/m.z.depths[i])});
         }
     }
     xbuf_[idx].type |= State::Camera;
@@ -120,6 +120,7 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
     if (m.new_keyframe)
     {
         setNewKeyframe(idx);
+        SD(2, "New Keyframe %d", current_kf_);
     }
     rmLostFeatFromKf();
 }
@@ -154,6 +155,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
             Vector2d lihat =  cam_.proj(zihat);
             Vector2d li(kf_feat_.pix[ni].x, kf_feat_.pix[ni].y);
             double err = (lihat - li).norm();
+            SD(1, "pix error %.2f. lihat = (%d,%d), li = (%d,%d)", err, lihat.x(), lihat.y(), li.x(), li.y());
             kf_parallax_ += err;
             ni++;
             nj++;
@@ -171,7 +173,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
         kf_condition_ = TOO_MUCH_PARALLAX;
         kf_feat_ = z;
         kf_num_feat_ = z.feat_ids.size();
-        SD(2, "new keyframe, too much parallax: = %f", kf_parallax_);
+        SD(2, "new keyframe, too much parallax: = %f, nmatch = %d", kf_parallax_, kf_Nmatch_feat_);
         return true;
     }
     else if(kf_Nmatch_feat_ <= std::round(kf_feature_thresh_ * kf_num_feat_) + 0.001)

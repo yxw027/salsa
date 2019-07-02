@@ -8,6 +8,12 @@ using namespace xform;
 namespace salsa
 {
 
+void vecSat(Vector3d& x, const Vector3d& max, const Vector3d& min)
+{
+    for (int i = 0; i < x.rows(); i++)
+        x[i] = (x[i] > max[i]) ? max[i] : x[i] < min[i] ? min[i] : x[i];
+}
+
 SalsaRosbag::SalsaRosbag(int argc, char** argv)
 {
     start_ = 0;
@@ -24,6 +30,7 @@ SalsaRosbag::SalsaRosbag(int argc, char** argv)
     salsa_.init(param_filename_);
     truth_log_.open(salsa_.log_prefix_ + "/../Truth.log");
     imu_log_.open(salsa_.log_prefix_ + "/Imu.log");
+    v_I2m_prev_ = Vector3d::Zero();
 }
 
 void SalsaRosbag::loadParams()
@@ -261,12 +268,17 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 
     ros::Duration dt = time - prev_mocap_;
     Vector3d v = z.q_.rotp(z.t() - x_I2m_prev_.t())/dt.toSec();
+    if (v.norm() > 3.0)
+        v = v_I2m_prev_;
+    v_I2m_prev_ = v;
+
     Vector6d b = Vector6d::Ones() * NAN;
     Vector2d tau = Vector2d::Ones() * NAN;
     Vector7d x_e2n = Vector7d::Ones() * NAN;
     Vector7d x_b2c = Vector7d::Ones() * NAN;
+    Vector3d lla = Vector3d::Ones()*NAN;
     truth_log_.log(t);
-    truth_log_.logVectors(z.arr(), z.q().euler(), v, b, tau, x_e2n, x_b2c);
+    truth_log_.logVectors(z.arr(), z.q().euler(), v, b, tau, x_e2n, x_b2c, lla);
     int32_t multipath(0), denied(0);
     truth_log_.log(multipath, denied);
     for (int i = 0; i < salsa_.ns_; i++)
