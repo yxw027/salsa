@@ -18,6 +18,7 @@ CurrentStateType = np.dtype([
     ('x', XType),
     ('euler', (np.float64, 3)),
     ('v', (np.float64, 3)),
+    ('lla', (np.float64, 3))
 ])
 
 SimStateType = np.dtype([
@@ -29,6 +30,7 @@ SimStateType = np.dtype([
     ('tau', (np.float64, 2)),
     ('x_e2n', XType),
     ('x_b2c', XType),
+    ('lla', (np.float64, 3)),
     ('multipath', np.int32),
     ('denied', np.int32),
     ('mp', (np.float64, params["num_sat"]))

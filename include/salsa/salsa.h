@@ -204,6 +204,7 @@ public:
     double camera_start_delay_;
     double static_start_end_;
     double static_start_freq_;
+    bool normalized_imu_;
     Matrix7d zero_vel_Xi_;
     void zeroVelUpdate(const meas::ZeroVel& m, int idx);
     void initializeStateZeroVel(const meas::ZeroVel& m);
@@ -308,6 +309,8 @@ public:
     int get_feature_radius_;
     int track_feature_min_distance_;
     int next_feature_id_;
+    double klt_quality_;
+    int klt_block_size_;
     std::vector<uchar> match_status_;
     std::vector<cv::Point2f> prev_features_;
     std::vector<cv::Scalar> colors_;

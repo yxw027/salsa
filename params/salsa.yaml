@@ -11,6 +11,7 @@ duration: 40
 bag_name: "/home/superjax/rosbag/mynt_outdoors_walk/walk1_uc.bag"
 mocap_rate: 10
 bias0: [0, 0, 0, 0, 0, 0]
+wait_key: false
 # bias0: [-0.04717741613721455, -0.07034896670337663, -0.03231176628010501,
 #        -0.004936014393538678, 0.006832230548126756, 0.003299054277444827]
 
@@ -39,12 +40,12 @@ x_b2o: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
 ### Static Start
 #####################################
 enable_static_start: true
-static_start_freq: 0.2 # how often to drop static-start nodes
+static_start_freq: 0.05 # how often to drop static-start nodes
 static_start_imu_thresh: 15 # if imu mag exceeds this, then stop static start
 camera_start_delay: 1.0 # wait this long after static start to start fusing images
-static_start_Xi: [1e9, 1e9, 1e9, # pos
-                  1e9,           # yaw
-                  1e9, 1e9, 1e9] # vel
+static_start_Xi: [1e14, 1e14, 1e14, # pos
+                  1e14,           # yaw
+                  1e14, 1e14, 1e14] # vel
 
 #####################################
 ### IMU
@@ -80,6 +81,8 @@ distortion: [-0.2816241410812369, 0.05758000227344342, 0.000913492516598625, 0.0
 kf_parallax_thresh: 7
 kf_feature_thresh: 0.8
 update_on_camera: true
+klt_quality: 0.3
+klt_block_size: 7
 
 show_matches: true
 show_skip: 1

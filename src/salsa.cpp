@@ -22,6 +22,7 @@ Salsa::Salsa() :
     x_e2n_ = xform::Xformd::Identity();
     x_b2c_ = xform::Xformd::Identity();
     static_start_end_ = INFINITY;
+    normalized_imu_ = false;
 }
 
 Salsa::~Salsa()
@@ -807,6 +808,17 @@ void Salsa::zeroVelUpdate(const meas::ZeroVel& m, int idx)
 {
     (void)idx;
     SD(2, "ZeroVel Update, t=%.3f", m.t);
+    xbuf_[idx].x = x0_;
+    xbuf_[idx].v = v0_;
+    if (!normalized_imu_)
+    {
+      Vector6d avg_imu = imu_.back().avgImuOverInterval();
+      double mag = avg_imu.norm();
+      double scale_error = mag/ImuIntegrator::G;
+      imu_bias_ = avg_imu/mag * (scale_error - 1.0);
+      SD_S(4, "Setting Scale Bias to " << imu_bias_.transpose() << " scale error = " << scale_error);
+      normalized_imu_ = true;
+    }
 }
 
 void Salsa::initializeStateZeroVel(const meas::ZeroVel &m)

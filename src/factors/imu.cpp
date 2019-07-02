@@ -7,7 +7,8 @@ using namespace quat;
 namespace salsa
 {
 
-Vector3d ImuIntegrator::gravity_{0, 0, 9.80665};
+
+Vector3d ImuIntegrator::gravity_{0, 0, ImuIntegrator::G};
 
 ImuIntegrator::ImuIntegrator()
 {
@@ -264,6 +265,16 @@ ImuFunctor ImuFunctor::split(double _t)
 
     }
     return f0;
+}
+
+Vector6d ImuFunctor::avgImuOverInterval()
+{
+  Vector6d sum = Vector6d::Zero();
+  for (auto& u : meas_hist_)
+  {
+    sum += u.z;
+  }
+  return sum / meas_hist_.size();
 }
 
 template<typename T>

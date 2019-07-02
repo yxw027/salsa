@@ -15,6 +15,7 @@ namespace salsa
 class ImuIntegrator
 {
 public:
+    static constexpr double G = 9.80665;
     ImuIntegrator();
     void reset(const double& _t);
     void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot);
@@ -60,7 +61,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node);
 
-
+    Vector6d avgImuOverInterval();
     void errorStateDynamics(const Vector10d& y, const Vector9d& dy,
                             const Vector6d& u, const Vector6d& eta, Vector9d& dydot);
     void dynamics(const Vector10d& y, const Vector6d& u, Vector9d& ydot, Matrix9d& A, Matrix96&B);

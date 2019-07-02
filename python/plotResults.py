@@ -460,16 +460,16 @@ def plotPosLla():
         for log in data:
             if i == 2:
                 plt.plot(log.Lla['t'], log.Lla['pp_lla'][:,i], label=log.label+"pp")
-                plt.plot(log.Lla['t'], log.Lla['est_lla'][:,i], label=log.label + "est")
+                plt.plot(log.state['t'], log.state['lla'][:,i], label=log.label + "est")
             else:
                 plt.plot(log.Lla['t'], log.Lla['pp_lla'][:,i]*180.0/np.pi, label=log.label + "pp")
-                plt.plot(log.Lla['t'], log.Lla['est_lla'][:,i]*180.0/np.pi, label=log.label)
+                plt.plot(log.state['t'], log.state['lla'][:,i]*180.0/np.pi, label=log.label)
         if i == 0:
             plt.legend()
     plt.subplot(1,2,2)
     for log in data:
         plt.plot(log.Lla['pp_lla'][:,1]*180/np.pi, log.Lla['pp_lla'][:,0]*180.0/np.pi, label=log.label + "pp")
-        plt.plot(log.Lla['est_lla'][:,1]*180/np.pi, log.Lla['est_lla'][:,0]*180.0/np.pi, label=log.label + "est")
+        plt.plot(log.state['lla'][:,1]*180/np.pi, log.state['lla'][:,0]*180.0/np.pi, label=log.label + "est")
     pw.addPlot("Lla", f);
 
 
@@ -550,9 +550,9 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
         saveMultipath()
         # plotAzel()
     # #
-    # if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
-    #     # plotFeatRes()
-    #     plotFeatDepths()
+    if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
+        # plotFeatRes()
+        plotFeatDepths()
     # #
     # if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
     #     plotMocapRes()
@@ -563,5 +563,5 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
-    plotResults("/tmp/Salsa/")
+    plotResults("/tmp/Salsa/GNSSHardware", False)
     # plotResults("/tmp/Salsa/FeatSimulation/")

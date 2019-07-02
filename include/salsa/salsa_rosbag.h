@@ -54,6 +54,7 @@ public:
     double end_;
     bool got_imu_;
     int imu_count_;
+    bool wait_key_;
 
 
     quat::Quatd q_mocap_to_NED_pos_, q_mocap_to_NED_att_;

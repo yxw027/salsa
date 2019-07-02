@@ -129,6 +129,9 @@ void Salsa::logPointPosLla()
 void Salsa::logCurrentState()
 {
     xform::Xformd xo = current_state_.x * x_b2o_;
+    Vector3d lla = xhead().t > static_start_end_ ?
+                       Vector3d::Ones() * NAN :
+                       WGS84::ecef2lla(x_e2n_.transforma(current_state_.x.t_));
     logs_[log::CurrentState]->log(current_state_.t);
     logs_[log::CurrentState]->logVectors(current_state_.x.arr(),
                                          current_state_.x.q().euler(),
@@ -137,7 +140,8 @@ void Salsa::logCurrentState()
                                          current_state_.tau,
                                          xo.arr(),
                                          xo.q().euler(),
-                                         x_b2o_.rotp(current_state_.v));
+                                         x_b2o_.rotp(current_state_.v),
+                                         lla);
 }
 
 

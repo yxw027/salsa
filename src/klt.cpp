@@ -21,6 +21,8 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("tracker_freq", filename, tracker_freq_);
     get_yaml_node("disable_vision", filename, disable_vision_);
     get_yaml_node("show_skip", filename, show_skip_);
+    get_yaml_node("klt_quality", filename, klt_quality_);
+    get_yaml_node("klt_block_size", filename, klt_block_size_);
 
 
     got_first_img_ = false;
@@ -48,6 +50,9 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
 //        mask_ = 255;
 //    }
     t_next_klt_output_ = NAN;
+
+    if (show_matches_)
+      cv::namedWindow("tracked_points");
 }
 
 bool Salsa::dropFeature(int idx)
@@ -272,8 +277,8 @@ void Salsa::collectNewfeatures()
         // Now find a bunch of points, not in the mask
         int num_new_features = nf_ - current_feat_.size();
         std::vector<Point2f> new_corners;
-        goodFeaturesToTrack(current_img_, new_corners, num_new_features, 0.3,
-                            get_feature_radius_, point_mask_, 7);
+        goodFeaturesToTrack(current_img_, new_corners, num_new_features, klt_quality_,
+                            get_feature_radius_, point_mask_, klt_block_size_);
 
         for (int i = 0; i < new_corners.size(); i++)
         {

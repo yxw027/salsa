@@ -34,6 +34,7 @@ void SalsaRosbag::loadParams()
     get_yaml_node("image_topic", param_filename_, image_topic_);
     get_yaml_node("start_time", param_filename_, start_);
     get_yaml_node("duration", param_filename_, duration_);
+    get_yaml_node("wait_key", param_filename_, wait_key_);
 
     // Load Sensor Noise Parameters
     double acc_stdev, gyro_stdev;
@@ -135,6 +136,7 @@ void SalsaRosbag::parseBag()
 void SalsaRosbag::imuCB(const rosbag::MessageInstance& m)
 {
     imu_count_++;
+    got_imu_ = true;
     sensor_msgs::ImuConstPtr imu = m.instantiate<sensor_msgs::Imu>();
     double t = (imu->header.stamp - bag_start_).toSec();
     Vector6d z;
@@ -321,8 +323,9 @@ void SalsaRosbag::odomCB(const rosbag::MessageInstance &m)
     Vector2d tau = Vector2d::Ones() * NAN;
     Vector7d x_e2n = Vector7d::Ones() * NAN;
     Vector7d x_b2c = Vector7d::Ones() * NAN;
+    Vector3d lla = WGS84::ecef2lla(salsa_.x_e2n_.transforma(z.t_));
     truth_log_.log((odom->header.stamp - bag_start_).toSec());
-    truth_log_.logVectors(z.arr(), z.q().euler(), v, b, tau, x_e2n, x_b2c);
+    truth_log_.logVectors(z.arr(), z.q().euler(), v, b, tau, x_e2n, x_b2c, lla);
     int32_t multipath = 0;
     int32_t denied = 0;
     truth_log_.log(multipath, denied);
@@ -358,6 +361,8 @@ void SalsaRosbag::imgCB(double tc, const cv_bridge::CvImageConstPtr &img)
 {
     imu_count_ = 0;
     salsa_.imageCallback(tc, img->image, pix_R_);
+    if (wait_key_)
+      cv::waitKey(0);
 }
 
 //void SalsaRosbag::getMocapOffset()
