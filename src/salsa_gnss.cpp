@@ -14,6 +14,7 @@ void Salsa::initGNSS(const std::string& filename)
     get_yaml_node("doppler_cov", filename, doppler_cov_);
     get_yaml_eigen("x_e2n", filename, x_e2n_.arr_);
     get_yaml_node("min_satellite_elevation", filename, min_satellite_elevation_);
+    min_satellite_elevation_ = deg2rad(min_satellite_elevation_);
     get_yaml_node("use_point_positioning", filename, use_point_positioning_);
     get_yaml_node("disable_gnss", filename, disable_gnss_);
 }
@@ -152,7 +153,7 @@ void Salsa::gnssUpdate(const meas::Gnss &m, int idx)
     {
         Matrix2d R = (Vector2d() << ob.qualP, doppler_cov_).finished().asDiagonal();
         prange_.back()[i++].init(m.obs[0].t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, R,
-                                 switch_Xi_, p_b2g_, current_node_, idx);
+                                 switch_Xi_, p_b2g_, xbuf_[idx].node, idx);
     }
     xbuf_[idx].type |= State::Gnss;
 }

@@ -91,8 +91,8 @@ void SalsaRosbag::openBag()
     if (bag_end_ > view_->getEndTime())
         bag_end_ = view_->getEndTime();
 
-    delete view_;
-    view_ = new rosbag::View(bag_, bag_start_, bag_end_);
+//    delete view_;
+//    view_ = new rosbag::View(bag_, bag_start_, bag_end_);
 }
 
 
@@ -100,7 +100,7 @@ void SalsaRosbag::parseBag()
 {
     loadEph();
 
-    ProgressBar prog(view_->size(), 80);
+    ProgressBar prog(rosbag::View(bag_, bag_start_, bag_end_).size(), 80);
     int i = 0;
     for(rosbag::MessageInstance const m  : (*view_))
     {

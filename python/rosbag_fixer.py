@@ -5,35 +5,55 @@ from tqdm import tqdm
 from inertial_sense.msg import GNSSObsVec
 from geometry_msgs.msg import PoseStamped
 
-def adjustTime(inputfile, outputfile, mocaptopic):
-    print("input file: %s" % inputfile)
-    print('output file: %s' % outputfile)
-    print('mocap_topic: %s' % mocaptopic)
+def adjustTime(inputfile, outputfile, gps_topics, ignored_topics):
+    dt = gpsOffset(inputfile, gps_topics)
 
+
+    inbag = rosbag.Bag(inputfile)
     outbag = rosbag.Bag(outputfile, 'w')
-    bag = rosbag.Bag(inputfile)
 
-    dt_m = mocapOffset(inputfile, mocaptopic)
+    topics = [x for x in inbag.get_type_and_topic_info()[1].keys() if x not in ignored_topics]
 
-    for topic, msg, t in tqdm(bag.read_messages(), total=bag.get_message_count()):
-        if topic == mocaptopic:
-            msg.header.stamp -= dt_m
-            outbag.write(topic, msg, msg.header.stamp)
-        elif hasattr(msg,"header") and topic != "/output_raw":
-            outbag.write(topic, msg, msg.header.stamp)
+    last = rospy.Time(0)
+    last_topic = ""
+    for topic, msg, t in tqdm(inbag.read_messages(topics), total=inbag.get_message_count()):
+        if hasattr(msg, "header") and msg.header.stamp.to_sec() < 1.0:
+            msg.header.stamp = t
 
-    sys.stdout.flush()
+        new_time = []
+        if topic in gps_topics and hasattr(msg , "header"):
+            new_time = msg.header.stamp
+        else:
+            if hasattr(msg , "header"):
+                msg.header.stamp += dt
+                new_time = msg.header.stamp
+            else:
+                new_time = t + dt
+        outbag.write(topic, msg, new_time)
+        if (last - new_time).to_sec() > 1.0:
+            print((last - new_time).to_sec(), topic, last_topic)
+        last = new_time
+        last_topic = topic
+    outbag.reindex()
     outbag.close()
-    print ("done")
+    inbag.close()
+    
 
-def mocapOffset(inputfile, mocaptopic):
+def gpsOffset(inputfile, gps_topics):
     bag = rosbag.Bag(inputfile)
 
     biggest_dt = rospy.Duration(0)
-    for topic, msg, t in tqdm(bag.read_messages(topics=[mocaptopic]), total=bag.get_message_count()):
+    last_topic= ""
+    for topic, msg, t in tqdm(bag.read_messages(topics=gps_topics), total=bag.get_message_count()):
+        if not hasattr(msg , "header"):
+            continue
         dt = msg.header.stamp - t
+        if abs((dt - biggest_dt).to_sec()) > 1.0:
+            print ((dt - biggest_dt).to_sec(), topic, last_topic)
         if dt > biggest_dt:
             biggest_dt = dt
+        last_topic = topic
+    print biggest_dt.secs
     return biggest_dt
 
 
@@ -69,8 +89,9 @@ def convertObsType(inputfile, outputfile):
 
 
 if __name__ == '__main__':
-    adjustTime("/home/superjax/rosbag/mocap_ned1.bag",
-               "/home/superjax/rosbag/mocap_ned1_adjust.bag",
-               "/Ragnarok_ned")
+    adjustTime("/home/superjax/rosbag/gps_carry/bright_small1.bag",
+               "/home/superjax/rosbag/gps_carry/bright_small1_adjust.bag",
+               ["/gps", "/ins", "/gps/geph", "gps/obs", "/uins/imu"],
+               ["/output_raw", "/rc_raw"])
 
 

@@ -68,3 +68,11 @@ inline bool ge(double t0, double t1) { return t0 >= t1-EPS; }
 inline bool eq(double t0, double t1) { return std::abs(t0 - t1) <= 2.0*EPS; }
 inline bool ne(double t0, double t1) { return std::abs(t0 - t1) > 2.0*EPS; }
 
+constexpr double rad2deg(double x)
+{
+  return 180.0 / M_PI * x;
+}
+constexpr double deg2rad(double x)
+{
+  return M_PI / 180.0 * x;
+}

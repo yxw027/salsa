@@ -39,7 +39,7 @@ x_b2o: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
 ### Static Start
 #####################################
 enable_static_start: true
-static_start_freq: 0.1 # how often to drop static-start nodes
+static_start_freq: 0.2 # how often to drop static-start nodes
 static_start_imu_thresh: 15 # if imu mag exceeds this, then stop static start
 camera_start_delay: 1.0 # wait this long after static start to start fusing images
 static_start_Xi: [1e9, 1e9, 1e9, # pos
@@ -61,17 +61,28 @@ tracker_freq: 10
 min_depth: 0.5
 use_measured_depth: false
 
-focal_len: [189.288014941235, 188.89300027962554]
-cam_center: [189.57352223555952, 114.25998149460739]
-image_size: [376, 240]
+
+# Small Camera
+# focal_len: [189.288014941235, 188.89300027962554]
+# cam_center: [189.57352223555952, 114.25998149460739]
+# image_size: [376, 240]
+# cam_skew: 0.0
+# distortion: [-0.28839265926889596, 0.06052865219979488, 0.003175682270413171,  0.0014326472335837869, 0]
+
+# Big Camera
+focal_len: [386.5056187959309, 386.9805107887256]
+cam_center: [387.88086531158535,  233.65220025666383]
+image_size: [752, 480]
 cam_skew: 0.0
-distortion: [-0.28839265926889596, 0.06052865219979488, 0.003175682270413171,  0.0014326472335837869, 0]
+distortion: [-0.2816241410812369, 0.05758000227344342, 0.000913492516598625, 0.0011916159178065463, 0.0]
+
+
 kf_parallax_thresh: 7
 kf_feature_thresh: 0.8
 update_on_camera: true
 
 show_matches: true
-show_skip: 25
+show_skip: 1
 get_feature_radius: 10
 track_feature_min_distance: 5
 feature_mask: ""
@@ -84,15 +95,15 @@ x_b2c: [0.01666044727690726, 0.06831908058722323, -0.3523408903053932,
 ### GNSS
 #####################################
 clk_bias_xi: [2, 2] # nsec
-doppler_cov: 0.005
-min_satellite_elevation: 0.43654987
+doppler_cov: 0.01
+min_satellite_elevation: 10
 use_point_positioning: true
 disable_gnss: false
 update_on_gnss: false
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, 0]
-switch_xi: 5
+switch_xi: 10
 switchdot_xi: 50
 enable_switching_factors: true
 
@@ -115,8 +126,8 @@ state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-5, 1e-5, 1e-5, # q
                    5e-5, 5e-5, 5e-5, # v
                    1e-3, 1e-3] # clk_bias (nsec)
-x_e2n_anchor_cov: [1e-5, 1e-5, 1e-5, # p
-                   1e-8, 1e-8, 1e-2] # q
+x_e2n_anchor_cov: [1e-3, 1e-3, 1e-3, # p
+                   1e-6, 1e-6, 1e-6] # q
 # bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
 #                  0.000001, 0.000001, 0.000001] # gyro
 bias_anchor_xi: [5e2, 5e2, 5e2, # acc

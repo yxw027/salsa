@@ -131,6 +131,7 @@ void Salsa::logCurrentState()
     xform::Xformd xo = current_state_.x * x_b2o_;
     logs_[log::CurrentState]->log(current_state_.t);
     logs_[log::CurrentState]->logVectors(current_state_.x.arr(),
+                                         current_state_.x.q().euler(),
                                          current_state_.v,
                                          imu_bias_,
                                          current_state_.tau,

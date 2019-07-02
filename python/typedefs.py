@@ -11,6 +11,7 @@ XType = np.dtype([
 CurrentStateType = np.dtype([
 	('t', np.float64),
     ('xu', XType),
+    ('euleru', (np.float64, 3)),
     ('vu', (np.float64, 3)),
     ('b', (np.float64, 6)),
     ('tau', (np.float64, 2)),

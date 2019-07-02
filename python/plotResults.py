@@ -209,7 +209,7 @@ def plotAttitude():
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
         for log in data:
-            plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['x']['q'][:,0]), label=log.label)
+            plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['xu']['q'][:,0]), label=log.label)
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['q'][:,i]*np.sign(log.x['x']['q'][:,0]), 'x')
         if i == 0:
@@ -355,7 +355,7 @@ def plotMultipathTime():
         plt.axvspan(row[0], row[1], alpha=0.2, color='red', label="denied")
 
 def plotMultipath():
-    nsat = truth["mp"][0].size
+    nsat = params["num_sat"]
     f = plt.figure()
     plt.suptitle("$\kappa$ estimation")
     legend_entries = list()
@@ -371,6 +371,7 @@ def plotMultipath():
             plt.legend(handles=legend_entries, ncol=7)
         if i != nsat-1:
             plt.xticks([])
+        plt.ylabel(str(data[0].satPos['sats']['id'][-1, i]))
         plt.ylim([-0.05, 1.05])
         # plotMultipathTime()
     pw.addPlot("Multipath", f)
@@ -506,9 +507,10 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global data, truth, pw, xtitles, imu_titles, vtitles, plotKF, colors
-    global savePlots, filePrefix
+    global savePlots, filePrefix, params
     savePlots = saveFig
     filePrefix = prefix
+    params = yaml.load(open("../params/salsa.yaml"))
     xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
     vtitles = ['$v_x$', '$v_y$', '$v_z$']
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
@@ -522,7 +524,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
     data = [Log(subdir) for subdir in subdirs]
 
-    interpolateTruth()
+    # interpolateTruth()
     getMultipathTime()
     getDeniedTime()
 

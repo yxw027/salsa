@@ -89,8 +89,8 @@ void Salsa::addImuFactors(ceres::Problem &problem)
                      prev_idx, it->from_idx_, xbuf_tail_, xbuf_head_);
         SALSA_ASSERT(it->to_idx_ == (it->from_idx_ + 1) % STATE_BUF_SIZE, "Skipping States! from %d to %d ", it->from_idx_, it->to_idx_);
         prev_idx = it->to_idx_;
-        SALSA_ASSERT(inWindow(it->to_idx_), "Trying to add factor to node outside of window");
-        SALSA_ASSERT(inWindow(it->from_idx_), "Trying to add factor to node outside of window");
+        SALSA_ASSERT(inWindow(it->to_idx_), "Trying to add IMU factor to node outside of window");
+        SALSA_ASSERT(inWindow(it->from_idx_), "Trying to add IMU factor to node outside of window");
         SALSA_ASSERT(std::abs(1.0 - xbuf_[it->to_idx_].x.q().arr_.norm()) < 1e-8, "Quat Left Manifold");
         FunctorShield<ImuFunctor>* ptr = new FunctorShield<ImuFunctor>(&*it);
         problem.AddResidualBlock(new ImuFactorAD(ptr),
@@ -108,7 +108,7 @@ void Salsa::addMocapFactors(ceres::Problem &problem)
 {
     for (auto it = mocap_.begin(); it != mocap_.end(); it++)
     {
-        SALSA_ASSERT(inWindow(it->idx_), "Trying to add factor to node outside of window");
+        SALSA_ASSERT(inWindow(it->idx_), "Trying to add Mocap factor to node outside of window");
         FunctorShield<MocapFunctor>* ptr = new FunctorShield<MocapFunctor>(&*it);
         problem.AddResidualBlock(new MocapFactorAD(ptr),
                                  NULL,
@@ -129,7 +129,7 @@ void Salsa::addRawGnssFactors(ceres::Problem &problem)
             PseudorangeFunctor &p((*pvec)[i]);
             if(!inWindow(p.idx_))
             {
-                SD(5, "Trying to add factor to node outside of window. idx=%d, tail=%d, head=%d", p.idx_, xbuf_tail_, xbuf_head_);
+                SD(5, "Trying to add GNSS factor to node outside of window. idx=%d, tail=%d, head=%d", p.idx_, xbuf_tail_, xbuf_head_);
                 continue;
             }
             problem.AddResidualBlock(new PseudorangeFactor(&p),
