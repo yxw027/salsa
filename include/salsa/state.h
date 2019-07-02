@@ -13,8 +13,8 @@ class State
 {
 public:
     enum {
-        xSize = 12,
-        dxSize = 11
+        xSize = 18,
+        dxSize = 17
     };
     enum {
         None = 0x00,
@@ -23,7 +23,7 @@ public:
         Camera = 0x04,
     };
     typedef Eigen::Matrix<double, dxSize, dxSize> dxMat;
-    double buf_[13];
+    double buf_[19];
     int kf;
     int node;
     uint8_t type;
@@ -33,6 +33,7 @@ public:
     Eigen::Map<Eigen::Vector3d> p;
     Eigen::Map<Eigen::Vector3d> v;
     Eigen::Map<Eigen::Vector2d> tau;
+    Eigen::Map<Vector6d> bias;
 
     State();
     State& operator=(const State& other);

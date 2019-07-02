@@ -12,9 +12,10 @@ State::State() :
     x(buf_+1),
     p(buf_+1),
     v(buf_+8),
-    tau(buf_+11)
+    tau(buf_+11),
+    bias(buf_+13)
 {
-    for (int i = 0; i < 13; i++)
+    for (int i = 0; i < 19; i++)
         buf_[i] = NAN;
     kf = -1;
     type = None;
@@ -26,6 +27,7 @@ State& State::operator=(const State& other)
     x = other.x;
     v = other.v;
     tau = other.tau;
+    bias = other.bias;
     kf = other.kf;
     node = other.node;
     type = other.type;

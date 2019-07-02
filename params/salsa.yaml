@@ -52,6 +52,8 @@ static_start_Xi: [1e9, 1e9, 1e9, # pos
 #####################################
 accel_noise_stdev: 3.0
 gyro_noise_stdev: 1.0
+imu_bias_xi: [1e5, 1e5, 1e5, # acc
+              1e7, 1e7, 1e7] # gyro
 
 #####################################
 ### Camera
@@ -131,10 +133,8 @@ update_on_mocap: true
 state_anchor_cov: [1e-6, 1e-6, 1e-6, # p
                    1e-5, 1e-5, 1e-5, # q
                    5e-6, 5e-6, 5e-6, # v
-                   1e-3, 1e-3] # clk_bias (nsec)
+                   1e-3, 1e-3, # clk_bias (nsec)
+                   5e3, 5e3, 5e3, # acc bias
+                   1e4, 1e4, 1e4] # gyro bias
 x_e2n_anchor_cov: [1e-3, 1e-3, 1e-3, # p
                    1e-6, 1e-6, 1e-6] # q
-# bias_anchor_cov: [0.00001, 0.00001, 0.00001, # acc
-#                  0.000001, 0.000001, 0.000001] # gyro
-bias_anchor_xi: [5e3, 5e3, 5e3, # acc
-                 1e4, 1e4, 1e4] # gyro

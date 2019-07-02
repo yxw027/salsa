@@ -87,7 +87,7 @@ void ImuIntegrator::estimateXj(const Xformd &xi, const Vector3d &vi, Xformd &xj,
     SALSA_ASSERT(std::abs(1.0 - xj.q_.arr_.norm()) < 1e-8, "Quat left manifold");
 }
 
-ImuFunctor::ImuFunctor(const double &_t0, const Vector6d &b0, int from_idx, int from_node)
+ImuFunctor::ImuFunctor(const double &_t0, const Vector6d &b0, const Matrix6d& bias_Xi, int from_idx, int from_node)
 {
     delta_t_ = 0.0;
     t0_ = _t0;
@@ -103,6 +103,7 @@ ImuFunctor::ImuFunctor(const double &_t0, const Vector6d &b0, int from_idx, int 
     from_idx_ = from_idx;
     to_idx_ = -1;
     from_node_ = from_node;
+    bias_Xi_ = bias_Xi;
 }
 
 void ImuFunctor::errorStateDynamics(const Vector10d& y, const Vector9d& dy, const Vector6d& u,
@@ -217,7 +218,7 @@ ImuFunctor ImuFunctor::split(double _t)
     bool single_imu0 = le(_t, meas_hist_.front().t); // _t <= z.t
 
     // Create new ImuFunctor from the beginning to the split
-    ImuFunctor f0(t0_, b_, from_idx_, from_node_);
+    ImuFunctor f0(t0_, b_, bias_Xi_, from_idx_, from_node_);
     while (lt(f0.t, _t)) // f0.t < _t
     {
         if (le(meas_hist_.front().t, _t)) // z.t <= _t
@@ -279,20 +280,22 @@ Vector6d ImuFunctor::avgImuOverInterval()
 
 template<typename T>
 bool ImuFunctor::operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj,
-                            const T* _b, T* residuals) const
+                            const T* _bi, const T* _bj, T* residuals) const
 {
     typedef Matrix<T,3,1> VecT3;
     typedef Matrix<T,6,1> VecT6;
     typedef Matrix<T,9,1> VecT9;
     typedef Matrix<T,10,1> VecT10;
+    typedef Matrix<T,15,1> VecT15;
 
     Xform<T> xi(_xi);
     Xform<T> xj(_xj);
     Map<const VecT3> vi(_vi);
     Map<const VecT3> vj(_vj);
-    Map<const VecT6> b(_b);
+    Map<const VecT6> bi(_bi);
+    Map<const VecT6> bj(_bj);
 
-    VecT9 dy = J_ * (b - b_);
+    VecT9 dy = J_ * (bi - b_);
     VecT10 y;
     y.template segment<6>(0) = y_.template segment<6>(0) + dy.template segment<6>(0);
     Quat<T> q_dy;
@@ -304,19 +307,22 @@ bool ImuFunctor::operator()(const T* _xi, const T* _xj, const T* _vi, const T* _
     Map<VecT3> alpha(y.data()+ALPHA);
     Map<VecT3> beta(y.data()+BETA);
     Quat<T> gamma(y.data()+GAMMA);
-    Map<VecT9> r(residuals);
+    Map<VecT15> r(residuals);
 
     r.template block<3,1>(ALPHA, 0) = xi.q_.rotp(xj.t_ - xi.t_ - 1/2.0*gravity_*delta_t_*delta_t_) - vi*delta_t_ - alpha;
     r.template block<3,1>(BETA, 0) = gamma.rota(vj) - vi - xi.q_.rotp(gravity_)*delta_t_ - beta;
     r.template block<3,1>(GAMMA, 0) = (xi.q_.inverse() * xj.q_) - gamma;
+    r.template tail<6>() = bi - bj;
 
-    r = Xi_ * r;
+
+    r.template head<9>() = Xi_ * r.template head<9>();
+    r.template tail<6>() = bias_Xi_ * (bi - bj);
 
     return true;
 }
-template bool ImuFunctor::operator()<double>(const double* _xi, const double* _xj, const double* _vi, const double* _vj, const double* _b, double* residuals) const;
-typedef ceres::Jet<double, 26> jactype;
-template bool ImuFunctor::operator()<jactype>(const jactype* _xi, const jactype* _xj, const jactype* _vi, const jactype* _vj, const jactype* _b, jactype* residuals) const;
+template bool ImuFunctor::operator()<double>(const double* _xi, const double* _xj, const double* _vi, const double* _vj, const double* _bi, const double* _bj, double* residuals) const;
+typedef ceres::Jet<double, 32> jactype;
+template bool ImuFunctor::operator()<jactype>(const jactype* _xi, const jactype* _xj, const jactype* _vi, const jactype* _vj, const jactype* _bi, const jactype* _bj, jactype* residuals) const;
 
 
 }

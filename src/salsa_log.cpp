@@ -65,17 +65,17 @@ void Salsa::logOptimizedWindow()
         if (inWindow(i))
         {
             logs_[log::Opt]->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
-            logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau);
+            logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau, xbuf_[i].bias);
         }
         else
         {
             logs_[log::Opt]->log(-1, -1);
             double padding = NAN;
-            for (int j = 0; j < 13; j++)
+            for (int j = 0; j < 19; j++)
                 logs_[log::Opt]->log(padding);
         }
     }    
-    logs_[log::Opt]->logVectors(imu_bias_, x_b2c_.arr(), x_e2n_.arr());
+    logs_[log::Opt]->logVectors(x_b2c_.arr(), x_e2n_.arr());
     logSwParams();
 
     if (DEBUGLOGLEVEL <= 4)
@@ -136,7 +136,7 @@ void Salsa::logCurrentState()
     logs_[log::CurrentState]->logVectors(current_state_.x.arr(),
                                          current_state_.x.q().euler(),
                                          current_state_.v,
-                                         imu_bias_,
+                                         current_state_.bias,
                                          current_state_.tau,
                                          xo.arr(),
                                          xo.q().euler(),

@@ -14,7 +14,6 @@ Salsa::Salsa() :
     new_meas_(meas::basecmp)
 {
     last_kf_id_ = -1;
-    bias_ = nullptr;
     state_anchor_ = nullptr;
     x_e2n_anchor_ = nullptr;
     disable_solver_ = false;
@@ -27,7 +26,6 @@ Salsa::Salsa() :
 
 Salsa::~Salsa()
 {
-    if (bias_) delete bias_;
     if (state_anchor_) delete state_anchor_;
     if (x_e2n_anchor_) delete x_e2n_anchor_;
 
@@ -68,12 +66,12 @@ void Salsa::load(const string& filename)
     get_yaml_node("max_solver_time", filename, options_.max_solver_time_in_seconds);
     get_yaml_node("max_iter", filename, options_.max_num_iterations);
     get_yaml_node("num_threads", filename, options_.num_threads);
-    get_yaml_eigen("bias0", filename, imu_bias_);
+    get_yaml_eigen("bias0", filename, bias0_);
     get_yaml_node("min_depth", filename, min_depth_);
 
     xbuf_.resize(STATE_BUF_SIZE);
 
-    Vector11d state_anchor_cov;
+    Eigen::Matrix<double, State::dxSize, 1> state_anchor_cov;
     get_yaml_eigen("state_anchor_cov", filename, state_anchor_cov);
     state_anchor_xi_ = state_anchor_cov.cwiseInverse().cwiseSqrt().asDiagonal();
 
@@ -82,7 +80,7 @@ void Salsa::load(const string& filename)
     x_e2n_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
 
 
-    get_yaml_diag("bias_anchor_xi", filename, imu_bias_Xi_);
+    get_yaml_diag("imu_bias_xi", filename, imu_bias_Xi_);
     get_yaml_diag("clk_bias_xi", filename, clk_bias_Xi_);
 
     get_yaml_node("update_on_camera", filename, update_on_camera_);
@@ -143,7 +141,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
         return;
     }
 
-    current_state_integrator_.b_ = imu_bias_;
+    current_state_integrator_.b_ = xhead().bias;
     for (auto& z : imu_meas_buf_)
     {
         if (z.t > current_state_integrator_.t)
@@ -153,6 +151,7 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
     current_state_integrator_.estimateXj(xbuf_[xbuf_head_].x,  xbuf_[xbuf_head_].v,
                                          current_state_.x, current_state_.v);
     current_state_.tau = xbuf_[xbuf_head_].tau;
+    current_state_.bias = xbuf_[xbuf_head_].bias;
     SALSA_ASSERT((current_state_.x.arr().array() == current_state_.x.arr().array()).all()
                  || (current_state_.v.array() == current_state_.v.array()).all(),
                  "NaN Detected in propagation");
@@ -247,6 +246,7 @@ void Salsa::initialize(const double& t, const Xformd &x0, const Vector3d& v0, co
     xbuf_[0].tau = current_state_.tau =tau0;
     xbuf_[0].kf = current_state_.kf = current_kf_ = -1;
     xbuf_[0].node = current_state_.node = current_node_ = 0;
+    xbuf_[0].bias = current_state_.bias = bias0_;
     oldest_node_ = 0;
     x0_ = x0;
     v0_ = v0;
@@ -571,7 +571,7 @@ int Salsa::newNode(double t)
 
     SD(2, "New Transition Factors from %d", xhead().node);
     ClockBiasFunctor& clk = clk_.emplace_back(clk_bias_Xi_, xbuf_head_, xhead().node);
-    ImuFunctor& imu = imu_.emplace_back(xhead().t, imu_bias_, xbuf_head_, xhead().node);
+    ImuFunctor& imu = imu_.emplace_back(xhead().t, xhead().bias, imu_bias_Xi_, xbuf_head_, xhead().node);
 
     if (imu_.size() > 1)
     {
@@ -632,6 +632,7 @@ int Salsa::newNode(double t)
     imu.estimateXj(xhead().x, xhead().v, xbuf_[next_idx].x, xbuf_[next_idx].v);
     xbuf_[next_idx].tau(0) = xhead().tau(0) + imu.delta_t_*xhead().tau(1);
     xbuf_[next_idx].tau(1) = xhead().tau(1);
+    xbuf_[next_idx].bias = xhead().bias;
 
     imu.finished(next_idx);
     clk.finished(imu.delta_t_, next_idx);
@@ -681,6 +682,7 @@ int Salsa::moveNode(double t)
     imu.estimateXj(xbuf_[from_idx].x, xbuf_[from_idx].v, xhead().x, xhead().v);
     xhead().tau(0) = xbuf_[from_idx].tau(0) + imu.delta_t_*xhead().tau(1);
     xhead().tau(1) = xbuf_[from_idx].tau(1);
+    xhead().bias = xbuf_[from_idx].bias;
     xhead().type = State::None;
     current_state_integrator_.reset(t);
 
@@ -737,6 +739,7 @@ int Salsa::insertNode(double t)
         imu_it->estimateXj(from_node.x, from_node.v, new_node.x, new_node.v);
         new_node.tau(0) = from_node.tau(0) + from_node.tau(1) * imu_it->delta_t_;
         new_node.tau(1) = from_node.tau(1);
+        new_node.bias = from_node.bias;
 
         // Fix all the indices
         reWireTransitionFactors(new_node_idx, imu_it, clk_it);
@@ -852,8 +855,8 @@ void Salsa::zeroVelUpdate(const meas::ZeroVel& m, int idx)
       Vector6d avg_imu = imu_.back().avgImuOverInterval();
       double mag = avg_imu.norm();
       double scale_error = mag/ImuIntegrator::G;
-      imu_bias_ = avg_imu/mag * (scale_error - 1.0);
-      SD_S(4, "Setting Scale Bias to " << imu_bias_.transpose() << " scale error = " << scale_error);
+      xhead().bias = avg_imu/mag * (scale_error - 1.0);
+      SD_S(4, "Setting Scale Bias to " << xhead().bias.transpose() << " scale error = " << scale_error);
       normalized_imu_ = true;
     }
 }

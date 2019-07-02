@@ -30,13 +30,13 @@ struct StateAnchor
   void set(const State &x);
 
   template<typename T>
-  bool operator()(const T* _x, const T* _v, const T* _tau, T* _res) const;
+  bool operator()(const T* _x, const T* _v, const T* _tau, const T* _bias, T* _res) const;
 
   salsa::State x_;
   const State::dxMat& Xi_;
 
 };
-typedef ceres::AutoDiffCostFunction<FunctorShield<StateAnchor>, 11, 7, 3, 2> StateAnchorFactorAD;
+typedef ceres::AutoDiffCostFunction<FunctorShield<StateAnchor>, State::dxSize, 7, 3, 2, 6> StateAnchorFactorAD;
 
 
 class ImuBiasAnchor

@@ -55,7 +55,8 @@ OptStateType = np.dtype([
     ('p', (np.float64, 3)),
     ('q', (np.float64, 4)),
     ('v', (np.float64, 3)),
-    ('tau', (np.float64, 2))
+    ('tau', (np.float64, 2)),
+    ('imu', (np.float64, 6)),
 ])
 
 OptType = np.dtype([
@@ -63,7 +64,6 @@ OptType = np.dtype([
     ('tail', np.int32),
     ('x', (OptStateType, params["max_node_window"])),
     # ('s', (np.float64, 0)),
-    ('imu', (np.float64, 6)),
     ('x_b2c', XType),
     ('x_e2n', XType),
 ])

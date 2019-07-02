@@ -57,9 +57,10 @@ class ImuFunctor : public ImuIntegrator
 {
 public:
     typedef Eigen::Matrix<double, 9, 6> Matrix96;
+    typedef Eigen::Matrix<double, 15, 15> Matrix15d;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    ImuFunctor(const double& _t0, const Vector6d& b0, int from_idx, int from_node);
+    ImuFunctor(const double& _t0, const Vector6d& b0, const Matrix6d& bias_Xi, int from_idx, int from_node);
 
     Vector6d avgImuOverInterval();
     void errorStateDynamics(const Vector10d& y, const Vector9d& dy,
@@ -72,7 +73,7 @@ public:
 
     template<typename T>
     bool operator()(const T* _xi, const T* _xj, const T* _vi, const T* _vj,
-                    const T* _b, T* residuals) const;
+                    const T* _bi, const T* _bj, T* residuals) const;
 
     int from_idx_;
     int to_idx_;
@@ -84,12 +85,13 @@ public:
 
     Matrix9d P_;
     Matrix9d Xi_;
+    Matrix6d bias_Xi_;
 
     Matrix96 J_;
 
     std::deque<meas::Imu, Eigen::aligned_allocator<meas::Imu>> meas_hist_;
 };
-typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 9, 7, 7, 3, 3, 6> ImuFactorAD;
-typedef ceres::AutoDiffCostFunction<ImuFunctor, 9, 7, 7, 3, 3, 6> UnshieldedImuFactorAD;
+typedef ceres::AutoDiffCostFunction<FunctorShield<ImuFunctor>, 15, 7, 7, 3, 3, 6, 6> ImuFactorAD;
+typedef ceres::AutoDiffCostFunction<ImuFunctor, 15, 7, 7, 3, 3, 6, 6> UnshieldedImuFactorAD;
 
 }

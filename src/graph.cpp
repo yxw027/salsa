@@ -9,7 +9,6 @@ namespace salsa
 
 void Salsa::initFactors()
 {
-    bias_ = new ImuBiasAnchor(imu_bias_, imu_bias_Xi_);
     state_anchor_ = new StateAnchor(state_anchor_xi_);
     x_e2n_anchor_ = new XformAnchor(x_e2n_anchor_xi_);
 }
@@ -19,7 +18,6 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParam());
     if (!enable_static_start_ || xhead().t > static_start_end_)
         problem.SetParameterBlockConstant(x_e2n_.data());
-    problem.AddParameterBlock(imu_bias_.data(), 6);
 
     int idx = xbuf_tail_;
     int prev_idx = -1;
@@ -68,11 +66,8 @@ void Salsa::setAnchors(ceres::Problem &problem)
     state_anchor_->set(xbuf_[xbuf_tail_]);
     FunctorShield<StateAnchor>* state_ptr = new FunctorShield<StateAnchor>(state_anchor_);
     problem.AddResidualBlock(new StateAnchorFactorAD(state_ptr), NULL, xbuf_[xbuf_tail_].x.data(),
-                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data());
-
-    bias_->setBias(imu_bias_);
-    FunctorShield<ImuBiasAnchor>* imu_ptr = new FunctorShield<ImuBiasAnchor>(bias_);
-    problem.AddResidualBlock(new ImuBiasAnchorFactorAD(imu_ptr), NULL, imu_bias_.data());
+                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data(),
+                             xbuf_[xbuf_tail_].bias.data());
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)
@@ -96,10 +91,11 @@ void Salsa::addImuFactors(ceres::Problem &problem)
         problem.AddResidualBlock(new ImuFactorAD(ptr),
                                  NULL,
                                  xbuf_[it->from_idx_].x.data(),
-                xbuf_[it->to_idx_].x.data(),
-                xbuf_[it->from_idx_].v.data(),
-                xbuf_[it->to_idx_].v.data(),
-                imu_bias_.data());
+                                 xbuf_[it->to_idx_].x.data(),
+                                 xbuf_[it->from_idx_].v.data(),
+                                 xbuf_[it->to_idx_].v.data(),
+                                 xbuf_[it->from_idx_].bias.data(),
+                                 xbuf_[it->to_idx_].bias.data());
     }
     SALSA_ASSERT(prev_idx == xbuf_head_, "not enough intervals");
 }
@@ -240,6 +236,8 @@ void Salsa::solve()
 
     if (!disable_solver_)
         ceres::Solve(options_, problem, &summary_);
+
+    if (summary_.IsSolutionUsable())
     //    std::cout << summary_.FullReport() << std::endl;
 
     delete problem;

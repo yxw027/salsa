@@ -75,6 +75,7 @@ public:
     // Constants
     xform::Xformd x0_;
     Eigen::Vector3d v0_;
+    Vector6d bias0_;
     UncalibratedCamera<double> cam_;
     xform::Xformd x_b2m_; // transform from imu to mocap frame
     xform::Xformd x_b2c_; // transform from imu to camera frame
@@ -159,11 +160,11 @@ public:
     StateVec xbuf_;
     ClockBiasDeque clk_;
     xform::Xformd x_e2n_; // transform from ECEF to inertial frame
-    Vector6d imu_bias_;
+//    Vector6d imu_bias_;
 
     // Factors
     ImuDeque imu_;
-    ImuBiasAnchor* bias_;
+//    ImuBiasAnchor* bias_;
     FeatMap xfeat_; int nf_;
     StateAnchor* state_anchor_;
     State::dxMat state_anchor_xi_;
