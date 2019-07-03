@@ -67,7 +67,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("max_iter", filename, options_.max_num_iterations);
     get_yaml_node("num_threads", filename, options_.num_threads);
     get_yaml_eigen("bias0", filename, bias0_);
-    get_yaml_node("min_depth", filename, min_depth_);
+    get_yaml_node("max_depth", filename, max_depth_);
 
     xbuf_.resize(STATE_BUF_SIZE);
 

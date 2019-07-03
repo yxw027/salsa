@@ -21,7 +21,7 @@ wait_key: false
 max_node_window: 50
 max_kf_window: 15
 state_buf_size: 1000
-num_feat: 75
+num_feat: 100
 num_sat: 15
 disable_solver: false
 max_iter: 1000
@@ -51,18 +51,18 @@ static_start_imu_bias_relaxation: 100
 #####################################
 ### IMU
 #####################################
-accel_noise_stdev: 1.0
+accel_noise_stdev: 3.0
 gyro_noise_stdev: 0.5
-imu_bias_xi: [1e5, 1e5, 1e5, # acc
-              1e6, 1e6, 1e6] # gyro 
+imu_bias_xi: [1e3, 1e3, 1e3, # acc
+              1e5, 1e5, 1e5] # gyro 
 
 #####################################
 ### Camera
 #####################################
 pix_err_stdev: 0.2
 disable_vision: false
-tracker_freq: 10
-min_depth: 0.01
+tracker_freq: 1000
+max_depth: 4.0
 use_measured_depth: false
 use_distort_mask: true
 
@@ -82,12 +82,12 @@ cam_skew: 0.0
 distortion: [-0.2816241410812369, 0.05758000227344342, 0.000913492516598625, 0.0011916159178065463, 0.0]
 
 
-kf_parallax_thresh: 40
-kf_feature_thresh: 0.80
+kf_parallax_thresh: 30
+kf_feature_thresh: 0.90
 update_on_camera: true
 klt_quality: 0.3
-klt_block_size: 5
-ransac_thresh: 0.02
+klt_block_size: 3
+ransac_thresh: 0.1
 ransac_prob: 0.999
 
 show_matches: true
@@ -96,7 +96,7 @@ get_feature_radius: 50
 track_feature_min_distance: 30
 feature_mask: ""
 simulate_klt: true
-tc: 0.0
+tc: 0.007 # t_b = t_c + dt
 x_b2c: [0.01666044727690726, 0.06831908058722323, -0.3523408903053932, 
         0.7060646666507441, 0.004429725140391003, 0.001812721421084533, 0.7081311870576004]
 

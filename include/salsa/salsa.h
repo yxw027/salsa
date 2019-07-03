@@ -273,7 +273,7 @@ public:
         TOO_MUCH_PARALLAX = 2,
         INSUFFICIENT_MATCHES = 3
     };
-    double min_depth_;
+    double max_depth_;
     int last_kf_id_;
     double kf_parallax_thresh_;
     double kf_feature_thresh_;
@@ -285,6 +285,7 @@ public:
     int kf_condition_;
     bool update_on_camera_;
     std::function<void(int kf, int condition)> new_kf_cb_ = nullptr;
+    void fixDepth();
 
     /************************************/
     /*               KLT                */

@@ -107,7 +107,7 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
         }
         else if (m.new_keyframe)
         {
-            double rho0 = min_depth_;
+            double rho0 = 1.0/max_depth_;
             if (use_measured_depth_ && !std::isnan(m.z.depths[i]))
                 rho0 = 1.0/m.z.depths[i];
             SD(1, "Adding new feature %d", m.z.feat_ids[i]);
@@ -250,6 +250,17 @@ int Salsa::numTotalFeat() const
         n_feat_meas += 1 + ft.second.funcs.size();
     }
     return n_feat_meas;
+}
+
+void Salsa::fixDepth()
+{
+    for (auto& ft : xfeat_)
+    {
+        if (ft.second.rho < 1.0/max_depth_)
+        {
+            ft.second.rho = 1.0/(2.0 * max_depth_);
+        }
+    }
 }
 
 

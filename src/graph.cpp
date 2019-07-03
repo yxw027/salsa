@@ -240,6 +240,8 @@ void Salsa::solve()
     if (!disable_solver_)
         ceres::Solve(options_, problem, &summary_);
 
+    fixDepth();
+
     if (summary_.IsSolutionUsable())
     //    std::cout << summary_.FullReport() << std::endl;
 

@@ -51,7 +51,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     t_next_klt_output_ = NAN;
 
     if (show_matches_)
-      cv::namedWindow("tracked_points");
+      cv::namedWindow("tracked points");
 }
 
 bool Salsa::dropFeature(int idx)
@@ -185,10 +185,10 @@ int Salsa::calcNewKeyframeConditionKLT()
         return FIRST_KEYFRAME;
     }
 
-    if (current_feat_.size() < std::round(kf_feature_thresh_ * kf_num_feat_))
+    if (current_feat_.size() < std::round(kf_feature_thresh_ * nf_))
     {
         SD(2, "KLT new keyframe, not enough matches: = %d/%f",
-           kf_Nmatch_feat_, std::round(kf_feature_thresh_ * kf_num_feat_));
+           current_feat_.size(), std::round(kf_feature_thresh_ * nf_));
         kf_condition_ = INSUFFICIENT_MATCHES;
         return INSUFFICIENT_MATCHES;
     }
