@@ -29,7 +29,7 @@ using namespace salsa;
 
 TEST(ImuFactor, compile)
 {
-    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    ImuFunctor imu(0.0, Vector6d::Zero(), Matrix6d::Identity(), 0, 0);
 }
 
 TEST (ImuFactor, splitInMiddle)
@@ -37,7 +37,7 @@ TEST (ImuFactor, splitInMiddle)
     Vector6d z;
     z << 0, 0, -9.80665, 0, 0, 0;
     Matrix6d R = Matrix6d::Identity();
-    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    ImuFunctor imu(0.0, Vector6d::Zero(), Matrix6d::Identity(), 0, 0);
     imu.integrate(0.01, z, R);
     imu.integrate(0.02, z, R);
     imu.integrate(0.03, z, R);
@@ -58,7 +58,7 @@ TEST (ImuFactor, splitInOnTopOfMeas)
     Vector6d z;
     z << 0, 0, -9.80665, 0, 0, 0;
     Matrix6d R = Matrix6d::Identity();
-    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    ImuFunctor imu(0.0, Vector6d::Zero(), Matrix6d::Identity(), 0, 0);
     imu.integrate(0.01, z, R);
     imu.integrate(0.02, z, R);
     imu.integrate(0.03, z, R);
@@ -79,7 +79,7 @@ TEST (ImuFactor, splitJustAfterStart)
     Vector6d z;
     z << 0, 0, -9.80665, 0, 0, 0;
     Matrix6d R = Matrix6d::Identity();
-    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    ImuFunctor imu(0.0, Vector6d::Zero(), Matrix6d::Identity(), 0, 0);
     imu.integrate(0.01, z, R);
     imu.integrate(0.02, z, R);
     imu.integrate(0.03, z, R);
@@ -103,7 +103,7 @@ TEST (ImuFactor, splitJustBeforeEnd)
     Vector6d z;
     z << 0, 0, -9.80665, 0, 0, 0;
     Matrix6d R = Matrix6d::Identity();
-    ImuFunctor imu(0.0, Vector6d::Zero(), 0, 0);
+    ImuFunctor imu(0.0, Vector6d::Zero(), Matrix6d::Identity(), 0, 0);
     imu.integrate(0.01, z, R);
     imu.integrate(0.02, z, R);
     imu.integrate(0.03, z, R);
@@ -134,7 +134,7 @@ TEST(ImuFactor, Propagation)
     Matrix6d cov = Matrix6d::Identity() * 1e-3;
 
     multirotor.run();
-    IMU* imu = new IMU(multirotor.t_, b0, 0, 0);
+    IMU* imu = new IMU(multirotor.t_, b0, Matrix6d::Identity(), 0, 0);
     Xformd x0 = multirotor.state().X;
     Vector3d v0 = multirotor.state().v;
 
@@ -155,7 +155,7 @@ TEST(ImuFactor, Propagation)
         if (std::abs(multirotor.t_ - next_reset) <= multirotor.dt_ /2.0)
         {
             delete imu;
-            imu = new IMU(multirotor.t_, b0, 0, 0);
+            imu = new IMU(multirotor.t_, b0, Matrix6d::Identity(), 0, 0);
             x0 = multirotor.state().X;
             v0 = multirotor.state().v;
             next_reset += 1.0;
@@ -182,8 +182,8 @@ TEST(ImuFactor, ErrorStateDynamics)
 
     Vector6d bias;
     bias.setZero();
-    IMU y(t, bias, 0, 0);
-    IMU yhat(t, bias, 0, 0);
+    IMU y(t, bias, Matrix6d::Identity(), 0, 0);
+    IMU yhat(t, bias, Matrix6d::Identity(), 0, 0);
     IMU::boxplus(y.y_, Vector9d::Constant(0.01), yhat.y_);
     IMU::boxminus(y.y_, yhat.y_, dy);
 
@@ -246,20 +246,20 @@ TEST(ImuFactor, DynamicsJacobians)
         eta0.setZero();
         dy0.setZero();
 
-        ImuFunctor f(0, b0, 0, 0);
+        ImuFunctor f(0, b0, Matrix6d::Identity(), 0, 0);
         f.dynamics(y0, u0, ydot, A, B);
         Vector9d dy0 = Vector9d::Zero();
 
         auto yfun = [&y0, &cov, &b0, &u0, &eta0](const Vector9d& dy)
         {
-            ImuFunctor f(0, b0, 0, 0);
+            ImuFunctor f(0, b0, Matrix6d::Identity(), 0, 0);
             Vector9d dydot;
             f.errorStateDynamics(y0, dy, u0, eta0, dydot);
             return dydot;
         };
         auto etafun = [&y0, &cov, &b0, &dy0, &u0](const Vector6d& eta)
         {
-            ImuFunctor f(0, b0, 0, 0);
+            ImuFunctor f(0, b0, Matrix6d::Identity(), 0, 0);
             Vector9d dydot;
             f.errorStateDynamics(y0, dy0, u0, eta, dydot);
             return dydot;
@@ -298,7 +298,7 @@ TEST(ImuFactor, BiasJacobians)
     Eigen::Matrix<double, 9, 6> J, JFD;
 
     b0.setZero();
-    ImuFunctor f(0, b0, 0, 0);
+    ImuFunctor f(0, b0, Matrix6d::Identity(), 0, 0);
     Vector10d y0 = f.y_;
     for (int i = 0; i < meas.size(); i++)
     {
@@ -308,7 +308,7 @@ TEST(ImuFactor, BiasJacobians)
 
     auto fun = [&cov, &meas, &t, &y0](const Vector6d& b0)
     {
-        ImuFunctor f(0, b0, 0, 0);
+        ImuFunctor f(0, b0, Matrix6d::Identity(), 0, 0);
         for (int i = 0; i < meas.size(); i++)
         {
             f.integrate(t[i], meas[i], cov);

@@ -23,7 +23,7 @@ TEST (FeatFactor, ADvsANEval)
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
 
-    FeatFunctor f(3.0*Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(3.0*Matrix2d::Identity(), xb2c, zi, zj, Vector2d::Zero(), 0);
     FeatFactor an(&f);
     FeatFactorAD ad(new FunctorShield<FeatFunctor>(&f));
 
@@ -44,7 +44,7 @@ TEST (FeatFactor, FDvsANJac1)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, Vector2d(0, 0), 0);
     FeatFactor an(&f);
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
@@ -91,7 +91,7 @@ TEST (FeatFactor, FDvsANJac2)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, Vector2d(0,0), 0);
     FeatFactor an(&f);
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
@@ -138,7 +138,7 @@ TEST (FeatFactor, FDvsANJac3)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, Vector2d(0,0), 0);
     FeatFactor an(&f);
     xform::Xformd xi  = Xformd::Random();
     xform::Xformd xj  = Xformd::Random();
@@ -183,7 +183,7 @@ TEST (FeatFactor, InitZeroResidual)
     double rho = zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, Vector2d(0,0), 0);
 
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
@@ -211,7 +211,7 @@ TEST (FeatFactor, Withc2bTransform)
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, Vector2d(0, 0), 0);
 
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
@@ -237,7 +237,7 @@ TEST (FeatFactor, Withc2bTransformAndNoise)
     double rho = 1.0/zi.norm();
     zi.normalize();
     zj.normalize();
-    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, 0);
+    FeatFunctor f(Matrix2d::Identity(), xb2c, zi, zj, Vector2d(0, 0), 0);
 
     Vector2d res;
     f(xi.data(), xj.data(), &rho, res.data());
@@ -292,7 +292,7 @@ TEST (FeatFactor, SimulatedFeatures)
         Vector2d pix0 = cam.proj(test0);
         Vector2d pix1 = cam.proj(test1);
 
-        FeatFunctor f(Matrix2d::Identity(), x_b2c, zeta0, zeta1, 0);
+        FeatFunctor f(Matrix2d::Identity(), x_b2c, zeta0, zeta1, Vector2d(0, 0), 0);
         double rho = 1.0/z0.depths[i];
         Vector2d res;
         f(x0.data(), x_.data(), &rho, res.data());
@@ -313,7 +313,7 @@ TEST (FeatFactor, OptOnePointOneView)
     Vector3d zeta_j = x2.rotp(l - x2.t()).normalized();
     double rho = 1.0/((l-x1.t()).norm());
     double rhohat = 0.001;
-    FeatFunctor f(Matrix2d::Identity(), x_b2c, zeta_i, zeta_j, 1);
+    FeatFunctor f(Matrix2d::Identity(), x_b2c, zeta_i, zeta_j, Vector2d(0, 0), 1);
 
     ceres::Problem problem;
     problem.AddParameterBlock(x1.data(), 7, new XformParamAD);
@@ -357,7 +357,7 @@ TEST (FeatFactor, OptOnePointOneViewC2B)
     Vector3d zeta_j = x_b2c.transformp(x2.transformp(l)).normalized();
     double rho = 1.0/(x_b2c.transformp(x1.transformp(l)).norm());
     double rhohat = 0.001;
-    FeatFunctor f(Matrix2d::Identity(), x_b2c, zeta_i, zeta_j, 1);
+    FeatFunctor f(Matrix2d::Identity(), x_b2c, zeta_i, zeta_j, Vector2d(0, 0), 1);
 
     ceres::Problem problem;
     problem.AddParameterBlock(x1.data(), 7, new XformParamAD);
