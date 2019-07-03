@@ -155,7 +155,7 @@ bool Salsa::calcNewKeyframeCondition(const Features &z)
             Vector2d lihat =  cam_.proj(zihat);
             Vector2d li(kf_feat_.pix[ni].x, kf_feat_.pix[ni].y);
             double err = (lihat - li).norm();
-            SD(1, "pix error %.2f. lihat = (%d,%d), li = (%d,%d)", err, lihat.x(), lihat.y(), li.x(), li.y());
+            SD(1, "pix error %.2f. lihat = (%f,%f), li = (%f,%f)", err, lihat.x(), lihat.y(), li.x(), li.y());
             kf_parallax_ += err;
             ni++;
             nj++;

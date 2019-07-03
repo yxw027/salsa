@@ -45,7 +45,8 @@ def plotImuBias():
             plt.subplot(3, 2, i * 2 + j + 1)
             plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
             for k, log in enumerate(data):
-                plt.plot(log.opt['x']['t'], log.opt['x']['imu'][:, j * 3 + i], color=colors[k+1], label=log.label)
+                print log.opt['x']['imu'].shape
+                plt.plot(log.opt['x']['t'], log.opt['x']['imu'][:, :, j * 3 + i], color=colors[k+1], label=log.label, alpha=0.3)
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
             plt.legend()

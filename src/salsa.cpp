@@ -96,6 +96,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("static_start_imu_thresh", filename, static_start_imu_thresh_);
     get_yaml_node("camera_start_delay", filename, camera_start_delay_);
     get_yaml_node("static_start_freq", filename, static_start_freq_);
+    get_yaml_node("static_start_imu_bias_relaxation", filename, static_start_imu_bias_relaxation_);
 }
 
 void Salsa::initState()
@@ -853,9 +854,10 @@ void Salsa::zeroVelUpdate(const meas::ZeroVel& m, int idx)
     if (!normalized_imu_)
     {
       Vector6d avg_imu = imu_.back().avgImuOverInterval();
-      double mag = avg_imu.norm();
+      double mag = avg_imu.head<3>().norm();
       double scale_error = mag/ImuIntegrator::G;
-      xhead().bias = avg_imu/mag * (scale_error - 1.0);
+      xtail().bias.head<3>() = xhead().bias.head<3>() = -avg_imu.head<3>()/mag * (scale_error - 1.0);
+      xtail().bias.tail<3>() = xhead().bias.tail<3>() = -avg_imu.tail<3>();
       SD_S(4, "Setting Scale Bias to " << xhead().bias.transpose() << " scale error = " << scale_error);
       normalized_imu_ = true;
     }

@@ -63,11 +63,14 @@ void Salsa::setAnchors(ceres::Problem &problem)
     FunctorShield<XformAnchor>* xe2n_ptr = new FunctorShield<XformAnchor>(x_e2n_anchor_);
     problem.AddResidualBlock(new XformAnchorFactorAD(xe2n_ptr), NULL, x_e2n_.data());
 
-    state_anchor_->set(xbuf_[xbuf_tail_]);
-    FunctorShield<StateAnchor>* state_ptr = new FunctorShield<StateAnchor>(state_anchor_);
-    problem.AddResidualBlock(new StateAnchorFactorAD(state_ptr), NULL, xbuf_[xbuf_tail_].x.data(),
-                             xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data(),
-                             xbuf_[xbuf_tail_].bias.data());
+//    if (!enable_static_start_ || current_state_.t > static_start_end_)
+//    {
+        state_anchor_->set(xtail());
+        FunctorShield<StateAnchor>* state_ptr = new FunctorShield<StateAnchor>(state_anchor_);
+        problem.AddResidualBlock(new StateAnchorFactorAD(state_ptr), NULL, xbuf_[xbuf_tail_].x.data(),
+                                 xbuf_[xbuf_tail_].v.data(), xbuf_[xbuf_tail_].tau.data(),
+                                 xbuf_[xbuf_tail_].bias.data());
+//    }
 }
 
 void Salsa::addImuFactors(ceres::Problem &problem)

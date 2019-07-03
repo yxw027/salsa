@@ -205,6 +205,7 @@ public:
     double camera_start_delay_;
     double static_start_end_;
     double static_start_freq_;
+    double static_start_imu_bias_relaxation_;
     bool normalized_imu_;
     Matrix7d zero_vel_Xi_;
     void zeroVelUpdate(const meas::ZeroVel& m, int idx);
