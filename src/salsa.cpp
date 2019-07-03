@@ -53,7 +53,7 @@ void Salsa::load(const string& filename)
     get_yaml_eigen("x_b2c", filename, x_b2c_.arr());
     get_yaml_eigen("x_b2o", filename, x_b2o_.arr());
     get_yaml_eigen("p_b2g", filename, p_b2g_);
-    get_yaml_node("tm", filename, dt_m_);
+    get_yaml_node("mocap_offset", filename, dt_m_);
     get_yaml_node("tc", filename, dt_c_);
     get_yaml_node("max_node_window", filename, max_node_window_);
     get_yaml_node("max_kf_window", filename, max_kf_window_);

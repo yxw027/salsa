@@ -123,7 +123,7 @@ enable_switching_factors: true
 position_noise_stdev: 0.01
 attitude_noise_stdev: 0.01
 disable_mocap: true
-tm: -150527.278188551
+mocap_offset: 0.2 # t_b = t_m + dt
 x_b2m: [0.006228303245238449, 0.01936311380701126, -0.09925855920867407,
         0.8870108331782217, 0.0, -0.4617486132350339, 0.0]
 update_on_mocap: true

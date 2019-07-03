@@ -61,7 +61,7 @@ public:
     ros::Time bag_start_;
     ros::Time bag_duration_;
     ros::Time bag_end_;
-    ros::Duration mocap_offset_;
+    double mocap_offset_; // t_b = t_m + dt
     double mocap_rate_;
     ros::Time prev_mocap_, prev_mocap_run_;
     xform::Xformd x_I2m_prev_;

@@ -42,6 +42,7 @@ void SalsaRosbag::loadParams()
     get_yaml_node("start_time", param_filename_, start_);
     get_yaml_node("duration", param_filename_, duration_);
     get_yaml_node("wait_key", param_filename_, wait_key_);
+    get_yaml_node("mocap_offset", param_filename_, mocap_offset_);
 
     // Load Sensor Noise Parameters
     double acc_stdev, gyro_stdev;
@@ -245,7 +246,7 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
 {
     geometry_msgs::PoseStampedConstPtr pose = m.instantiate<geometry_msgs::PoseStamped>();
 
-    ros::Time time = m.getTime() + ros::Duration(0.05);
+    ros::Time time = pose->header.stamp + ros::Duration(mocap_offset_);
 
 
     double t = (time - bag_start_).toSec();
