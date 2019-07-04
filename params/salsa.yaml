@@ -19,7 +19,7 @@ wait_key: false
 ### OPT SETUP
 ######################################
 max_node_window: 50
-max_kf_window: 15
+max_kf_window: 20
 state_buf_size: 1000
 num_feat: 100
 num_sat: 15
@@ -53,13 +53,13 @@ static_start_imu_bias_relaxation: 100
 #####################################
 accel_noise_stdev: 3.0
 gyro_noise_stdev: 0.5
-imu_bias_xi: [1e3, 1e3, 1e3, # acc
-              1e5, 1e5, 1e5] # gyro 
+imu_bias_xi: [5e2, 5e2, 5e2, # acc
+              1e4, 1e4, 1e4] # gyro 
 
 #####################################
 ### Camera
 #####################################
-pix_err_stdev: 0.2
+pix_err_stdev: 0.05
 disable_vision: false
 tracker_freq: 1000
 max_depth: 4.0

@@ -31,6 +31,7 @@ def plotClockBias():
         plt.plot(truth['t'], truth['tau'][:, i], label='x')
         for log in data:
             plt.plot(log.state['t'], log.state['tau'][:, i], label=log.label)
+            plt.plot(log.opt['x']['t'], log.opt['x']['tau'][:,:,i], color=colors[k+1], label=log.label, alpha=0.3)
         if i == 0:
             plt.legend()
     pw.addPlot("Clock Bias", f)
@@ -193,8 +194,9 @@ def plotPosition():
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
-        for log in data:
+        for k, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['p'][:,i], label=log.label)
+            plt.plot(log.opt['x']['t'], log.opt['x']['p'][:,:,i], label=log.label, alpha=0.3, color=colors[k+2])
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['p'][:,i], 'x')
         if i == 0:
@@ -209,8 +211,9 @@ def plotAttitude():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
         plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
-        for log in data:
+        for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['xu']['q'][:,0]), label=log.label)
+            plt.plot(log.opt['x']['t'], log.opt['x']['q'][:,:,i]*np.sign(log.opt['x']['q'][:,:,0]), label=log.label, color=colors[l+2], alpha=0.3)
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['q'][:,i]*np.sign(log.x['x']['q'][:,0]), 'x')
         if i == 0:
@@ -308,8 +311,9 @@ def plotVelocity():
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i])
         plt.plot(truth['t'], truth['v'][:,i], label='x')
-        for log in data:
+        for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['v'][:,i], label=log.label)
+            plt.plot(log.opt['x']['t'], log.opt['x']['v'][:,:,i], label=log.label, alpha=0.3, color=colors[l+2])
             if plotKF:
                 plt.plot(log.x['t'], log.x['v'][:,i], 'x')
         if i == 0:
