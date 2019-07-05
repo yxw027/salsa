@@ -64,7 +64,7 @@ disable_vision: false
 tracker_freq: 1000
 max_depth: 4.0
 use_measured_depth: false
-use_distort_mask: true
+use_distort_mask: false
 
 
 # Small Camera
