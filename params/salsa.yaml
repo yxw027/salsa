@@ -87,6 +87,8 @@ kf_feature_thresh: 0.90
 update_on_camera: true
 klt_quality: 0.3
 klt_block_size: 7
+klt_winsize: 21
+klt_max_levels: 3
 ransac_thresh: 0.02
 ransac_prob: 0.999
 

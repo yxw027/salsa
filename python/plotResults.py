@@ -479,9 +479,14 @@ def plotColoredPosLla():
     plt.suptitle("Lat Lon Alt")
     cmap = plt.get_cmap("plasma", 8)
     for log in data:
-        print log.opt['x']['lla'].shape
         counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
         print counts.shape
+        print log.opt['x']['lla'].shape
+        while counts.shape[0] < log.opt['x']['lla'].shape[0]:
+            counts = np.vstack((counts, np.zeros((1,20), dtype=np.bool)))
+        print counts.shape
+        print log.opt['x']['lla'].shape
+
         for i in range(np.max(counts)):
             tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
             tmp[counts > i, :] = log.opt['x']['lla'][counts > i, :]

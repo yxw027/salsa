@@ -23,6 +23,9 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("show_skip", filename, show_skip_);
     get_yaml_node("klt_quality", filename, klt_quality_);
     get_yaml_node("klt_block_size", filename, klt_block_size_);
+    get_yaml_node("klt_winsize", filename, klt_winsize_.width);
+    get_yaml_node("klt_winsize", filename, klt_winsize_.height);
+    get_yaml_node("klt_max_levels", filename, klt_max_levels_);
     get_yaml_node("ransac_thresh", filename, ransac_thresh_);
     get_yaml_node("ransac_prob", filename, ransac_prob_);
     bool use_distort_mask;
@@ -163,7 +166,8 @@ void Salsa::imageCallback(const double& tc, const Mat& img, const Eigen::Matrix2
 void Salsa::trackFeatures()
 {
     std::vector<float> err;
-    calcOpticalFlowPyrLK(prev_img_, current_img_, prev_features_, current_feat_.pix, match_status_, err);
+    calcOpticalFlowPyrLK(prev_img_, current_img_, prev_features_, current_feat_.pix, match_status_,
+                         err, klt_winsize_, klt_max_levels_);
 }
 
 void Salsa::calcCurrentZetas()

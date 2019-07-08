@@ -320,6 +320,8 @@ public:
     int next_feature_id_;
     double klt_quality_;
     int klt_block_size_;
+    cv::Size klt_winsize_;
+    int klt_max_levels_;
     double ransac_thresh_;
     double ransac_prob_;
     std::vector<uchar> match_status_;
