@@ -57,6 +57,7 @@ OptStateType = np.dtype([
     ('v', (np.float64, 3)),
     ('tau', (np.float64, 2)),
     ('imu', (np.float64, 6)),
+    ('lla', (np.float64, 3))
 ])
 
 OptType = np.dtype([

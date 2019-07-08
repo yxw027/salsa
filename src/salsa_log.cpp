@@ -64,14 +64,21 @@ void Salsa::logOptimizedWindow()
         int i = (xbuf_tail_ + ii) % STATE_BUF_SIZE;
         if (inWindow(i))
         {
+            Vector3d lla = xbuf_[i].node < 10 ?
+                               Vector3d::Ones() * NAN :
+                               WGS84::ecef2lla(x_e2n_.transforma(xbuf_[i].x.t_));
             logs_[log::Opt]->log(xbuf_[i].node, xbuf_[i].kf, xbuf_[i].t);
-            logs_[log::Opt]->logVectors(xbuf_[i].x.arr(), xbuf_[i].v, xbuf_[i].tau, xbuf_[i].bias);
+            logs_[log::Opt]->logVectors((xbuf_[i].x * x_b2o_).arr(),
+                                        x_b2o_.rotp(xbuf_[i].v),
+                                        xbuf_[i].tau,
+                                        xbuf_[i].bias,
+                                        lla);
         }
         else
         {
             logs_[log::Opt]->log(-1, -1);
             double padding = NAN;
-            for (int j = 0; j < 19; j++)
+            for (int j = 0; j < 22; j++)
                 logs_[log::Opt]->log(padding);
         }
     }    
@@ -129,7 +136,7 @@ void Salsa::logPointPosLla()
 void Salsa::logCurrentState()
 {
     xform::Xformd xo = current_state_.x * x_b2o_;
-    Vector3d lla = xhead().t > static_start_end_ ?
+    Vector3d lla = current_node_ < 10 ?
                        Vector3d::Ones() * NAN :
                        WGS84::ecef2lla(x_e2n_.transforma(current_state_.x.t_));
     logs_[log::CurrentState]->log(current_state_.t);

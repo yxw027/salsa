@@ -27,6 +27,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     get_yaml_node("ransac_prob", filename, ransac_prob_);
     bool use_distort_mask;
     get_yaml_node("use_distort_mask", filename, use_distort_mask);
+    get_yaml_node("make_video", filename, make_video_);
 
 
     got_first_img_ = false;
@@ -42,16 +43,32 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     }
 
     if (use_distort_mask)
+    {
         createDistortionMask();
+    }
     else
     {
-        mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
-        mask_ = 255;
+        std::string mask_filename;
+        get_yaml_node("mask_filename", filename, mask_filename);
+        mask_ = cv::imread(mask_filename, IMREAD_GRAYSCALE);
+        if (mask_.empty())
+        {
+            mask_.create(cv::Size(cam_.image_size_(0), cam_.image_size_(1)), CV_8UC1);
+            mask_ = 255;
+        }
     }
+    cvtColor(cv::Scalar::all(255) - mask_, mask_overlay_, COLOR_GRAY2BGR);
     t_next_klt_output_ = NAN;
 
     if (show_matches_)
       cv::namedWindow("tracked points");
+
+    if (make_video_)
+    {
+      video_ = new cv::VideoWriter();
+      video_->open(log_prefix_ + "tracked.m4v", cv::VideoWriter::fourcc('X','V','I','D'), 10,
+                   cv::Size(cam_.image_size_(0), cam_.image_size_(1)));
+    }
 }
 
 bool Salsa::dropFeature(int idx)
@@ -85,7 +102,6 @@ void Salsa::createDistortionMask()
     boundary_mat.convertTo(boundary_mat, CV_32SC1);
     mask_ = cv::Mat(cv::Size(cam_.image_size_.x(), cam_.image_size_.y()), CV_8UC1, cv::Scalar(0));
     cv::fillConvexPoly(mask_, boundary_mat, cv::Scalar(255));
-    cvtColor(cv::Scalar::all(255) - mask_, mask_overlay_, COLOR_GRAY2BGR);
 }
 
 void Salsa::setFeatureMask(const std::string& filename)
@@ -293,7 +309,7 @@ void Salsa::collectNewfeatures()
 
 void Salsa::showImage()
 {
-    if (show_skip_count_ == 0)
+    if (show_skip_count_ == 0 || make_video_)
     {
         cvtColor(prev_img_, color_img_, COLOR_GRAY2BGR);
         color_img_ = color_img_ - 0.2*mask_overlay_;
@@ -314,12 +330,14 @@ void Salsa::showImage()
             }
             else
             {
-                drawX(color_img_, prev_features_[i], 5, Scalar(0, 0, 0));
+                drawX(color_img_, prev_features_[i], 5, Scalar(255, 0, 0));
             }
         }
 
         cv::imshow("tracked points", color_img_);
         cv::waitKey(1);
+        if (video_)
+            video_->write(color_img_);
     }
     show_skip_count_ = (show_skip_count_+1)%show_skip_;
 }

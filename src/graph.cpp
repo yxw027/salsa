@@ -31,6 +31,7 @@ void Salsa::addParameterBlocks(ceres::Problem &problem)
         idx = (idx+1) % STATE_BUF_SIZE;
     }
 
+
     for (auto& feat : xfeat_)
     {
         Feat& ft(feat.second);
@@ -210,10 +211,10 @@ void Salsa::addZeroVelFactors(ceres::Problem &problem)
         else
         {
             ZeroVelFunctor* ptr = new ZeroVelFunctor(x0_, v0_, zero_vel_Xi_);
-            problem.AddResidualBlock(new ZeroVelFactorAD(ptr),
-                                     NULL,
-                                     xbuf_[idx].x.data(),
-                                     xbuf_[idx].v.data());
+//            problem.AddResidualBlock(new ZeroVelFactorAD(ptr),
+//                                     NULL,
+//                                     xbuf_[idx].x.data(),
+//                                     xbuf_[idx].v.data());
         }
     }
 

@@ -121,6 +121,7 @@ void SalsaRosbag::parseBag()
 
         prog.print(i++, (m.getTime() - bag_start_).toSec());
 
+
         if (m.isType<sensor_msgs::Imu>() && m.getTopic().compare(imu_topic_) == 0)
             imuCB(m);
         else if (m.isType<geometry_msgs::PoseStamped>() && m.getTopic().compare(mocap_topic_) == 0)
@@ -189,7 +190,7 @@ void SalsaRosbag::obsCB(const rosbag::MessageInstance& m)
     }
     salsa_.obsCallback(z);
 
-    while (eph_.size())
+    while (std::isfinite(salsa_.current_state_.t) && eph_.size())
     {
         ephCB(eph_.back());
         eph_.pop_back();
@@ -259,6 +260,13 @@ void SalsaRosbag::poseCB(const rosbag::MessageInstance& m)
             pose->pose.orientation.y,
             pose->pose.orientation.z;
     z.q().normalize(); // I am a little worried that I have to do this.
+
+    if (INS_ref_.t().norm() < 1e-8)
+    {
+        INS_ref_ = z;
+    }
+
+    z = INS_ref_.inverse() * z;
 
     if (imu_count_ >= 10  && (time - prev_mocap_run_).toSec() > 1.0/mocap_rate_)
     {
@@ -354,6 +362,11 @@ void SalsaRosbag::imgCB(const rosbag::MessageInstance &m)
         return;
 
     sensor_msgs::ImageConstPtr img = m.instantiate<sensor_msgs::Image>();
+    if (img->header.stamp.sec == 1562468305 && img->header.stamp.nsec == 102213746)
+    {
+        std::cout << "skipping wonky image" << std::endl;
+        return;
+    }
     cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(img);
     double tc = (img->header.stamp - bag_start_).toSec();
     imgCB(tc, cv_ptr);

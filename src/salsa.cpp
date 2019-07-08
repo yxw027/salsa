@@ -28,6 +28,11 @@ Salsa::~Salsa()
 {
     if (state_anchor_) delete state_anchor_;
     if (x_e2n_anchor_) delete x_e2n_anchor_;
+    if (video_)
+    {
+        video_->release();
+        delete video_;
+    }
 
     for (auto&& ptr : logs_) delete ptr;
 }
@@ -35,9 +40,9 @@ Salsa::~Salsa()
 void Salsa::init(const string& filename)
 {
     load(filename);
+    initLog(filename);
     initImg(filename);
     initGNSS(filename);
-    initLog(filename);
     initState();
     initFactors();
     initSolverOptions();
@@ -326,6 +331,7 @@ void Salsa::handleMeas()
         else if (lt(t, t_min_node))
         {
             node_idx = -1;
+            SD(5, "Unable to handle stale measurements at t%.3f, Oldest: t%.3f", t, t_min_node);
         }
         // otherwise The measurement occurs either on or before our current node
         else if (lt(t, t_max_node))
@@ -446,6 +452,11 @@ void Salsa::addMeas(const meas::Mocap &&mocap)
 void Salsa::addMeas(const meas::Gnss &&gnss)
 {
     SD(2, "Got new GNSS measurement t: %.3f", gnss.t);
+    if (!std::isfinite(gnss.t))
+    {
+        SD(2, "NaN Time on GNSS meas t: %.3f, skipping", gnss.t);
+        return;
+    }
     gnss_meas_buf_.push_back(gnss);
     new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
     if (update_on_gnss_)

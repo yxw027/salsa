@@ -17,6 +17,8 @@ void Salsa::initGNSS(const std::string& filename)
     min_satellite_elevation_ = deg2rad(min_satellite_elevation_);
     get_yaml_node("use_point_positioning", filename, use_point_positioning_);
     get_yaml_node("disable_gnss", filename, disable_gnss_);
+    get_yaml_node("min_sats", filename, min_sats_);
+    get_yaml_node("dt_gnss", filename, dt_gnss_);
 }
 
 void Salsa::ephCallback(const GTime& t, const eph_t &eph)
@@ -123,7 +125,7 @@ void Salsa::rawGnssCallback(const GTime &t, const VecVec3 &z, const VecMat3 &R,
 
 void Salsa::initializeNodeWithGnss(const meas::Gnss& m, int idx)
 {
-    if (filtered_obs_.size() > 7 && use_point_positioning_)
+    if (filtered_obs_.size() >= min_sats_ && use_point_positioning_)
     {
         // Use Iterated Least-Squares to estimate x_e2n and time offset
         Vector8d pp_sol = Vector8d::Zero();
@@ -160,7 +162,7 @@ void Salsa::gnssUpdate(const meas::Gnss &m, int idx)
 
 bool Salsa::initializeStateGnss(const meas::Gnss &m)
 {
-    if (sats_.size() < 8)
+    if (sats_.size() < min_sats_)
     {
         SD(5, "Waiting for Ephemeris, got %lu sats\n", sats_.size());
         return false;
@@ -187,8 +189,11 @@ bool Salsa::initializeStateGnss(const meas::Gnss &m)
 
 void Salsa::obsCallback(const ObsVec &obs)
 {
+    if (!std::isfinite(current_state_.t))
+        return;
+
     if (start_time_.tow_sec < 0)
-        start_time_ = obs[0].t - current_state_.t;
+        start_time_ = obs[0].t - current_state_.t - dt_gnss_;
 
     filterObs(obs);
     if (filtered_obs_.size() > 0)

@@ -29,9 +29,9 @@ def plotClockBias():
         plt.subplot(2, 1, i + 1)
         plt.title(tautitles[i])
         plt.plot(truth['t'], truth['tau'][:, i], label='x')
-        for log in data:
+        for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['tau'][:, i], label=log.label)
-            plt.plot(log.opt['x']['t'], log.opt['x']['tau'][:,:,i], color=colors[k+1], label=log.label, alpha=0.3)
+            plt.plot(log.opt['x']['t'], log.opt['x']['tau'][:,:,i], color=colors[l+1], label=log.label, alpha=0.3)
         if i == 0:
             plt.legend()
     pw.addPlot("Clock Bias", f)
@@ -46,7 +46,6 @@ def plotImuBias():
             plt.subplot(3, 2, i * 2 + j + 1)
             plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
             for k, log in enumerate(data):
-                print log.opt['x']['imu'].shape
                 plt.plot(log.opt['x']['t'], log.opt['x']['imu'][:, :, j * 3 + i], color=colors[k+1], label=log.label, alpha=0.3)
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
@@ -90,19 +89,19 @@ def plotSatPos():
 
 def plotAzel():
     f = plt.figure()
-    for sat in np.unique(satPos['sats']['id']):
+    for sat in np.unique(data[0].satPos['sats']['id']):
         if sat < 0: continue
-        idx = satPos['sats']['id'] == sat
+        idx = data[0].satPos['sats']['id'] == sat
         labels = ["az", "el"]
         for i in range(2):
             plt.subplot(2,1,i+1)
-            plt.plot(satPos['t'][np.sum(idx, axis=1).astype(np.bool)], 180.0/np.pi * satPos['sats']['azel'][idx][:,i], label=str(sat))
+            plt.plot(data[0].satPos['t'][np.sum(idx, axis=1).astype(np.bool)], 180.0/np.pi * data[0].satPos['sats']['azel'][idx][:,i], label=str(sat))
             plt.ylabel(labels[i])
             if i == 0:
                 plt.legend()
-    azel = satPos['sats']['azel'][-1]*180.0/np.pi
-    dist = np.sqrt(np.sum(np.square(satPos['sats']['p'][-1]), axis=1))/1000
-    ids = satPos['sats']['id'][-1]
+    azel = data[0].satPos['sats']['azel'][-1]*180.0/np.pi
+    dist = np.sqrt(np.sum(np.square(data[0].satPos['sats']['p'][-1]), axis=1))/1000
+    ids = data[0].satPos['sats']['id'][-1]
     # for i in range(len(ids)):
     #     print ids[i], ", ", dist[i], ", ", azel[i,:]
 
@@ -111,13 +110,13 @@ def plotAzel():
 
 def plotPRangeRes():
     f = plt.figure()
-    for s, sat in enumerate(np.unique(prangeRes['sats']['id'])):
+    for s, sat in enumerate(np.unique(data[0].prangeRes['sats']['id'])):
         if sat < 0: continue
-        idx = prangeRes['sats']['id'] == sat
+        idx = data[0].prangeRes['sats']['id'] == sat
         for i in range(2):
             plt.subplot(2,1,i+1)
             try:
-                plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(bool)], prangeRes['sats']['res'][idx][:,i], label=str(sat))
+                plt.plot(data[0].prangeRes['t'][np.sum(idx, axis=1).astype(bool)], data[0].prangeRes['sats']['res'][idx][:,i], label=str(sat))
             except:
                 debug = 1
             if i == 0:
@@ -127,13 +126,13 @@ def plotPRangeRes():
     # plt.grid()
     pw.addPlot("PRangeRes", f)
     f = plt.figure()
-    for s, sat in enumerate(np.unique(prangeRes['sats']['id'])):
+    for s, sat in enumerate(np.unique(data[0].prangeRes['sats']['id'])):
         if sat < 0: continue
-        idx = prangeRes['sats']['id'] == sat
+        idx = data[0].prangeRes['sats']['id'] == sat
         for i in range(2):
             plt.subplot(2, 1, i + 1)
-            p = plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['z'][idx][:, i], label='z')
-            plt.plot(prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], prangeRes['sats']['zhat'][idx][:, i], '--', color=p[0].get_color(), label='zhat')
+            p = plt.plot(data[0].prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], data[0].prangeRes['sats']['z'][idx][:, i], label='z')
+            plt.plot(data[0].prangeRes['t'][np.sum(idx, axis=1).astype(np.bool)], data[0].prangeRes['sats']['zhat'][idx][:, i], '--', color=p[0].get_color(), label='zhat')
             if s == 1:
                 plotMultipathTime()
     plt.legend()
@@ -331,8 +330,6 @@ def getMultipathTime():
     switch_on = truth['t'][np.where(truth['multipath'][:-1] < truth['multipath'][1:])[0]]
     switch_off = truth['t'][np.where(truth['multipath'][:-1] > truth['multipath'][1:])[0]]
 
-    print switch_on
-    print switch_off
     if len(switch_on) == 0 and len(switch_off) == 0:
         multipathTime = None
 
@@ -477,6 +474,22 @@ def plotPosLla():
         plt.plot(log.state['lla'][:,1]*180/np.pi, log.state['lla'][:,0]*180.0/np.pi, label=log.label + "est")
     pw.addPlot("Lla", f);
 
+def plotColoredPosLla():
+    f = plt.figure()
+    plt.suptitle("Lat Lon Alt")
+    cmap = plt.get_cmap("plasma", 8)
+    for log in data:
+        print log.opt['x']['lla'].shape
+        counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
+        print counts.shape
+        for i in range(np.max(counts)):
+            tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
+            tmp[counts > i, :] = log.opt['x']['lla'][counts > i, :]
+            print tmp.shape
+            plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
+            plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
+    plt.legend()
+    pw.addPlot("Colored Lla", f)
 
 class Log:
     def __init__(self, prefix):
@@ -541,6 +554,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plotEuler()
     plotVelocity()
     plotPosLla()
+    plotColoredPosLla()
     # plotPosError()
     # plotVelError()
     plotImuBias()
@@ -549,11 +563,11 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     # plotXb2c()
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
-        # plotPRangeRes()
+        plotPRangeRes()
         plotClockBias()
         plotMultipath()
         saveMultipath()
-        # plotAzel()
+        plotAzel()  
     # #
     if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
         # plotFeatRes()
@@ -568,5 +582,8 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
-    plotResults("/tmp/Salsa/MocapFeatHardware", False)
+    # plotResults("/tmp/Salsa/MocapFeatHardware", False)
+    plotResults("/tmp/Salsa/GNSSHardware", False)
+
     # plotResults("/tmp/Salsa/FeatSimulation/")
+

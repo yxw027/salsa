@@ -250,10 +250,12 @@ public:
     double doppler_cov_;
     bool use_point_positioning_;
     double min_satellite_elevation_;
+    int min_sats_;
     SatVec sats_;
     ObsVec filtered_obs_;
     int n_obs_;
     bool enable_switching_factors_;
+    double dt_gnss_;
     Eigen::Vector3d pp_lla_;
 
     /************************************/
@@ -306,6 +308,8 @@ public:
     void drawX(cv::Mat& img, cv::Point2f& center, int size, const cv::Scalar &color);
     int show_skip_;
     int show_skip_count_;
+    bool make_video_;
+    cv::VideoWriter* video_;
     bool sim_KLT_;
     double t_next_klt_output_;
     double tracker_freq_;
