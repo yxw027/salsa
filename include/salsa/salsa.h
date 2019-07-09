@@ -142,6 +142,7 @@ public:
     void cleanUpFeatureTracking(int oldest_kf_idx);
     void rmLostFeatFromKf();
     bool checkFeatures();
+    bool checkPrange();
     bool inWindow(int idx);
     State& xhead() { return xbuf_[xbuf_head_]; }
     State& xtail() { return xbuf_[xbuf_tail_]; }
@@ -217,7 +218,7 @@ public:
     /************************************/
     void imuCallback(const double &t, const Vector6d &z, const Matrix6d &R) override;
     bool checkIMUString();
-    bool checkTransitions();
+    bool checkGraph();
     double acc_wander_weight_;
     double gyro_wander_weight_;
 
@@ -309,7 +310,7 @@ public:
     int show_skip_;
     int show_skip_count_;
     bool make_video_;
-    cv::VideoWriter* video_;
+    cv::VideoWriter* video_ = nullptr;
     bool sim_KLT_;
     double t_next_klt_output_;
     double tracker_freq_;

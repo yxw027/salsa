@@ -8,13 +8,14 @@ using namespace xform;
 namespace salsa
 {
 
-FeatFunctor::FeatFunctor(const Matrix2d& cov, const xform::Xformd& x_b2c, const Vector3d &zetai,
+FeatFunctor::FeatFunctor(double t, const Matrix2d& cov, const xform::Xformd& x_b2c, const Vector3d &zetai,
                          const Vector3d &zetaj, const Vector2d &pixj, int to_idx) :
     to_idx_(to_idx),
     zetai_(zetai),
     zetaj_(zetaj),
     x_b2c_(x_b2c),
-    pixj_(pixj)
+    pixj_(pixj),
+    t_(t)
 {
     Xi_ = cov.inverse().llt().matrixL().transpose();
     Pz_.block<1,3>(0,0) = zetaj_.cross(e_x).transpose().normalized();

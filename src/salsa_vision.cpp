@@ -95,12 +95,12 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
             if (ft.funcs.size() == 0 || (xbuf_[ft.funcs.back().to_idx_].kf >= 0))
             {
                 SD(1, "Adding new measurement to feature %d", m.z.feat_ids[i]);
-                ft.addMeas(idx, m.R_pix, x_b2c_, m.z.zetas[i], Vector2d(m.z.pix[i].x, m.z.pix[i].y));
+                ft.addMeas(m.t, idx, m.R_pix, x_b2c_, m.z.zetas[i], Vector2d(m.z.pix[i].x, m.z.pix[i].y));
             }
             else
             {
                 SD(1, "Moving feature measurement %d", m.z.feat_ids[i]);
-                ft.moveMeas(idx, m.z.zetas[i]);
+                ft.moveMeas(m.t, idx, m.z.zetas[i]);
             }
             ft.updated_in_last_image_ = true;
             ft.funcs.back().rho_true_ = 1.0/m.z.depths[i];
@@ -111,7 +111,7 @@ void Salsa::imageUpdate(const meas::Img &m, int idx)
             if (use_measured_depth_ && !std::isnan(m.z.depths[i]))
                 rho0 = 1.0/m.z.depths[i];
             SD(1, "Adding new feature %d", m.z.feat_ids[i]);
-            xfeat_.insert({m.z.feat_ids[i], Feat(xbuf_head_, current_kf_+1, m.z.zetas[i], Vector2d(m.z.pix[i].x, m.z.pix[i].y), rho0, 1.0/m.z.depths[i])});
+            xfeat_.insert({m.z.feat_ids[i], Feat(m.t, xbuf_head_, current_kf_+1, m.z.zetas[i], Vector2d(m.z.pix[i].x, m.z.pix[i].y), rho0, 1.0/m.z.depths[i])});
         }
     }
     xbuf_[idx].type |= State::Camera;
@@ -203,6 +203,7 @@ void Salsa::cleanUpFeatureTracking(int oldest_kf_idx)
         else
             fit++;
     }
+    SALSA_ASSERT(checkFeatures(), "Features Lost Wiring");
 }
 
 void Salsa::createNewKeyframe()

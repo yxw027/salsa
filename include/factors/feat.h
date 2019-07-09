@@ -15,13 +15,14 @@ namespace salsa
 class FeatFunctor
 {
 public:
-    FeatFunctor(const Eigen::Matrix2d& cov, const xform::Xformd& x_b2c,
+    FeatFunctor(double t, const Eigen::Matrix2d& cov, const xform::Xformd& x_b2c,
                 const Eigen::Vector3d &zetai_, const Eigen::Vector3d &zetaj_,
                 const Eigen::Vector2d &pixj, int to_idx);
 
     template<typename T>
     bool operator() (const T* _xi, const T* _xj, const T* _rho, T* _res) const;
 
+    double t_;
     int to_idx_;
     const Eigen::Vector3d& zetai_;
     Eigen::Vector3d zetaj_;

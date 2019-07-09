@@ -368,7 +368,7 @@ void Salsa::printGraph()
     int end = (xbuf_head_+1)%STATE_BUF_SIZE;
     while (tmp != end)
     {
-        logs_[log::Graph]->file_ << std::fixed << std::setw(5) << std::setprecision(3) << xbuf_[tmp].t << " -- ";
+        logs_[log::Graph]->file_ << std::fixed << std::setw(6) << std::setprecision(3) << xbuf_[tmp].t << " -- ";
         tmp = (tmp + 1) % STATE_BUF_SIZE;
     }
 

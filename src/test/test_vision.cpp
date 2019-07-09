@@ -15,9 +15,9 @@ TEST (Vision, isTrackedFeature)
 {
     Salsa salsa;
 
-    salsa.xfeat_.insert({0, Feat(0, 0, Vector3d(1, 0, 0), Vector2d(0, 0), 1.0)});
-    salsa.xfeat_.insert({1, Feat(0, 0, Vector3d(1, 0, 0), Vector2d(0, 0), 1.0)});
-    salsa.xfeat_.insert({2, Feat(0, 0, Vector3d(1, 0, 0), Vector2d(0, 0), 1.0)});
+    salsa.xfeat_.insert({0, Feat(0.0, 0, 0, Vector3d(1, 0, 0), Vector2d(0, 0), 1.0)});
+    salsa.xfeat_.insert({1, Feat(0.1, 0, 0, Vector3d(1, 0, 0), Vector2d(0, 0), 1.0)});
+    salsa.xfeat_.insert({2, Feat(0.2, 0, 0, Vector3d(1, 0, 0), Vector2d(0, 0), 1.0)});
 
     EXPECT_TRUE(salsa.isTrackedFeature(0));
     EXPECT_TRUE(salsa.isTrackedFeature(1));
@@ -176,9 +176,9 @@ TEST (Vision, SlideAnchor)
     {
         Vector3d zeta = cam.invProj(z.pixs[0], 1.0);
         if (!feat)
-            feat = new Feat(idx, kf, zeta, Vector2d(0, 0), 1.0/z.depths[0]);
+            feat = new Feat(t, idx, kf, zeta, Vector2d(0, 0), 1.0/z.depths[0]);
         else
-            feat->addMeas(idx, R_pix, salsa.x_b2c_, zeta, Vector2d(0, 0));
+            feat->addMeas(t, idx, R_pix, salsa.x_b2c_, zeta, Vector2d(0, 0));
         xbuf[idx].x = sim.state().X;
         xbuf[idx].v = sim.state().v;
         xbuf[idx].t = sim.t_;

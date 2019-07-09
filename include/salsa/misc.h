@@ -41,7 +41,7 @@
 #define SD_S(...)
 #endif
 
-#ifdef NDEBUG
+//#ifdef NDEBUG
 #define SALSA_ASSERT(condition, ...) \
     do { \
         if (! (condition)) { \
@@ -53,9 +53,9 @@
             throw std::runtime_error("ERROR:"); \
         } \
     } while (false)
-#else
-#   define SALSA_ASSERT(...)
-#endif
+//#else
+//#   define SALSA_ASSERT(...)
+//#endif
 
 /*************************************/
 /*          Round-Off helpers        */

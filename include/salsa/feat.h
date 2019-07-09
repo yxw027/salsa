@@ -37,17 +37,18 @@ struct Feat
     int idx0;
     double rho;
     double rho_true;
+    double t0;
     int slide_count;
     Eigen::Vector3d z0;
     FeatDeque funcs;
     Eigen::Vector2d pix0;
     bool updated_in_last_image_;
 
-    Feat(int _idx, int _kf0, const Eigen::Vector3d& _z0, const Eigen::Vector2d& _pix0, double _rho, double _rho_true=NAN);
+    Feat(double _t0, int _idx, int _kf0, const Eigen::Vector3d& _z0, const Eigen::Vector2d& _pix0, double _rho, double _rho_true=NAN);
 
-    void addMeas(int to_idx, const Eigen::Matrix2d& cov, const xform::Xformd& x_b2c,
+    void addMeas(double t, int to_idx, const Eigen::Matrix2d& cov, const xform::Xformd& x_b2c,
                  const Eigen::Vector3d& zj, const Eigen::Vector2d &pixj);
-    void moveMeas(int to_idx, const Eigen::Vector3d& zj);
+    void moveMeas(double t, int to_idx, const Eigen::Vector3d& zj);
     bool slideAnchor(int new_from_idx, const StateVec& xbuf, const xform::Xformd& x_b2c);
     Eigen::Vector3d pos(const StateVec& xbuf, const xform::Xformd& x_b2c);
 };

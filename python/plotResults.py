@@ -484,6 +484,8 @@ def plotColoredPosLla():
         print log.opt['x']['lla'].shape
         while counts.shape[0] < log.opt['x']['lla'].shape[0]:
             counts = np.vstack((counts, np.zeros((1,20), dtype=np.bool)))
+        while counts.shape[0] > log.opt['x']['lla'].shape[0]:
+            counts = counts[:-1,:].copy()
         print counts.shape
         print log.opt['x']['lla'].shape
 
@@ -565,18 +567,18 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plotImuBias()
     plotImu()
     plotXe2n()
-    # plotXb2c()
+    plotXb2c()
     #
-    if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
-        plotPRangeRes()
-        plotClockBias()
-        plotMultipath()
-        saveMultipath()
-        plotAzel()  
-    # #
-    if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
-        # plotFeatRes()
-        plotFeatDepths()
+    # if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
+    #     plotPRangeRes()
+    #     plotClockBias()
+    #     plotMultipath()
+    #     saveMultipath()
+    #     plotAzel()  
+    # # #
+    # if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
+    #     # plotFeatRes()
+    #     plotFeatDepths()
     # #
     # if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
     #     plotMocapRes()
