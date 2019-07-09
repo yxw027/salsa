@@ -495,6 +495,7 @@ def plotColoredPosLla():
             print tmp.shape
             plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
             plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
+    plt.axis("equal")
     plt.legend()
     pw.addPlot("Colored Lla", f)
 
@@ -569,10 +570,10 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plotXe2n()
     plotXb2c()
     #
-    # if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
+    if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
     #     plotPRangeRes()
     #     plotClockBias()
-    #     plotMultipath()
+        plotMultipath()
     #     saveMultipath()
     #     plotAzel()  
     # # #
