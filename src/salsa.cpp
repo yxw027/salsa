@@ -76,17 +76,11 @@ void Salsa::load(const string& filename)
 
     xbuf_.resize(STATE_BUF_SIZE);
 
-    Eigen::Matrix<double, State::dxSize, 1> state_anchor_cov;
-    get_yaml_eigen("state_anchor_cov", filename, state_anchor_cov);
-    state_anchor_xi_ = state_anchor_cov.cwiseInverse().cwiseSqrt().asDiagonal();
-
-    Vector6d cov_diag;
-    get_yaml_eigen("x_e2n_anchor_cov", filename, cov_diag);
-    x_e2n_anchor_xi_ = cov_diag.cwiseInverse().cwiseSqrt().asDiagonal();
-
-
+    get_yaml_diag("state_anchor_xi", filename, state_anchor_xi_);
+    get_yaml_diag("x_e2n_anchor_xi", filename, x_e2n_anchor_xi_);
     get_yaml_diag("imu_bias_xi", filename, imu_bias_Xi_);
     get_yaml_diag("clk_bias_xi", filename, clk_bias_Xi_);
+    get_yaml_diag("prange_xi", filename, prange_Xi_);
 
     get_yaml_node("update_on_camera", filename, update_on_camera_);
     get_yaml_node("update_on_gnss", filename, update_on_gnss_);
@@ -164,7 +158,6 @@ void Salsa::imuCallback(const double &t, const Vector6d &z, const Matrix6d &R)
 
 
 
-    handleMeas();
     logCurrentState();
     logImu();
 }
@@ -357,6 +350,8 @@ void Salsa::handleMeas()
         mit = new_meas_.erase(mit); // Measurement handled, pop it!
         SALSA_ASSERT(checkGraph(), "Graph got messed up!");
     }
+    if (!disable_solver_)
+        solve();
 }
 
 void Salsa::update(meas::Base *m, int idx)
@@ -391,8 +386,6 @@ void Salsa::update(meas::Base *m, int idx)
         SD(5, "Unknown measurement type %d at t%.3f", m->type, m->t);
         break;
     }
-    if (!disable_solver_)
-        solve();
 }
 
 
@@ -460,7 +453,7 @@ void Salsa::addMeas(const meas::Gnss &&gnss)
     }
     gnss_meas_buf_.push_back(gnss);
     new_meas_.insert(new_meas_.end(), &gnss_meas_buf_.back());
-    if (update_on_gnss_)
+    if (update_on_gnss_ || (enable_static_start_ && current_state_.t < static_start_end_))
         handleMeas();
 }
 

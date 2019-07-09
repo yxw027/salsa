@@ -16,7 +16,7 @@ PseudorangeFunctor::PseudorangeFunctor()
 }
 
 void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& sat,
-                              const Vector3d& _rec_pos_ecef, const Matrix2d& cov, double sw_xi,
+                              const Vector3d& _rec_pos_ecef, const Matrix2d& xi, double sw_xi,
                               const Vector3d &_p_b2g, int node, int idx)
 {
     sat_id_ = sat.id_;
@@ -53,7 +53,7 @@ void PseudorangeFunctor::init(const GTime& _t, const Vector2d& _rho, Satellite& 
     ion_delay = sat.ionosphericDelay(t, lla, az_el);
     trop_delay = sat.troposphericDelay(t, lla, az_el);
     sat_clk = sat.clk;
-    Xi_ = cov.inverse().llt().matrixL().transpose();
+    Xi_ = xi;
     active_ = true;
 }
 

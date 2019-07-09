@@ -69,7 +69,7 @@ void Salsa::initImg(const std::string& filename)//, int _radius, cv::Size _size)
     if (make_video_)
     {
       video_ = new cv::VideoWriter();
-      video_->open(log_prefix_ + "tracked.m4v", cv::VideoWriter::fourcc('X','V','I','D'), 10,
+      video_->open(log_prefix_ + "/tracked.avi", cv::VideoWriter::fourcc('M','P','E','G'), 10,
                    cv::Size(cam_.image_size_(0), cam_.image_size_(1)));
     }
 }

@@ -172,6 +172,7 @@ public:
     XformAnchor* x_e2n_anchor_;
     Matrix6d x_e2n_anchor_xi_;
     Eigen::Matrix2d clk_bias_Xi_;
+    Eigen::Matrix2d prange_Xi_;
     Matrix6d imu_bias_Xi_;
     double switch_Xi_;
     double switchdot_Xi_;
@@ -248,7 +249,6 @@ public:
     bool checkClkString();
     int ns_;
     bool update_on_gnss_;
-    double doppler_cov_;
     bool use_point_positioning_;
     double min_satellite_elevation_;
     int min_sats_;

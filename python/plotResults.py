@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import yaml
 import os
 from scipy import interpolate
+import cv2
 import scipy
 
 sim_params = yaml.load(open("../params/sim_params.yaml"))
@@ -495,8 +496,8 @@ def plotColoredPosLla():
             print tmp.shape
             plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
             plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
+    # plt.imshow(grey, cmap="Greys", alpha = 0.5, extent=extent)
     plt.axis("equal")
-    plt.legend()
     pw.addPlot("Colored Lla", f)
 
 class Log:
@@ -591,7 +592,8 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
     # plotResults("/tmp/Salsa/MocapFeatHardware", False)
-    plotResults("/tmp/Salsa/GNSSHardware", False)
+    # plotResults("/tmp/Salsa/GNSSHardware", False)
+    plotResults("/tmp/Salsa/GNSSHardware2", False)
 
     # plotResults("/tmp/Salsa/FeatSimulation/")
 
