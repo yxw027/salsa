@@ -16,7 +16,7 @@ void Salsa::initFactors()
 void Salsa::addParameterBlocks(ceres::Problem &problem)
 {
     problem.AddParameterBlock(x_e2n_.data(), 7, new XformParam());
-    if (!enable_static_start_ || xhead().t > static_start_end_)
+    if (!enable_static_start_ || xhead().t > static_start_end_ + static_start_fix_delay_)
         problem.SetParameterBlockConstant(x_e2n_.data());
 
     int idx = xbuf_tail_;

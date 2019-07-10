@@ -152,6 +152,9 @@ void Salsa::gnssUpdate(const meas::Gnss &m, int idx)
     int i = 0;
     for (auto& ob : m.obs)
     {
+        Matrix2d xi = prange_Xi_;
+        xi(0,0) *= std::sqrt(1.0/ob.qualP);
+        xi(1,1) *= std::sqrt(1.0/ob.qualP);
         prange_.back()[i++].init(m.obs[0].t, ob.z.topRows<2>(), sats_[ob.sat_idx], rec_pos_ecef, prange_Xi_,
                                  switch_Xi_, p_b2g_, xbuf_[idx].node, idx);
     }

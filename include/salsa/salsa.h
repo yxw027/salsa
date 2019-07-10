@@ -206,6 +206,7 @@ public:
     double static_start_imu_thresh_;
     double camera_start_delay_;
     double static_start_end_;
+    double static_start_fix_delay_;
     double static_start_freq_;
     double static_start_imu_bias_relaxation_;
     bool normalized_imu_;

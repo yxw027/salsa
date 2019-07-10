@@ -10,7 +10,6 @@ TEST (Salsa, IndexGeNoWrap)
     salsa.xbuf_head_ = 20;
     salsa.xbuf_tail_ = 10;
 
-
     EXPECT_TRUE(salsa.stateIdxGe(12, 11));
     EXPECT_TRUE(salsa.stateIdxGe(20, 11));
     EXPECT_TRUE(salsa.stateIdxGe(20, 10));
@@ -38,9 +37,8 @@ TEST (Salsa, IndexGeWithWrap)
 {
     Salsa salsa;
     salsa.STATE_BUF_SIZE = 25;
-    salsa.xbuf_head_ = 10;                              `
+    salsa.xbuf_head_ = 10;
     salsa.xbuf_tail_ = 20;
-
 
     EXPECT_TRUE(salsa.stateIdxGe(8, 22));
     EXPECT_TRUE(salsa.stateIdxGe(0, salsa.STATE_BUF_SIZE-1));

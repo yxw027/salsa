@@ -69,6 +69,20 @@ def plot3DMap():
 
     pw.addPlot("3D", f, True)
 
+def plot2DMap():
+    f = plt.figure()
+    plt.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], label=r'$x$')
+    for log in data:
+        if plotKF:
+            k = [log.x['node'] != -1][0]
+            plt.plot(log.x['x']['p'][k,1],log.x['x']['p'][k,0], '*')
+        plt.plot(log.state['x']['p'][:,1],log.state['x']['p'][:,0], label=log.label)
+    plt.legend()
+    plt.axis('equal')
+    plt.grid()
+
+    pw.addPlot("2D", f)
+
 def plotSatPos():
     f = plt.figure()
     ax = f.add_subplot(111, projection='3d')
@@ -196,7 +210,8 @@ def plotPosition():
         plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
         for k, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['p'][:,i], label=log.label)
-            plt.plot(log.opt['x']['t'], log.opt['x']['p'][:,:,i], label=log.label, alpha=0.3, color=colors[k+2])
+            if len(data) == 1:
+                plt.plot(log.opt['x']['t'], log.opt['x']['p'][:,:,i], label=log.label, alpha=0.3, color=colors[k+2])
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['p'][:,i], 'x')
         if i == 0:
@@ -213,7 +228,8 @@ def plotAttitude():
         plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
         for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['xu']['q'][:,0]), label=log.label)
-            plt.plot(log.opt['x']['t'], log.opt['x']['q'][:,:,i]*np.sign(log.opt['x']['q'][:,:,0]), label=log.label, color=colors[l+2], alpha=0.3)
+            if len(data) == 1:
+                plt.plot(log.opt['x']['t'], log.opt['x']['q'][:,:,i]*np.sign(log.opt['x']['q'][:,:,0]), label=log.label, color=colors[l+2], alpha=0.3)
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['q'][:,i]*np.sign(log.x['x']['q'][:,0]), 'x')
         if i == 0:
@@ -313,7 +329,8 @@ def plotVelocity():
         plt.plot(truth['t'], truth['v'][:,i], label='x')
         for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['v'][:,i], label=log.label)
-            plt.plot(log.opt['x']['t'], log.opt['x']['v'][:,:,i], label=log.label, alpha=0.3, color=colors[l+2])
+            if len(data) == 1:
+                plt.plot(log.opt['x']['t'], log.opt['x']['v'][:,:,i], label=log.label, alpha=0.3, color=colors[l+2])
             if plotKF:
                 plt.plot(log.x['t'], log.x['v'][:,i], 'x')
         if i == 0:
@@ -365,8 +382,11 @@ def plotMultipath():
     legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[0], label=r'$x$'))
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
-        plt.plot(truth["t"], truth["mp"][:,i], color=colors[0], label=r'$x$')
+        if not np.isnan(truth["mp"][:,i]).all():
+            print "truth multipath"
+            plt.plot(truth["t"], truth["mp"][:,i], color=colors[0], label=r'$x$')
         for l, log in enumerate(data):
+            # if "kappa" not in log.label: continue
             plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], linewidth=1, alpha=0.2, color=colors[l+1])
             if i == 0:
                 legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[l+1], label=log.label))
@@ -455,7 +475,7 @@ def plotVelError():
         plt.savefig(filePrefix + "vel_error.png", dpi=600, facecolor='w', bbox_inches='tight')
     pw.addPlot("Velocity Error", f)
 
-def plotPosLla():
+def plotPPLla():
     f = plt.figure()
     plt.suptitle("PP LLA")
     for i in range(3):
@@ -473,29 +493,41 @@ def plotPosLla():
     for log in data:
         plt.plot(log.Lla['pp_lla'][:,1]*180/np.pi, log.Lla['pp_lla'][:,0]*180.0/np.pi, label=log.label + "pp")
         plt.plot(log.state['lla'][:,1]*180/np.pi, log.state['lla'][:,0]*180.0/np.pi, label=log.label + "est")
+    pw.addPlot("PP Lla", f);
+
+def plotLla():
+    f = plt.figure()
+    plt.suptitle("Lat Lon")
+    for log in data:
+        plt.plot(log.state['lla'][:,1]*180/np.pi, log.state['lla'][:,0]*180.0/np.pi, label=log.label)
+    plt.axis("equal")
+    plt.legend()
     pw.addPlot("Lla", f);
 
 def plotColoredPosLla():
     f = plt.figure()
     plt.suptitle("Lat Lon Alt")
     cmap = plt.get_cmap("plasma", 8)
-    for log in data:
-        counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
-        print counts.shape
-        print log.opt['x']['lla'].shape
-        while counts.shape[0] < log.opt['x']['lla'].shape[0]:
-            counts = np.vstack((counts, np.zeros((1,20), dtype=np.bool)))
-        while counts.shape[0] > log.opt['x']['lla'].shape[0]:
-            counts = counts[:-1,:].copy()
-        print counts.shape
-        print log.opt['x']['lla'].shape
+    log = data[0]
+    if np.isnan(log.swParams['p']['s']).all():
+        return
+    counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
+    print counts.shape
+    print log.opt['x']['lla'].shape
+    while counts.shape[0] < log.opt['x']['lla'].shape[0]:
+        counts = np.vstack((counts, np.zeros((1,20), dtype=np.bool)))
+    while counts.shape[0] > log.opt['x']['lla'].shape[0]:
+        counts = counts[:-1,:].copy()
+    print counts.shape
+    print log.opt['x']['lla'].shape
 
-        for i in range(np.max(counts)):
-            tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
-            tmp[counts > i, :] = log.opt['x']['lla'][counts > i, :]
-            print tmp.shape
-            plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
-            plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
+    for i in range(np.max(counts)):
+        tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
+        tmp[counts > i, :] = log.opt['x']['lla'][counts > i, :]
+        print tmp.shape
+        plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
+        plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
+    plt.legend()
     # plt.imshow(grey, cmap="Greys", alpha = 0.5, extent=extent)
     plt.axis("equal")
     pw.addPlot("Colored Lla", f)
@@ -549,7 +581,10 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     truth = np.fromfile(os.path.join(directory,"Truth.log"), dtype=SimStateType)
     # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
 
-    data = [Log(subdir) for subdir in subdirs]
+    ignored_dirs = []
+    ignored_dirs = [os.path.join(directory, o) for o in ignored_dirs]
+
+    data = [Log(subdir) for subdir in subdirs if subdir not in ignored_dirs]
 
     # interpolateTruth()
     getMultipathTime()
@@ -558,24 +593,27 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     pw = plotWindow()
 
     plot3DMap()
+    plot2DMap()
     plotPosition()
     plotAttitude()
     plotEuler()
     plotVelocity()
-    plotPosLla()
-    plotColoredPosLla()
+    # plotPPLla()
+    plotLla()
+    if len(data) == 1:
+        plotColoredPosLla()
     # plotPosError()
     # plotVelError()
     plotImuBias()
-    plotImu()
+    # plotImu()
     plotXe2n()
     plotXb2c()
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
-    #     plotPRangeRes()
-    #     plotClockBias()
+    # #     plotPRangeRes()
+        plotClockBias()
         plotMultipath()
-    #     saveMultipath()
+        # saveMultipath()
     #     plotAzel()  
     # # #
     # if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
@@ -592,8 +630,8 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
     # plotResults("/tmp/Salsa/MocapFeatHardware", False)
-    # plotResults("/tmp/Salsa/GNSSHardware", False)
-    plotResults("/tmp/Salsa/GNSSHardware2", False)
+    plotResults("/tmp/Salsa/GNSSHardware", False)
+    # plotResults("/tmp/Salsa/GNSSHardware2", False)
 
     # plotResults("/tmp/Salsa/FeatSimulation/")
 

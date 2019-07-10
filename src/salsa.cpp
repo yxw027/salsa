@@ -96,6 +96,7 @@ void Salsa::load(const string& filename)
     get_yaml_node("camera_start_delay", filename, camera_start_delay_);
     get_yaml_node("static_start_freq", filename, static_start_freq_);
     get_yaml_node("static_start_imu_bias_relaxation", filename, static_start_imu_bias_relaxation_);
+    get_yaml_node("static_start_fix_delay", filename, static_start_fix_delay_);
 }
 
 void Salsa::initState()

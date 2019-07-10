@@ -18,14 +18,15 @@ wait_key: false
 ######################################
 ### OPT SETUP
 ######################################
-max_node_window: 20
+max_node_window: 50
 max_kf_window: 20
 state_buf_size: 1000
 num_feat: 100
 num_sat: 15
 disable_solver: false
 max_iter: 1000
-max_solver_time: 0.07
+# max_solver_time: 0.07
+max_solver_time: 1.0
 num_threads: 12
 
 #####################################
@@ -107,16 +108,17 @@ x_b2c: [0.01666044727690726, 0.06831908058722323, -0.3523408903053932,
 ### GNSS
 #####################################
 clk_bias_xi: [2, 2] # nsec
-prange_xi: [3, 4]
+prange_xi: [ 1.0, 10.0]
 min_satellite_elevation: 10
 use_point_positioning: true
 disable_gnss: false
 update_on_gnss: false
+static_start_fix_delay: 3.0
 x_e2n: [ -1798298, -4531280, 4098905,
          0.2363030974, -0.7505535126, -0.509619223, -0.3480208592]
 p_b2g: [0, 0, 0]
-switch_xi: 20
-switchdot_xi: 60
+switch_xi: 12
+switchdot_xi: 40
 enable_switching_factors: true
 min_sats: 5
 dt_gnss: -0.03 # t_b = t_gnss + dt
