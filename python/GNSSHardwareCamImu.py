@@ -7,12 +7,12 @@ params = yaml.load(file("../params/salsa.yaml"))
 
 # bagfile = "/home/superjax/rosbag/mynt_mocap/mocap2.bag"
 # bagfile = "/home/superjax/rosbag/mynt_mocap/mocap2_adjust.bag"
-directory = "/tmp/Salsa/GNSSHardware2"
-prefix = "GV/"
+directory = "../results/GNSSHardware"
+prefix = "G/"
 
 if not os.path.exists(os.path.join(directory, prefix)):
     os.makedirs(os.path.join(directory, prefix))
-params["label"] = "GV"
+params["label"] = "G"
 
 # params['bag_name'] = "/home/superjax/rosbag/gps_carry2_uc/small1.bag"
 # params['start_time'] = 80 # small1
@@ -31,7 +31,7 @@ params['bag_name'] = "/home/superjax/rosbag/gps_flight_eve/uc/flight5.bag"
 params['log_prefix'] = os.path.join(directory, prefix)
 params['update_on_mocap'] = False
 params['disable_mocap'] = True
-params['disable_vision'] = False
+params['disable_vision'] = True
 params['update_on_vision'] = True
 params['disable_gnss'] = False
 params['update_on_gnss'] = True

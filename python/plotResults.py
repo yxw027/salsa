@@ -70,17 +70,21 @@ def plot3DMap():
     pw.addPlot("3D", f, True)
 
 def plot2DMap():
-    f = plt.figure()
-    plt.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], label=r'$x$')
+    f = plt.figure(figsize=[8, 6])
+    if plotTruth:
+        plt.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], label=r'$x$')
     for log in data:
         if plotKF:
             k = [log.x['node'] != -1][0]
             plt.plot(log.x['x']['p'][k,1],log.x['x']['p'][k,0], '*')
         plt.plot(log.state['x']['p'][:,1],log.state['x']['p'][:,0], label=log.label)
+    plt.xlabel(r"$\mathbf{p}_x (m)$")
+    plt.ylabel(r"$\mathbf{p}_y (m)$")
     plt.legend()
     plt.axis('equal')
     plt.grid()
-
+    if savePlots:
+        plt.savefig("../plots/2DMap.pdf", bbox_inches="tight")
     pw.addPlot("2D", f)
 
 def plotSatPos():
@@ -207,7 +211,8 @@ def plotPosition():
     for i in range(3):
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
-        plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
+        if plotTruth:
+            plt.plot(truth['t'], truth['x']['p'][:,i], label='x')
         for k, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['p'][:,i], label=log.label)
             if len(data) == 1:
@@ -225,7 +230,8 @@ def plotAttitude():
     for i in range(4):
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
-        plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
+        if plotTruth:
+            plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
         for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['xu']['q'][:,0]), label=log.label)
             if len(data) == 1:
@@ -238,18 +244,24 @@ def plotAttitude():
     pw.addPlot("Attitude", f)
 
 def plotEuler():
-    f = plt.figure()
-    plt.suptitle("Euler")
-    labels=[r"$\phi$", r"$\theta$", r"$\psi$"]
+    f = plt.figure(figsize=[8, 6])
+    # plt.suptitle("Attitude (Euler)")
+    # labels=[r"$\phi$", r"$\theta$", r"$\psi$"]
+    labels=["roll", "pitch", "yaw"]
     for i in range(3):
         plt.subplot(3,1,i+1)
-        plt.title(labels[i])
-        plt.plot(truth['t'], 180.0/np.pi * truth['euler'][:,i], label='x')
+        plt.grid()
+        if plotTruth:
+            plt.plot(truth['t'], 180.0/np.pi * truth['euler'][:,i], label='x')
         for log in data:
             plt.plot(log.state['t'], 180.0/np.pi * log.state['euler'][:,i], label=log.label)
+        plt.ylabel(labels[i] + r"($^\circ$)")
         if i == 0:
-            plt.legend()
+            plt.legend(bbox_to_anchor=(0.5, 1.3), ncol=7, loc="upper center")
         plotMultipathTime()
+    plt.xlabel("t (s)")
+    if savePlots:
+        plt.savefig("../plots/euler.pdf", bbox_inches="tight")
     pw.addPlot("Euler", f)
 
 
@@ -321,12 +333,13 @@ def plotXb2c():
 
 
 def plotVelocity():
-    f = plt.figure()
-    plt.suptitle('Velocity')
+    f = plt.figure(figsize=[8, 6])
+    # plt.suptitle('Velocity')
     for i in range(3):
         plt.subplot(4, 1, i+1)
-        plt.title(xtitles[i])
-        plt.plot(truth['t'], truth['v'][:,i], label='x')
+        plt.grid()
+        if plotTruth:
+            plt.plot(truth['t'], truth['v'][:,i], label='x')
         for l, log in enumerate(data):
             plt.plot(log.state['t'], log.state['v'][:,i], label=log.label)
             if len(data) == 1:
@@ -334,13 +347,20 @@ def plotVelocity():
             if plotKF:
                 plt.plot(log.x['t'], log.x['v'][:,i], 'x')
         if i == 0:
-            plt.legend()
+            plt.legend(bbox_to_anchor=(0.5, 1.4), ncol=7, loc="upper center")
+        plt.tick_params(axis='both', left='on', top='off', right='off', bottom='off', labelleft='on', labeltop='off', labelright='off', labelbottom='off')
+        plt.ylabel(vtitles[i] + r"$\left(\frac{m}{s}\right)$")
         plotMultipathTime()
     plt.subplot(4,1,4)
-    plt.ylabel("Magnitude")
-    plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
+    plt.grid()
+    plt.ylabel(r"$\Vert \mathbf{v} \Vert \left(\frac{m}{s}\right)$")
+    if plotTruth:
+        plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
     for log in data:
         plt.plot(log.state['t'], norm(log.state['v'], axis=1), label=r'\hat{x}')
+    plt.xlabel("t (s)")
+    if savePlots:
+        plt.savefig("../plots/velocity.pdf", bbox_inches="tight")
     pw.addPlot("Velocity", f)
 
 def getMultipathTime():
@@ -375,28 +395,35 @@ def plotMultipathTime():
         plt.axvspan(row[0], row[1], alpha=0.2, color='red', label="denied")
 
 def plotMultipath():
-    nsat = params["num_sat"]
+    nsat = 8 #params["num_sat"]
     f = plt.figure()
-    plt.suptitle("$\kappa$ estimation")
+    # plt.suptitle(r"$\kappa$ estimation")
+    color_idx = 0
     legend_entries = list()
-    legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[0], label=r'$x$'))
+    if plotTruth:
+        legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[color_idx], label=r'$x$'))
+        color_idx += 1
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
-        if not np.isnan(truth["mp"][:,i]).all():
-            print "truth multipath"
+        plt.grid()
+        if not np.isnan(truth["mp"][:,i]).all() and plotTruth:
             plt.plot(truth["t"], truth["mp"][:,i], color=colors[0], label=r'$x$')
         for l, log in enumerate(data):
-            # if "kappa" not in log.label: continue
-            plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], linewidth=1, alpha=0.2, color=colors[l+1])
+            if r"$\kappa$" not in log.label: continue
+            plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], linewidth=1, alpha=0.2, color=colors[l+color_idx])
             if i == 0:
-                legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[l+1], label=log.label))
+                legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[l+color_idx], label=log.label))
+
         if i == 0:
-            plt.legend(handles=legend_entries, ncol=7)
-        if i != nsat-1:
-            plt.xticks([])
-        plt.ylabel(str(data[0].satPos['sats']['id'][-1, i]))
+            plt.legend(handles=legend_entries, ncol=7, bbox_to_anchor=(0.5, 2.0), loc="upper center")
+        plt.tick_params(axis='both', left='on', top='off', right='off', bottom='off', labelleft='on', labeltop='off', labelright='off', labelbottom='off')
+        # plt.ylabel(r"$\kappa_{"+str(data[0].satPos['sats']['id'][-1, i]) + r"}$")
+        plt.ylabel(r"$\kappa_{"+ str(i) + r"}$")
         plt.ylim([-0.05, 1.05])
-        # plotMultipathTime()
+    plt.tick_params(axis='both', left='off', top='off', right='off', bottom='on', labelleft='on', labeltop='off', labelright='off', labelbottom='on')
+    plt.xlabel("t (s)") 
+    if savePlots:
+        plt.savefig("../plots/multipath.pdf", bbox_inches="tight")
     pw.addPlot("Multipath", f)
 
 def saveMultipath():
@@ -426,8 +453,9 @@ def saveMultipath():
         plt.ylim([-0.05, 1.05])
         # plotMultipathTime()
 
+
     if savePlots:
-        plt.savefig(filePrefix + "multipath.png", dpi=600, facecolor='w', bbox_inches='tight')
+        plt.savefig("../plots/multipath.pdf", dpi=600, facecolor='w', bbox_inches='tight')
 
 def plotPosError():
     f = plt.figure(figsize=[9,6])
@@ -449,7 +477,7 @@ def plotPosError():
     plotMultipathTime()
     plt.legend(ncol=2, framealpha=1)
     if savePlots:
-        plt.savefig(filePrefix + "pos_error.png", dpi=600, facecolor='w', bbox_inches='tight') 
+        plt.savefig("../plots/pos_error.png", dpi=600, facecolor='w', bbox_inches='tight') 
     pw.addPlot("Position Error", f)
 
 def plotVelError():
@@ -472,7 +500,7 @@ def plotVelError():
     plotMultipathTime()
     plt.legend(ncol=2, framealpha=1)
     if savePlots:
-        plt.savefig(filePrefix + "vel_error.png", dpi=600, facecolor='w', bbox_inches='tight')
+        plt.savefig("../plots/vel_error.png", dpi=600, facecolor='w', bbox_inches='tight')
     pw.addPlot("Velocity Error", f)
 
 def plotPPLla():
@@ -566,12 +594,13 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global data, truth, pw, xtitles, imu_titles, vtitles, plotKF, colors
-    global savePlots, filePrefix, params
+    global savePlots, filePrefix, params, plotTruth
     savePlots = saveFig
     filePrefix = prefix
+    plotTruth = False
     params = yaml.load(open("../params/salsa.yaml"))
-    xtitles = ['$p_x$', '$p_y$', '$p_z$', '$q_w$', '$q_x$', '$q_y$', '$q_z$']
-    vtitles = ['$v_x$', '$v_y$', '$v_z$']
+    xtitles = [r'$\mathbf{p}_x$', r'$\mathbf{p}_y$', r'$\mathbf{p}_z$', r'$\mathbf{q}_w$', r'$\mathbf{q}_x$', r'$\mathbf{q}_y$', r'$\mathbf{q}_z$']
+    vtitles = [r'$\mathbf{v}_x$', r'$\mathbf{v}_y$', r'$\mathbf{v}_z$']
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
@@ -581,7 +610,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     truth = np.fromfile(os.path.join(directory,"Truth.log"), dtype=SimStateType)
     # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
 
-    ignored_dirs = []
+    ignored_dirs = ['GV', 'GVK', 'V']
     ignored_dirs = [os.path.join(directory, o) for o in ignored_dirs]
 
     data = [Log(subdir) for subdir in subdirs if subdir not in ignored_dirs]
@@ -592,26 +621,26 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
     pw = plotWindow()
 
-    plot3DMap()
+    # plot3DMap()
     plot2DMap()
-    plotPosition()
-    plotAttitude()
+    # plotPosition()
+    # plotAttitude()
     plotEuler()
     plotVelocity()
     # plotPPLla()
-    plotLla()
-    if len(data) == 1:
-        plotColoredPosLla()
+    # plotLla()
+    # if len(data) == 1:
+    #     plotColoredPosLla()
     # plotPosError()
     # plotVelError()
-    plotImuBias()
-    # plotImu()
-    plotXe2n()
-    plotXb2c()
+    # plotImuBias()
+    # # plotImu()
+    # plotXe2n()
+    # plotXb2c()
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
-    # #     plotPRangeRes()
-        plotClockBias()
+    #     plotPRangeRes()
+    #     plotClockBias()
         plotMultipath()
         # saveMultipath()
     #     plotAzel()  
@@ -630,8 +659,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
     # plotResults("/tmp/Salsa/MocapFeatHardware", False)
-    plotResults("/tmp/Salsa/GNSSHardware", False)
+    plotResults("../results/GNSSHardware", False, True)
     # plotResults("/tmp/Salsa/GNSSHardware2", False)
-
     # plotResults("/tmp/Salsa/FeatSimulation/")
 
