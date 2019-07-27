@@ -2,6 +2,7 @@ import numpy as np
 from typedefs import *
 from plotWindow import plotWindow
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
 import yaml
 import os
@@ -75,6 +76,8 @@ def plot3DMap():
 
 def plot2DMap():
     f = plt.figure(figsize=[8, 6])
+    ax = plt.subplot(111)
+    getBG("/home/superjax/Pictures/DJI_0024.JPG", *Background)
     if plotTruth:
         plt.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], label=r'$x$', color=colors['$x$'])
     for i, log in enumerate(data):
@@ -84,14 +87,20 @@ def plot2DMap():
         # plt.plot(log.state['x']['p'][:,1],log.state['x']['p'][:,0], label=log.label)
         plt.plot(log.opt['x']['p'][:,0,1],log.opt['x']['p'][:,0,0], **lines[log.label])
         plt.plot(np.nan, np.nan,  label=log.label, **lines[log.label])
+    rect = patches.Rectangle(box[0], box[1], box[2], linewidth=1.0, edgecolor='r', facecolor='r', alpha=0.3, label="alcove boundary", linestyle="--")
+    ax.add_patch(rect)
+    xlim = np.array([-63, 9])
+    ybottom = -25
+    plt.xlim(xlim)
+    plt.ylim((xlim-xlim[0]) / 8 * 6 + ybottom)
     plt.xlabel(r"$\mathbf{p}_x (m)$")
     plt.ylabel(r"$\mathbf{p}_y (m)$")
     # plt.axvspan(1, -2.5, alpha=0.2, color='black', label="multipath")
     # plt.axvspan(-10, -2.5, alpha=0.2, color='red', label="denied")
-    plt.xlim([-6,6])
+    # plt.axis('equal')
+    # plt.xlim([-6,6])
     plt.legend()
-    plt.axis('equal')
-    plt.grid()
+    # plt.grid()
     if savePlots:
         plt.savefig("../plots/2DMap.pdf", bbox_inches="tight")
     pw.addPlot("2D", f)
@@ -543,11 +552,26 @@ def plotLla():
     plt.legend()
     pw.addPlot("Lla", f);
 
+def getBG(filename, scale, yoff, xoff, rot):
+    img = cv2.cvtColor(cv2.imread(filename), cv2.COLOR_BGR2GRAY).astype(np.uint16)
+    rows,cols = img.shape
+    M = cv2.getRotationMatrix2D((cols/2,rows/2),-1.0*rot,1)
+    img = cv2.warpAffine(img,M,(cols,rows))
+    size = np.array(img.shape)
+    lower_left = np.array([xoff,yoff])
+    upper_right = lower_left + size*scale
+    extent = [lower_left[1], upper_right[1], lower_left[0], upper_right[0]]
+    plt.imshow(img, cmap="gray", aspect='equal', extent=extent, alpha=0.5, origin="upper")
+
+
 def plotColoredPosLla():
-    f = plt.figure()
+    f = plt.figure(figsize=[8,6])
+    ax = plt.subplot(111)
     # plt.suptitle("Lat Lon Alt")
     cmap = plt.get_cmap("plasma", 8)
-    log = data[0]
+    for log in data:
+        if log.label=='GV+$\\kappa$':
+            break
     if np.isnan(log.swParams['p']['s']).all():
         return
     counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
@@ -555,6 +579,8 @@ def plotColoredPosLla():
         counts = np.vstack((counts, np.zeros((1,20), dtype=np.bool)))
     while counts.shape[0] > log.opt['x']['lla'].shape[0]:
         counts = counts[:-1,:].copy()
+
+    getBG("/home/superjax/Pictures/DJI_0024.JPG", *Background)
 
     for i in range(np.max(counts)):
         # tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
@@ -565,9 +591,18 @@ def plotColoredPosLla():
         plt.plot(tmp[:,:,1], tmp[:,:,0], color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
         plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
     plt.legend()
-    # plt.imshow(grey, cmap="Greys", alpha = 0.5, extent=extent)
-    plt.axis("equal")
-    pw.addPlot("Colored Lla", f)
+    xlim = np.array([-52, 9])
+    ybottom = -23
+    plt.xlim(xlim)
+    plt.ylim((xlim-xlim[0]) / 8 * 6 + ybottom)
+    # plt.axis("equal")
+    plt.xlabel(r"$\mathbf{p}_x (m)$")
+    plt.ylabel(r"$\mathbf{p}_y (m)$")
+    rect = patches.Rectangle(box[0], box[1], box[2], linewidth=1.0, edgecolor='r', facecolor='r', alpha=0.3, label="alcove boundary", linestyle="--")
+    ax.add_patch(rect)
+    if savePlots:
+        plt.savefig("../plots/colored.pdf", bbox_inches="tight")
+    # pw.addPlot("Colored Lla", f)
 
 class Log:
     def __init__(self, prefix):
@@ -603,7 +638,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     global data, truth, pw, xtitles, imu_titles, vtitles, plotKF, lines
-    global savePlots, filePrefix, params, plotTruth
+    global savePlots, filePrefix, params, plotTruth, box, Background
     savePlots = saveFig
     filePrefix = prefix
     plotTruth = False
@@ -633,6 +668,9 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
     data = [Log(subdir) for subdir in subdirs if subdir not in ignored_dirs]
 
+    box = [[-52.5, -10], 10, 17]
+    Background = [0.026, -86.5, -48, -2.0]
+
     # interpolateTruth()
     getMultipathTime()
     getDeniedTime()
@@ -645,12 +683,12 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     plotAttitude()
     plotEuler()
     plotVelocity()
-    # plotPPLla()
-    # plotLla()
-    if len(data) == 1:
-        plotColoredPosLla()
-    # plotPosError()
-    # plotVelError()
+    # # plotPPLla()
+    # # plotLla()
+    # # if len(data) == 1:
+    plotColoredPosLla()
+    # # plotPosError()
+    # # plotVelError()
     plotImuBias()
     plotImu()
     plotXe2n()
@@ -658,7 +696,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
         # plotPRangeRes()
-        plotClockBias()
+        # plotClockBias()
         plotMultipath()
         # saveMultipath()
     #     plotAzel()  
@@ -681,3 +719,5 @@ if __name__ == '__main__':
     # plotResults("/tmp/Salsa/GNSSHardware2", False)
     # plotResults("/tmp/Salsa/FeatSimulation/")
 
+    
+    
