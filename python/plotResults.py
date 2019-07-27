@@ -24,22 +24,25 @@ def plotRawRes(rawGPSRes):
 
 def plotClockBias():
     f = plt.figure()
-    plt.suptitle('Clock Bias')
+    # plt.suptitle('Clock Bias')
     tautitles = [r'$\tau$', r'$\dot{\tau}$']
     for i in range(2):
         plt.subplot(2, 1, i + 1)
         plt.title(tautitles[i])
         plt.plot(truth['t'], truth['tau'][:, i], label='x')
         for l, log in enumerate(data):
-            plt.plot(log.state['t'], log.state['tau'][:, i], label=log.label)
-            plt.plot(log.opt['x']['t'], log.opt['x']['tau'][:,:,i], color=colors[l+1], label=log.label, alpha=0.3)
+            if np.sum(log.opt['x']['tau'][:, :, i]) < 1e-12:
+                continue
+            # plt.plot(log.state['t'], log.state['tau'][:, i], label=log.label)
+            plt.plot(log.opt['x']['t'], log.opt['x']['tau'][:,:,i], alpha=0.3, **lines[log.label])
+            plt.plot(np.nan, np.nan, label=log.label, **lines[log.label])
         if i == 0:
-            plt.legend()
+            plt.legend(bbox_to_anchor=(0.5, 1.4), ncol=7, loc="upper center")
     pw.addPlot("Clock Bias", f)
 
 def plotImuBias():
     f = plt.figure()
-    plt.suptitle('Bias')
+    # plt.suptitle('Bias')
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     for i in range(3):
@@ -47,10 +50,11 @@ def plotImuBias():
             plt.subplot(3, 2, i * 2 + j + 1)
             plt.plot(truth['t'], truth['b'][:, j * 3 + i], label='x')
             for k, log in enumerate(data):
-                plt.plot(log.opt['x']['t'], log.opt['x']['imu'][:, :, j * 3 + i], color=colors[k+1], label=log.label, alpha=0.3)
+                plt.plot(log.opt['x']['t'], log.opt['x']['imu'][:, :, j * 3 + i], alpha=0.3, **lines[log.label])
+                plt.plot(np.nan, np.nan, label=log.label, **lines[log.label])
             plt.title(imu_titles[j * 3 + i])
         if i == 0:
-            plt.legend()
+            plt.legend(bbox_to_anchor=(0.5, 1.4), ncol=7, loc="upper center")
     pw.addPlot("IMU Bias", f)
 
 def plot3DMap():
@@ -72,14 +76,19 @@ def plot3DMap():
 def plot2DMap():
     f = plt.figure(figsize=[8, 6])
     if plotTruth:
-        plt.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], label=r'$x$')
-    for log in data:
+        plt.plot(truth['x']['p'][:,1],truth['x']['p'][:,0], label=r'$x$', color=colors['$x$'])
+    for i, log in enumerate(data):
         if plotKF:
             k = [log.x['node'] != -1][0]
             plt.plot(log.x['x']['p'][k,1],log.x['x']['p'][k,0], '*')
-        plt.plot(log.state['x']['p'][:,1],log.state['x']['p'][:,0], label=log.label)
+        # plt.plot(log.state['x']['p'][:,1],log.state['x']['p'][:,0], label=log.label)
+        plt.plot(log.opt['x']['p'][:,0,1],log.opt['x']['p'][:,0,0], **lines[log.label])
+        plt.plot(np.nan, np.nan,  label=log.label, **lines[log.label])
     plt.xlabel(r"$\mathbf{p}_x (m)$")
     plt.ylabel(r"$\mathbf{p}_y (m)$")
+    # plt.axvspan(1, -2.5, alpha=0.2, color='black', label="multipath")
+    # plt.axvspan(-10, -2.5, alpha=0.2, color='red', label="denied")
+    plt.xlim([-6,6])
     plt.legend()
     plt.axis('equal')
     plt.grid()
@@ -121,8 +130,6 @@ def plotAzel():
     azel = data[0].satPos['sats']['azel'][-1]*180.0/np.pi
     dist = np.sqrt(np.sum(np.square(data[0].satPos['sats']['p'][-1]), axis=1))/1000
     ids = data[0].satPos['sats']['id'][-1]
-    # for i in range(len(ids)):
-    #     print ids[i], ", ", dist[i], ", ", azel[i,:]
 
     pw.addPlot("AzEl", f)
 
@@ -177,7 +184,7 @@ def plotFeatRes(allFeat=False):
     while id <= np.max(featRes['f']['id']):
         page += 1
         f = plt.figure()
-        plt.suptitle('Feat Res')
+        # plt.suptitle('Feat Res')
         for c in range(ncols):
             for r in range(nrows):
                 id += 1
@@ -196,7 +203,7 @@ def plotFeatRes(allFeat=False):
 
 def plotFeatDepths():
     f = plt.figure()
-    plt.suptitle("Feat Pos")
+    # plt.suptitle("Feat Pos")
     p = plt.plot(data[0].featPos['t'], data[0].featPos['ft']['rho'], alpha=0.7)
     for i in range(len(p)):
         plt.plot(data[0].featPos['t'], data[0].featPos['ft']['rho_true'][:,i], linestyle='--', color=p[i].get_color(), alpha=0.5)
@@ -207,7 +214,7 @@ def plotFeatDepths():
 
 def plotPosition(): 
     f = plt.figure()
-    plt.suptitle('Position')
+    # plt.suptitle('Position')
     for i in range(3):
         plt.subplot(3, 1, i+1)
         plt.title(xtitles[i])
@@ -216,7 +223,7 @@ def plotPosition():
         for k, log in enumerate(data):
             plt.plot(log.state['t'], log.state['x']['p'][:,i], label=log.label)
             if len(data) == 1:
-                plt.plot(log.opt['x']['t'], log.opt['x']['p'][:,:,i], label=log.label, alpha=0.3, color=colors[k+2])
+                plt.plot(log.opt['x']['t'], log.opt['x']['p'][:,:,i], label=log.label, alpha=0.3, **lines[log.label])
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['p'][:,i], 'x')
         if i == 0:
@@ -226,16 +233,16 @@ def plotPosition():
 
 def plotAttitude():
     f = plt.figure()
-    plt.suptitle('Attitude')
+    # plt.suptitle('Attitude')
     for i in range(4):
         plt.subplot(4, 1, i+1)
         plt.title(xtitles[i+3])
         if plotTruth:
-            plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='x')
+            plt.plot(truth['t'], truth['x']['q'][:,i]*np.sign(truth['x']['q'][:,0]), label='$x$', **lines['$x$'])
         for l, log in enumerate(data):
-            plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['xu']['q'][:,0]), label=log.label)
+            plt.plot(log.state['t'], log.state['x']['q'][:,i]*np.sign(log.state['xu']['q'][:,0]), label=log.label, **lines[log.label])
             if len(data) == 1:
-                plt.plot(log.opt['x']['t'], log.opt['x']['q'][:,:,i]*np.sign(log.opt['x']['q'][:,:,0]), label=log.label, color=colors[l+2], alpha=0.3)
+                plt.plot(log.opt['x']['t'], log.opt['x']['q'][:,:,i]*np.sign(log.opt['x']['q'][:,:,0]), label=log.label, alpha=0.3, **lines[log.label])
             if plotKF:
                 plt.plot(log.x['t'], log.x['x']['q'][:,i]*np.sign(log.x['x']['q'][:,0]), 'x')
         if i == 0:
@@ -252,9 +259,9 @@ def plotEuler():
         plt.subplot(3,1,i+1)
         plt.grid()
         if plotTruth:
-            plt.plot(truth['t'], 180.0/np.pi * truth['euler'][:,i], label='x')
+            plt.plot(truth['t'], 180.0/np.pi * truth['euler'][:,i], label='$x$', **lines['$x$'])
         for log in data:
-            plt.plot(log.state['t'], 180.0/np.pi * log.state['euler'][:,i], label=log.label)
+            plt.plot(log.state['t'], 180.0/np.pi * log.state['euler'][:,i], label=log.label, **lines[log.label])
         plt.ylabel(labels[i] + r"($^\circ$)")
         if i == 0:
             plt.legend(bbox_to_anchor=(0.5, 1.3), ncol=7, loc="upper center")
@@ -271,7 +278,7 @@ def fixState(x):
 
 def plotImu():
     f = plt.figure()
-    plt.suptitle('Imu')
+    # plt.suptitle('Imu')
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
     for i in range(3):
@@ -288,30 +295,32 @@ def plotImu():
 def plotXe2n():
     f = plt.figure()
     # plt.suptitle(r"$T_{e}^{n}$")
-    plt.suptitle(r"$T_{e}^{n}$")
+    # plt.suptitle(r"$T_{e}^{n}$")
     # titles = ["p_{x}", "p_{y}", "p_{z}", "~", "q_{w}", "q_{x}", "q_{y}", "q_{z}"]
     titles = ["x", "y", "z", "~", "w", "x", "y", "z"]
     for i in range(4):
         if i < 3:
             plt.subplot(4,2,2*i+1)
             plt.ylabel(r"$p_{"+titles[i]+"}$")
-            plt.plot(truth['t'], truth['x_e2n']['p'][:,i], label="x")
+            if plotTruth:
+                plt.plot(truth['t'], truth['x_e2n']['p'][:,i], label="$x$", **lines['$x$'])
             for log in data:
-                plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_e2n']['p'][:,i], label=log.label)
-            plt.legend()
+                plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_e2n']['p'][:,i], label=log.label, **lines[log.label])
+            if i == 0:
+                plt.legend(bbox_to_anchor=(0.5, 1.4), ncol=7, loc="upper center")
         plt.subplot(4,2, 2*i+2)
-        plt.plot(truth['t'], truth['x_e2n']['q'][:, i], label="x")
+        if plotTruth:
+            plt.plot(truth['t'], truth['x_e2n']['q'][:, i], label="x", **lines['$x$'])
         plt.ylabel("$q_{" + titles[i] + "}$")
         for log in data:
-            plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_e2n']['q'][:, i], label=log.label)
-        plt.legend()
+            plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_e2n']['q'][:, i], label=log.label, **lines[log.label])
         plotMultipathTime()
     pw.addPlot("X_e2n", f)
 
 def plotXb2c():
     f = plt.figure()
     # plt.suptitle(r"$T_{e}^{n}$")
-    plt.suptitle(r"$T_{b}^{c}$")
+    # plt.suptitle(r"$T_{b}^{c}$")
     # titles = ["p_{x}", "p_{y}", "p_{z}", "~", "q_{w}", "q_{x}", "q_{y}", "q_{z}"]
     titles = ["x", "y", "z", "~", "w", "x", "y", "z"]
     for i in range(4):
@@ -319,16 +328,18 @@ def plotXb2c():
         if i < 3:
             plt.subplot(4,2,2*i+1)
             plt.ylabel(r"$p_{"+titles[i]+"}$")
-            plt.plot(truth['t'], truth['x_b2c']['p'][:,i], label="x")
+            if plotTruth:
+                plt.plot(truth['t'], truth['x_b2c']['p'][:,i], label="x", **lines["$x$"])
             for log in data:
-                plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_b2c']['p'][:,i], label=log.label)
-            plt.legend()
+                plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_b2c']['p'][:,i], label=log.label,**lines[log.label])
+            if i == 0:
+                plt.legend(bbox_to_anchor=(0.5, 1.4), ncol=7, loc="upper center")
         plt.subplot(4,2, 2*i+2)
-        plt.plot(truth['t'], truth['x_b2c']['q'][:, i], label="x")
+        if plotTruth:
+            plt.plot(truth['t'], truth['x_b2c']['q'][:, i], label="x", **lines['$x$'])
         plt.ylabel(r"$q_{" + titles[i] + "}$")
         for log in data:
-            plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_b2c']['q'][:, i], label=log.label)
-        plt.legend()
+            plt.plot(np.nanmax(log.opt['x']['t'], axis=1), log.opt['x_b2c']['q'][:, i], label=log.label, **lines[log.label])
     pw.addPlot("X_b2c", f)
 
 
@@ -339,11 +350,11 @@ def plotVelocity():
         plt.subplot(4, 1, i+1)
         plt.grid()
         if plotTruth:
-            plt.plot(truth['t'], truth['v'][:,i], label='x')
+            plt.plot(truth['t'], truth['v'][:,i], label='$x$', **lines['$x$'])
         for l, log in enumerate(data):
-            plt.plot(log.state['t'], log.state['v'][:,i], label=log.label)
+            plt.plot(log.state['t'], log.state['v'][:, i], label=log.label, **lines[log.label])
             if len(data) == 1:
-                plt.plot(log.opt['x']['t'], log.opt['x']['v'][:,:,i], label=log.label, alpha=0.3, color=colors[l+2])
+                plt.plot(log.opt['x']['t'], log.opt['x']['v'][:, :, i], alpha=0.3, label=log.label, **lines[log.label])
             if plotKF:
                 plt.plot(log.x['t'], log.x['v'][:,i], 'x')
         if i == 0:
@@ -355,9 +366,9 @@ def plotVelocity():
     plt.grid()
     plt.ylabel(r"$\Vert \mathbf{v} \Vert \left(\frac{m}{s}\right)$")
     if plotTruth:
-        plt.plot(truth['t'], norm(truth['v'], axis=1), label=r'x')
+        plt.plot(truth['t'], norm(truth['v'], axis=1), label='$x$', **lines['$x$'])
     for log in data:
-        plt.plot(log.state['t'], norm(log.state['v'], axis=1), label=r'\hat{x}')
+        plt.plot(log.state['t'], norm(log.state['v'], axis=1), label=log.label, **lines[log.label])
     plt.xlabel("t (s)")
     if savePlots:
         plt.savefig("../plots/velocity.pdf", bbox_inches="tight")
@@ -401,18 +412,18 @@ def plotMultipath():
     color_idx = 0
     legend_entries = list()
     if plotTruth:
-        legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[color_idx], label=r'$x$'))
+        legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], label=r'$x$'), **lines['$x$'])
         color_idx += 1
     for i in range(nsat):
         plt.subplot(nsat, 1, i+1)
         plt.grid()
         if not np.isnan(truth["mp"][:,i]).all() and plotTruth:
-            plt.plot(truth["t"], truth["mp"][:,i], color=colors[0], label=r'$x$')
+            plt.plot(truth["t"], truth["mp"][:,i], label=r'$x$', **lines['$x$'])
         for l, log in enumerate(data):
             if r"$\kappa$" not in log.label: continue
-            plt.plot(log.swParams['p']['t'][:,:,i], log.swParams['p']['s'][:,:,i], linewidth=1, alpha=0.2, color=colors[l+color_idx])
+            plt.plot(log.swParams['p']['t'][:,0,i], log.swParams['p']['s'][:,0,i], alpha=1.0, **lines[log.label])
             if i == 0:
-                legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[l+color_idx], label=log.label))
+                legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], label=log.label, **lines[log.label]))
 
         if i == 0:
             plt.legend(handles=legend_entries, ncol=7, bbox_to_anchor=(0.5, 2.0), loc="upper center")
@@ -429,7 +440,7 @@ def plotMultipath():
 def saveMultipath():
     nsat = truth["mp"][0].size
     f = plt.figure(figsize=[8, 6], dpi=600)
-    plt.suptitle("$\kappa$ estimation")
+    # plt.suptitle("$\kappa$ estimation")
     # cmap = plt.cm.get_cmap('tab10', len(data)+1)
     legend_entries = []
     legend_entries.append(plt.Line2D([np.nan, np.nan], [np.nan, np.nan], color=colors[0], label=r'$x$'))
@@ -459,7 +470,7 @@ def saveMultipath():
 
 def plotPosError():
     f = plt.figure(figsize=[9,6])
-    plt.suptitle('Position Error')
+    # plt.suptitle('Position Error')
     # for i in range(3):
     #     plt.subplot(4, 1, i + 1)
     #     plt.title(xtitles[i])
@@ -482,7 +493,7 @@ def plotPosError():
 
 def plotVelError():
     f = plt.figure(figsize=[9,6])
-    plt.suptitle('Velocity Error')
+    # plt.suptitle('Velocity Error')
     # for i in range(3):
     #     plt.subplot(3, 1, i + 1)
     #     plt.title(xtitles[i])
@@ -505,7 +516,7 @@ def plotVelError():
 
 def plotPPLla():
     f = plt.figure()
-    plt.suptitle("PP LLA")
+    # plt.suptitle("PP LLA")
     for i in range(3):
         plt.subplot(3, 2,2*i+1)
         for log in data:
@@ -525,7 +536,7 @@ def plotPPLla():
 
 def plotLla():
     f = plt.figure()
-    plt.suptitle("Lat Lon")
+    # plt.suptitle("Lat Lon")
     for log in data:
         plt.plot(log.state['lla'][:,1]*180/np.pi, log.state['lla'][:,0]*180.0/np.pi, label=log.label)
     plt.axis("equal")
@@ -534,26 +545,24 @@ def plotLla():
 
 def plotColoredPosLla():
     f = plt.figure()
-    plt.suptitle("Lat Lon Alt")
+    # plt.suptitle("Lat Lon Alt")
     cmap = plt.get_cmap("plasma", 8)
     log = data[0]
     if np.isnan(log.swParams['p']['s']).all():
         return
     counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
-    print counts.shape
-    print log.opt['x']['lla'].shape
     while counts.shape[0] < log.opt['x']['lla'].shape[0]:
         counts = np.vstack((counts, np.zeros((1,20), dtype=np.bool)))
     while counts.shape[0] > log.opt['x']['lla'].shape[0]:
         counts = counts[:-1,:].copy()
-    print counts.shape
-    print log.opt['x']['lla'].shape
 
     for i in range(np.max(counts)):
-        tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
-        tmp[counts > i, :] = log.opt['x']['lla'][counts > i, :]
-        print tmp.shape
-        plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
+        # tmp = np.ones(log.opt['x']['lla'].shape)*np.nan
+        # tmp[counts > i, :] = log.opt['x']['lla'][counts > i, :]
+        # plt.plot(tmp[:,:,1]*180/np.pi, tmp[:,:,0]*180.0/np.pi, color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
+        tmp = np.ones(log.opt['x']['p'].shape)*np.nan
+        tmp[counts > i, :] = log.opt['x']['p'][counts > i, :]
+        plt.plot(tmp[:,:,1], tmp[:,:,0], color=cmap(float(i)/float(np.max(counts))), alpha=0.3)
         plt.plot(np.nan,np.nan, color=cmap(float(i)/float(np.max(counts))), label=str(i))
     plt.legend()
     # plt.imshow(grey, cmap="Greys", alpha = 0.5, extent=extent)
@@ -593,7 +602,7 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     np.set_printoptions(linewidth=150)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-    global data, truth, pw, xtitles, imu_titles, vtitles, plotKF, colors
+    global data, truth, pw, xtitles, imu_titles, vtitles, plotKF, lines
     global savePlots, filePrefix, params, plotTruth
     savePlots = saveFig
     filePrefix = prefix
@@ -603,14 +612,23 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     vtitles = [r'$\mathbf{v}_x$', r'$\mathbf{v}_y$', r'$\mathbf{v}_z$']
     imu_titles = [r"$acc_x$", r"$acc_y$", r"$acc_z$",
                   r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    lines  = {  'GV+$\\kappa$': {'color': '#1f77b4', 'linewidth': 2, 'dashes': (None,None)},
+                'V':            {'color': '#ff7f0e', 'linewidth': 2, 'dashes': (4,4)},
+                'G+$\\kappa$':  {'color': '#2ca02c', 'linewidth': 1.5, 'dashes': (2,2)},
+                'GV':           {'color': '#d62728', 'linewidth': 1, 'dashes': (None, None)},
+                'G':            {'color': '#9467bd', 'linewidth': 1, 'dashes': (None, None)},
+                '$x$':          {'color': '#8c564b', 'linewidth': 1, 'dashes': (None, None)}, 
+                '1':            {'color': '#e377c2', 'linewidth': 1, 'dashes': (None, None)}, 
+                '2':            {'color': '#7f7f7f', 'linewidth': 1, 'dashes': (None, None)}, 
+                '3':            {'color': '#bcbd22', 'linewidth': 1, 'dashes': (None, None)},
+                '4':            {'color': '#17becf', 'linewidth': 1, 'dashes': (None, None)}}
     plotKF = plotKeyframes
 
     subdirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory,o))]
     truth = np.fromfile(os.path.join(directory,"Truth.log"), dtype=SimStateType)
     # trueFeatPos = np.fromfile(os.path.join(prefix, "TrueFeat.log"), dtype=(np.float64, 3))
 
-    ignored_dirs = ['GV', 'GVK', 'V']
+    ignored_dirs = ['GV', 'GV', 'G']
     ignored_dirs = [os.path.join(directory, o) for o in ignored_dirs]
 
     data = [Log(subdir) for subdir in subdirs if subdir not in ignored_dirs]
@@ -623,24 +641,24 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
 
     # plot3DMap()
     plot2DMap()
-    # plotPosition()
-    # plotAttitude()
+    plotPosition()
+    plotAttitude()
     plotEuler()
     plotVelocity()
     # plotPPLla()
     # plotLla()
-    # if len(data) == 1:
-    #     plotColoredPosLla()
+    if len(data) == 1:
+        plotColoredPosLla()
     # plotPosError()
     # plotVelError()
-    # plotImuBias()
-    # # plotImu()
-    # plotXe2n()
-    # plotXb2c()
+    plotImuBias()
+    plotImu()
+    plotXe2n()
+    plotXb2c()
     #
     if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
-    #     plotPRangeRes()
-    #     plotClockBias()
+        # plotPRangeRes()
+        plotClockBias()
         plotMultipath()
         # saveMultipath()
     #     plotAzel()  
