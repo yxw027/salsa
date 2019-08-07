@@ -9,6 +9,8 @@ import os
 from scipy import interpolate
 import cv2
 import scipy
+from matplotlib.animation import FuncAnimation
+from matplotlib import animation
 
 sim_params = yaml.load(open("../params/sim_params.yaml"))
 
@@ -604,6 +606,62 @@ def plotColoredPosLla():
         plt.savefig("../plots/colored.pdf", bbox_inches="tight")
     # pw.addPlot("Colored Lla", f)
 
+
+def animate(i, animator):
+    animator.plotColoredLine(i)
+
+class ColoredAnimator:
+    def __init__(self):
+        fig, ax = plt.subplots(figsize=[8, 6])
+        getBG("/home/superjax/Pictures/DJI_0024.JPG", *Background)
+        xlim = np.array([-52, 9])
+        ybottom = -23
+        plt.xlim(xlim)
+        plt.ylim((xlim-xlim[0]) / 8 * 6 + ybottom)
+
+        for log in data:
+            if log.label == 'GV+$\\kappa$':
+                break
+        self.log = log
+        if np.isnan(log.swParams['p']['s']).all():
+            return
+        counts = np.sum(np.greater(log.swParams['p']['s'], 0.5), axis=2)
+        while counts.shape[0] < log.opt['x']['lla'].shape[0]:
+            counts = np.vstack((counts, np.zeros((1, 20), dtype=np.bool)))
+        while counts.shape[0] > log.opt['x']['lla'].shape[0]:
+            counts = counts[:-1, :].copy()
+
+
+        self.cmap = plt.get_cmap("plasma", 8)
+        self.counts = counts
+        self.cmap = plt.get_cmap("plasma", np.max(counts))
+        self.lines = [plt.plot(np.nan, np.nan, color=self.cmap(float(i)/float(np.max(counts))), alpha=0.7) for i in range(np.max(counts))]
+        [plt.plot(np.nan, np.nan, color=self.cmap(float(i)/float(np.max(counts))), label=str(i)) for i in range(np.max(counts))]
+        plt.legend()
+      
+        fps = 1.0/np.mean(np.diff(np.nanmax(log.opt['x']['t'], axis=1)))
+        frames = len(log.opt['x']['t'])-1000
+        self.anim = FuncAnimation(fig, animate, frames=frames, fargs=[self], repeat=False)
+        self.anim.save("../plots/colored.avi", writer='ffmpeg', fps=fps)
+
+    def plotColoredLine(self, j):
+        t = np.nanmax(self.log.opt['x']['t'][1000+j,:])
+        print("t: ", t, "j: ", j, "total: ", len(self.log.opt['x']['t'])-1)
+        tmp = np.ones(self.log.opt['x']['p'].shape)*np.nan
+        for i in range(np.max(self.counts)):
+            tmp *= np.nan
+            idx = np.logical_and((self.counts == i), (self.log.opt['x']['t'] <= t))
+            tmp[idx , :] = self.log.opt['x']['p'][idx, :]
+            print("i", np.sum(idx))
+            self.lines[i][0].set_xdata(tmp[:,:,1].copy())
+            self.lines[i][0].set_ydata(tmp[:,:,0].copy())
+
+    def save(self, filename):
+        self.anim.save(filename)
+    
+        
+
+
 class Log:
     def __init__(self, prefix):
         self.prefix = prefix
@@ -671,46 +729,48 @@ def plotResults(directory, plotKeyframes=True, saveFig=False, prefix=""):
     box = [[-52.5, -10], 10, 17]
     Background = [0.026, -86.5, -48, -2.0]
 
+    ani = ColoredAnimator()
+
     # interpolateTruth()
-    getMultipathTime()
-    getDeniedTime()
+    # getMultipathTime()
+    # getDeniedTime()
 
-    pw = plotWindow()
+    # pw = plotWindow()
 
-    # plot3DMap()
-    plot2DMap()
-    plotPosition()
-    plotAttitude()
-    plotEuler()
-    plotVelocity()
-    # # plotPPLla()
-    # # plotLla()
-    # # if len(data) == 1:
-    plotColoredPosLla()
-    # # plotPosError()
-    # # plotVelError()
-    plotImuBias()
-    plotImu()
-    plotXe2n()
-    plotXb2c()
-    #
-    if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
-        # plotPRangeRes()
-        # plotClockBias()
-        plotMultipath()
-        # saveMultipath()
-    #     plotAzel()  
-    # # #
-    # if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
-    #     # plotFeatRes()
-    #     plotFeatDepths()
+    # # plot3DMap()
+    # plot2DMap()
+    # plotPosition()
+    # plotAttitude()
+    # plotEuler()
+    # plotVelocity()
+    # # # plotPPLla()
+    # # # plotLla()
+    # # # if len(data) == 1:
+    # plotColoredPosLla()
+    # # # plotPosError()
+    # # # plotVelError()
+    # plotImuBias()
+    # plotImu()
+    # plotXe2n()
+    # plotXb2c()
     # #
-    # if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
-    #     plotMocapRes()
-    #
-    # if len(satPos) > 0 and max(satPos['size']) > 0:
-    #     plotSatPos()
-    pw.show()
+    # if len(data[0].prangeRes) > 0 and max(data[0].prangeRes['size']) > 0:
+    #     # plotPRangeRes()
+    #     # plotClockBias()
+    #     plotMultipath()
+    #     # saveMultipath()
+    # #     plotAzel()  
+    # # # #
+    # # if len(data[0].featPos) > 0 and max(data[0].featPos['size']) > 0:
+    # #     # plotFeatRes()
+    # #     plotFeatDepths()
+    # # #
+    # # if len(data[0].mocapRes) > 0 and max(data[0].mocapRes['size']) > 0:
+    # #     plotMocapRes()
+    # #
+    # # if len(satPos) > 0 and max(satPos['size']) > 0:
+    # #     plotSatPos()
+    # pw.show()
 
 if __name__ == '__main__':
     # plotResults("/tmp/Salsa.MocapSimulation")
